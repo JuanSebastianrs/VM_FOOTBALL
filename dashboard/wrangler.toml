@@ -1,0 +1,24 @@
+name = "vm-football-dashboard"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+
+# API key for authenticating training updates
+# Set via: npx wrangler secret put API_KEY
+# [vars]
+# API_KEY = "your-secret-key"
+
+# Durable Objects
+[durable_objects]
+bindings = [
+    { name = "TRAINING_STATE", class_name = "TrainingState" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TrainingState"]
+
+# KV Namespace (optional, for persistent metrics history)
+# Create via: npx wrangler kv:namespace create "METRICS"
+# [[kv_namespaces]]
+# binding = "METRICS"
+# id = "your-kv-namespace-id"

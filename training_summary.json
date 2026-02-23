@@ -1,0 +1,38 @@
+{
+  "started": "2026-02-21T03:40:59.290246",
+  "finished": "2026-02-22T02:43:34.520116",
+  "total_time_min": 1382.6,
+  "experiments": {
+    "exp1_nano_640": {
+      "metrics/precision(B)": 0.5314027632115482,
+      "metrics/recall(B)": 0.3523499765588373,
+      "metrics/mAP50(B)": 0.32868285127463776,
+      "metrics/mAP50-95(B)": 0.10828452692102557,
+      "fitness": 0.10828452692102557,
+      "training_time_min": 211.7,
+      "status": "success",
+      "resumed": true
+    },
+    "exp2_nano_1280": {
+      "metrics/precision(B)": 0.6281510597391066,
+      "metrics/recall(B)": 0.49715683510514735,
+      "metrics/mAP50(B)": 0.47892480611212956,
+      "metrics/mAP50-95(B)": 0.1736982428547514,
+      "fitness": 0.1736982428547514,
+      "training_time_min": 575.7,
+      "status": "success",
+      "resumed": true
+    },
+    "exp3_small_640": {
+      "metrics/precision(B)": 0.5876646294444764,
+      "metrics/recall(B)": 0.4142053445850914,
+      "metrics/mAP50(B)": 0.3976217494669741,
+      "metrics/mAP50-95(B)": 0.13359840373082799,
+      "fitness": 0.13359840373082799,
+      "training_time_min": 588.1,
+      "status": "success",
+      "resumed": false,
+      "best_pt_size_mb": 19.2
+    }
+  }
+}

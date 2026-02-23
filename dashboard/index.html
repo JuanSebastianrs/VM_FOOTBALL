@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM_FOOTBALL - Training Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2236;
+            --bg-card-hover: #1f2a40;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --border-bright: #334155;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #10b981, #3b82f6);
+            --gradient-3: linear-gradient(135deg, #f59e0b, #ef4444);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header h1 span {
+            font-weight: 400;
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-badge.idle { background: rgba(100, 116, 139, 0.2); color: var(--text-muted); }
+        .status-badge.training { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .status-badge.complete { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .status-badge.error { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Main Layout */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Stat cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-1px);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Progress bar */
+        .progress-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .progress-eta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gradient-2);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Charts container */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 250px !important;
+        }
+
+        /* Experiments table */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .model-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .model-badge.yolo { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .model-badge.rfdetr { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+
+        .metric-good { color: var(--accent-green); }
+        .metric-ok { color: var(--accent-orange); }
+        .metric-bad { color: var(--accent-red); }
+
+        /* Connection indicator */
+        .connection {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .connection.connected { color: var(--accent-green); }
+        .connection.disconnected { color: var(--accent-red); }
+
+        /* Log panel */
+        .log-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .log-entries {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            color: var(--text-secondary);
+        }
+
+        .log-entry .timestamp {
+            color: var(--text-muted);
+        }
+
+        .log-entry.success { color: var(--accent-green); }
+        .log-entry.error { color: var(--accent-red); }
+        .log-entry.info { color: var(--accent-blue); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .main { padding: 16px; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">&#9917;</div>
+        <h1>VM_FOOTBALL <span>Training Dashboard</span></h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <span id="status-badge" class="status-badge idle">
+            <span class="pulse-dot"></span>
+            <span id="status-text">Idle</span>
+        </span>
+        <div id="connection" class="connection disconnected">
+            <span>&#9679;</span>
+            <span id="conn-text">Offline</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Current Model</div>
+            <div class="stat-value" id="current-model">--</div>
+            <div class="stat-sub" id="current-experiment">Waiting for data</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Epoch</div>
+            <div class="stat-value" id="current-epoch">0/0</div>
+            <div class="stat-sub" id="epoch-progress">0%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Best mAP</div>
+            <div class="stat-value" id="best-map">--</div>
+            <div class="stat-sub" id="best-map-model">--</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Time Elapsed</div>
+            <div class="stat-value" id="elapsed-time">--</div>
+            <div class="stat-sub" id="eta-time">ETA: --</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Experiments</div>
+            <div class="stat-value" id="experiments-count">0/0</div>
+            <div class="stat-sub" id="experiments-status">--</div>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+        <div class="progress-header">
+            <span class="progress-title" id="progress-label">Pipeline Progress</span>
+            <span class="progress-eta" id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+        </div>
+        <div class="progress-details">
+            <span id="progress-phase">Waiting to start...</span>
+            <span id="progress-time">--</span>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title">
+                <span style="color:var(--accent-blue)">&#9632;</span> Training Loss
+            </div>
+            <canvas id="loss-chart"></canvas>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">
+                <span style="color:var(--accent-green)">&#9632;</span> mAP (mean Average Precision)
+            </div>
+            <canvas id="map-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Comparison chart for hyperparameters -->
+    <div class="charts-grid">
+        <div class="chart-card" style="grid-column: span 2;">
+            <div class="chart-title">
+                <span style="color:var(--accent-purple)">&#9632;</span> Experiment Comparison
+            </div>
+            <canvas id="comparison-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Experiments Table -->
+    <div class="table-card">
+        <div class="table-title">Experiments</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Experiment</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                    <th>Epochs</th>
+                    <th>Batch</th>
+                    <th>LR</th>
+                    <th>mAP50</th>
+                    <th>mAP50-95</th>
+                    <th>Loss</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="experiments-table">
+                <tr><td colspan="10" style="text-align:center; color:var(--text-muted)">No experiments yet</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Log -->
+    <div class="log-panel">
+        <div class="chart-title">Activity Log</div>
+        <div class="log-entries" id="log-entries">
+            <div class="log-entry info">
+                <span class="timestamp">[--:--:--]</span> Dashboard ready. Waiting for training data...
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+const state = {
+    connected: false,
+    status: 'idle', // idle, training, complete, error
+    currentExperiment: null,
+    experiments: {},
+    lossData: {},      // { expName: [{ epoch, value }] }
+    mapData: {},       // { expName: [{ epoch, value }] }
+    bestMap: { value: 0, model: '' },
+};
+
+// ============================================================
+// Charts
+// ============================================================
+const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: { color: '#94a3b8', font: { size: 11 } },
+        },
+    },
+    scales: {
+        x: {
+            grid: { color: 'rgba(30, 41, 59, 0.5)' },
+            ticks: { color: '#64748b', font: { size: 10 } },
+        },
+        y: {
+            grid: { color: 'rgba(30, 41, 59, 0.5)' },
+            ticks: { color: '#64748b', font: { size: 10 } },
+        },
+    },
+};
+
+const colors = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+];
+
+const lossChart = new Chart(document.getElementById('loss-chart'), {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, title: { display: true, text: 'Loss', color: '#64748b' } } } },
+});
+
+const mapChart = new Chart(document.getElementById('map-chart'), {
+    type: 'line',
+    data: { labels: [], datasets: [] },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, title: { display: true, text: 'mAP', color: '#64748b' }, min: 0, max: 1 } } },
+});
+
+const comparisonChart = new Chart(document.getElementById('comparison-chart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [] },
+    options: {
+        ...chartDefaults,
+        indexAxis: 'y',
+        scales: {
+            x: { ...chartDefaults.scales.x, min: 0, max: 1, title: { display: true, text: 'mAP50', color: '#64748b' } },
+            y: { ...chartDefaults.scales.y },
+        },
+    },
+});
+
+// ============================================================
+// WebSocket / Polling
+// ============================================================
+const WORKER_URL = '';  // Set to your Cloudflare Worker URL
+let ws = null;
+let pollInterval = null;
+
+function connectWS() {
+    if (!WORKER_URL) {
+        addLog('No worker URL configured. Using demo mode.', 'info');
+        return;
+    }
+
+    const wsUrl = WORKER_URL.replace('https://', 'wss://').replace('http://', 'ws://') + '/ws';
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        setConnection(true);
+        addLog('Connected to training server', 'success');
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleUpdate(data);
+    };
+
+    ws.onclose = () => {
+        setConnection(false);
+        addLog('Disconnected. Reconnecting in 5s...', 'error');
+        setTimeout(connectWS, 5000);
+    };
+
+    ws.onerror = () => {
+        setConnection(false);
+    };
+}
+
+function startPolling() {
+    if (!WORKER_URL) return;
+    pollInterval = setInterval(async () => {
+        try {
+            const resp = await fetch(WORKER_URL + '/api/status');
+            const data = await resp.json();
+            handleUpdate(data);
+            setConnection(true);
+        } catch {
+            setConnection(false);
+        }
+    }, 5000);
+}
+
+// ============================================================
+// Update Handlers
+// ============================================================
+function handleUpdate(data) {
+    switch (data.event) {
+        case 'train_start':
+            onTrainStart(data);
+            break;
+        case 'epoch_end':
+            onEpochEnd(data);
+            break;
+        case 'train_end':
+            onTrainEnd(data);
+            break;
+        case 'error':
+            onError(data);
+            break;
+        case 'status':
+            onStatusUpdate(data);
+            break;
+    }
+}
+
+function onTrainStart(data) {
+    state.status = 'training';
+    state.currentExperiment = data.experiment;
+    state.experiments[data.experiment] = {
+        model_type: data.model_type,
+        total_epochs: data.total_epochs,
+        config: data.config || {},
+        status: 'training',
+        startTime: new Date(),
+    };
+    state.lossData[data.experiment] = [];
+    state.mapData[data.experiment] = [];
+
+    setStatus('training', `Training ${data.experiment}`);
+    document.getElementById('current-model').textContent = data.model_type.toUpperCase();
+    document.getElementById('current-experiment').textContent = data.experiment;
+    addLog(`Started: ${data.experiment} (${data.model_type})`, 'info');
+    updateExperimentsTable();
+}
+
+function onEpochEnd(data) {
+    const exp = data.experiment;
+    const metrics = data.metrics || {};
+
+    // Store loss
+    const loss = metrics.train_loss || metrics.box_loss || metrics.loss || 0;
+    if (!state.lossData[exp]) state.lossData[exp] = [];
+    state.lossData[exp].push({ epoch: data.epoch, value: loss });
+
+    // Store mAP
+    const map50 = metrics['metrics/mAP50(B)'] || metrics.mAP50 || metrics.map50 || 0;
+    if (!state.mapData[exp]) state.mapData[exp] = [];
+    state.mapData[exp].push({ epoch: data.epoch, value: map50 });
+
+    // Track best
+    if (map50 > state.bestMap.value) {
+        state.bestMap = { value: map50, model: exp };
+    }
+
+    // Update UI
+    document.getElementById('current-epoch').textContent = `${data.epoch}/${data.total_epochs}`;
+    document.getElementById('epoch-progress').textContent = `${data.progress_pct}%`;
+    document.getElementById('progress-bar').style.width = `${data.progress_pct}%`;
+    document.getElementById('progress-pct').textContent = `${data.progress_pct}%`;
+    document.getElementById('best-map').textContent = state.bestMap.value.toFixed(4);
+    document.getElementById('best-map-model').textContent = state.bestMap.model;
+
+    // Time
+    const elapsed = data.elapsed_sec || 0;
+    const eta = data.eta_sec || 0;
+    document.getElementById('elapsed-time').textContent = formatTime(elapsed);
+    document.getElementById('eta-time').textContent = `ETA: ${formatTime(eta)}`;
+
+    document.getElementById('progress-phase').textContent = `${exp} - Epoch ${data.epoch}/${data.total_epochs}`;
+
+    // Update experiments info
+    if (state.experiments[exp]) {
+        state.experiments[exp].currentEpoch = data.epoch;
+        state.experiments[exp].lastMetrics = metrics;
+        state.experiments[exp].map50 = map50;
+    }
+
+    updateCharts();
+    updateExperimentsTable();
+}
+
+function onTrainEnd(data) {
+    const exp = data.experiment;
+    if (state.experiments[exp]) {
+        state.experiments[exp].status = 'complete';
+        state.experiments[exp].finalMetrics = data.final_metrics || {};
+        state.experiments[exp].totalTime = data.total_time_min;
+    }
+
+    addLog(`Completed: ${exp} in ${data.total_time_min}min`, 'success');
+    updateExperimentsTable();
+    updateComparisonChart();
+
+    // Check if all done
+    const total = Object.keys(state.experiments).length;
+    const done = Object.values(state.experiments).filter(e => e.status === 'complete').length;
+    document.getElementById('experiments-count').textContent = `${done}/${total}`;
+
+    if (done === total) {
+        setStatus('complete', 'All experiments complete');
+    }
+}
+
+function onError(data) {
+    state.status = 'error';
+    if (state.experiments[data.experiment]) {
+        state.experiments[data.experiment].status = 'error';
+        state.experiments[data.experiment].error = data.error;
+    }
+    setStatus('error', data.error);
+    addLog(`Error: ${data.experiment} - ${data.error}`, 'error');
+    updateExperimentsTable();
+}
+
+function onStatusUpdate(data) {
+    if (data.experiments) {
+        for (const [name, exp] of Object.entries(data.experiments)) {
+            state.experiments[name] = { ...state.experiments[name], ...exp };
+        }
+    }
+    if (data.lossData) state.lossData = { ...state.lossData, ...data.lossData };
+    if (data.mapData) state.mapData = { ...state.mapData, ...data.mapData };
+    updateCharts();
+    updateExperimentsTable();
+    updateComparisonChart();
+}
+
+// ============================================================
+// Chart Updates
+// ============================================================
+function updateCharts() {
+    // Loss chart
+    const lossDatasets = [];
+    let maxEpochs = 0;
+
+    Object.entries(state.lossData).forEach(([name, data], idx) => {
+        if (data.length === 0) return;
+        maxEpochs = Math.max(maxEpochs, data.length);
+        lossDatasets.push({
+            label: name,
+            data: data.map(d => d.value),
+            borderColor: colors[idx % colors.length],
+            backgroundColor: colors[idx % colors.length] + '20',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.3,
+            fill: true,
+        });
+    });
+
+    lossChart.data.labels = Array.from({ length: maxEpochs }, (_, i) => i + 1);
+    lossChart.data.datasets = lossDatasets;
+    lossChart.update('none');
+
+    // mAP chart
+    const mapDatasets = [];
+    maxEpochs = 0;
+
+    Object.entries(state.mapData).forEach(([name, data], idx) => {
+        if (data.length === 0) return;
+        maxEpochs = Math.max(maxEpochs, data.length);
+        mapDatasets.push({
+            label: name,
+            data: data.map(d => d.value),
+            borderColor: colors[idx % colors.length],
+            backgroundColor: colors[idx % colors.length] + '20',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.3,
+            fill: true,
+        });
+    });
+
+    mapChart.data.labels = Array.from({ length: maxEpochs }, (_, i) => i + 1);
+    mapChart.data.datasets = mapDatasets;
+    mapChart.update('none');
+}
+
+function updateComparisonChart() {
+    const completed = Object.entries(state.experiments)
+        .filter(([, e]) => e.status === 'complete' && e.map50 !== undefined)
+        .sort((a, b) => (b[1].map50 || 0) - (a[1].map50 || 0));
+
+    if (completed.length === 0) return;
+
+    comparisonChart.data.labels = completed.map(([name]) => name);
+    comparisonChart.data.datasets = [{
+        label: 'mAP50',
+        data: completed.map(([, e]) => e.map50 || 0),
+        backgroundColor: completed.map(([, e], i) =>
+            e.model_type === 'yolo' ? '#3b82f680' : '#8b5cf680'
+        ),
+        borderColor: completed.map(([, e]) =>
+            e.model_type === 'yolo' ? '#3b82f6' : '#8b5cf6'
+        ),
+        borderWidth: 1,
+    }];
+    comparisonChart.update('none');
+}
+
+// ============================================================
+// Experiments Table
+// ============================================================
+function updateExperimentsTable() {
+    const tbody = document.getElementById('experiments-table');
+    const entries = Object.entries(state.experiments);
+
+    if (entries.length === 0) return;
+
+    tbody.innerHTML = entries.map(([name, exp]) => {
+        const config = exp.config || {};
+        const metrics = exp.lastMetrics || exp.finalMetrics || {};
+        const modelType = exp.model_type || 'unknown';
+
+        const statusIcon = exp.status === 'complete' ? '&#10003;' :
+                          exp.status === 'error' ? '&#10007;' :
+                          exp.status === 'training' ? '&#9679;' : '&#8987;';
+        const statusColor = exp.status === 'complete' ? 'var(--accent-green)' :
+                           exp.status === 'error' ? 'var(--accent-red)' :
+                           exp.status === 'training' ? 'var(--accent-blue)' : 'var(--text-muted)';
+
+        const badgeClass = modelType === 'yolo' ? 'yolo' : 'rfdetr';
+        const map50 = exp.map50 || metrics.mAP50 || metrics['metrics/mAP50(B)'] || '--';
+        const map5095 = metrics['metrics/mAP50-95(B)'] || metrics.mAP5095 || '--';
+        const loss = metrics.train_loss || metrics.box_loss || '--';
+        const totalTime = exp.totalTime ? `${exp.totalTime}m` : (exp.currentEpoch ? '...' : '--');
+        const epochStr = exp.currentEpoch ? `${exp.currentEpoch}/${exp.total_epochs}` :
+                        exp.total_epochs ? `0/${exp.total_epochs}` : '--';
+
+        return `<tr>
+            <td><strong>${name}</strong></td>
+            <td><span class="model-badge ${badgeClass}">${modelType.toUpperCase()}</span></td>
+            <td style="color:${statusColor}">${statusIcon} ${exp.status}</td>
+            <td>${epochStr}</td>
+            <td>${config.batch_size || config.batch || '--'}</td>
+            <td>${config.lr || config.lr0 || '--'}</td>
+            <td class="${getMetricClass(map50, 0.5, 0.3)}">${typeof map50 === 'number' ? map50.toFixed(4) : map50}</td>
+            <td>${typeof map5095 === 'number' ? map5095.toFixed(4) : map5095}</td>
+            <td>${typeof loss === 'number' ? loss.toFixed(4) : loss}</td>
+            <td>${totalTime}</td>
+        </tr>`;
+    }).join('');
+
+    // Update count
+    const total = entries.length;
+    const done = entries.filter(([, e]) => e.status === 'complete').length;
+    document.getElementById('experiments-count').textContent = `${done}/${total}`;
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function setStatus(status, text) {
+    const badge = document.getElementById('status-badge');
+    badge.className = `status-badge ${status}`;
+    document.getElementById('status-text').textContent = text;
+}
+
+function setConnection(connected) {
+    const el = document.getElementById('connection');
+    el.className = `connection ${connected ? 'connected' : 'disconnected'}`;
+    document.getElementById('conn-text').textContent = connected ? 'Online' : 'Offline';
+}
+
+function addLog(message, type = '') {
+    const entries = document.getElementById('log-entries');
+    const now = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `<span class="timestamp">[${now}]</span> ${message}`;
+    entries.appendChild(entry);
+    entries.scrollTop = entries.scrollHeight;
+
+    // Keep only last 100 entries
+    while (entries.children.length > 100) {
+        entries.removeChild(entries.firstChild);
+    }
+}
+
+function formatTime(seconds) {
+    if (!seconds || seconds <= 0) return '--';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+}
+
+function getMetricClass(value, good, ok) {
+    if (typeof value !== 'number') return '';
+    if (value >= good) return 'metric-good';
+    if (value >= ok) return 'metric-ok';
+    return 'metric-bad';
+}
+
+// ============================================================
+// Init
+// ============================================================
+if (WORKER_URL) {
+    connectWS();
+    startPolling();
+} else {
+    addLog('Dashboard running in standalone mode. Configure WORKER_URL to connect.', 'info');
+    setConnection(false);
+}
+</script>
+
+</body>
+</html>

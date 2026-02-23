@@ -1,0 +1,48 @@
+# ============================================================
+# YOLO Ball Detection - Training Configuration
+# ============================================================
+# Optimized for Vertex AI Custom Spot Jobs with L4/T4 GPUs.
+# Dataset downloaded from GCS to local SSD for fast I/O.
+
+seed: 42
+
+# Dataset
+dataset:
+  # Compressed tar (1 file download, MUCH faster than 42K individual files)
+  tar_path: "gs://vm-football-data/reorganized_dataset.tar.gz"
+  # Fallback: raw GCS path (slow, only if tar doesn't exist)
+  gcs_path: "gs://vm-football-data/reorganized_dataset"
+  # Local path after extraction (fast NVMe/SSD)
+  local_path: "/workspace/dataset/reorganized_dataset"
+
+# Output
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/yolo_ball_experiments"
+
+# YOLO Experiments - Ball Detection Only (class 5)
+yolo:
+  experiments:
+    exp1_nano_640:
+      description: "YOLO11n Nano - 640px baseline"
+      model: "yolo11n.pt"
+      epochs: 50
+      batch_size: 32
+      imgsz: 640
+      patience: 15
+
+    exp2_nano_1280:
+      description: "YOLO11n Nano - 1280px high resolution"
+      model: "yolo11n.pt"
+      epochs: 50
+      batch_size: 16
+      imgsz: 1280
+      patience: 15
+
+    exp3_small_640:
+      description: "YOLO11s Small - 640px more capacity"
+      model: "yolo11s.pt"
+      epochs: 50
+      batch_size: 32
+      imgsz: 640
+      patience: 15
