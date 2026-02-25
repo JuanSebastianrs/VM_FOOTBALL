@@ -1,16 +1,15 @@
 # rfdetr_detector.py
 """
-Detector basado en RF-DETR (Real-Time DETR de Roboflow).
-Detector basado en transformadores, estado del arte.
+Detector de fútbol basado en RF-DETR (Real-Time DETR de Roboflow).
+Entrenado para detección de jugadores (1 clase unificada: player).
+
+RF-DETR maneja preprocesamiento y postprocesamiento internamente
+a través de model.predict(), sin necesidad de NMS.
 """
 
 from pathlib import Path
 from typing import List, Optional, Union
 import numpy as np
-
-# TODO: Descomentar cuando se instale RF-DETR
-# from rfdetr import RFDETR
-# import torch
 
 from .detector import FootballDetector, Detection
 
@@ -18,131 +17,110 @@ from .detector import FootballDetector, Detection
 class RFDETRDetector(FootballDetector):
     """
     Detector de fútbol usando RF-DETR.
-    
+
     RF-DETR es un detector basado en transformadores desarrollado por Roboflow.
     Ventajas sobre YOLO:
-        - Mejor rendimiento en objetos pequeños (balón)
+        - Mejor rendimiento en objetos pequeños
         - Sin necesidad de NMS (Hungarian matching)
         - Mejor transferencia a nuevos dominios
-    
-    Instalación:
-        pip install rfdetr
-        
+
+    El modelo se entrena con 1 clase unificada ("player") que incluye
+    player_left, player_right, goalkeeper_left, goalkeeper_right.
+
     Uso:
-        detector = RFDETRDetector("models/rfdetr_football.pt")
+        detector = RFDETRDetector("models/rfdetr_player.pth")
         detector.load_model()
         detections = detector.detect(image)
-    
-    Referencia:
-        https://github.com/roboflow/rf-detr
     """
-    
+
+    # RF-DETR class names (trained with 1 unified class)
+    RFDETR_CLASSES = ["player"]
+
     def __init__(
         self,
         weights_path: Union[str, Path],
         device: str = "cuda:0",
-        imgsz: int = 640,
+        resolution: int = 480,
     ):
         """
         Args:
-            weights_path: Ruta a pesos .pt de RF-DETR
+            weights_path: Ruta a pesos .pth de RF-DETR
             device: Dispositivo de inferencia
-            imgsz: Tamaño de imagen
+            resolution: Resolución de entrada (debe coincidir con entrenamiento)
         """
         super().__init__(weights_path, device)
-        self.imgsz = imgsz
-        
+        self.resolution = resolution
+
     def load_model(self) -> None:
-        """
-        Cargar modelo RF-DETR.
-        
-        TODO:
-            - Inicializar modelo RF-DETR
-            - Cargar pesos entrenados
-            - Mover a dispositivo
-        """
-        # TODO: Implementar
-        # self.model = RFDETR.from_pretrained(str(self.weights_path))
-        # self.model.to(self.device)
-        raise NotImplementedError("TODO: Cargar modelo RF-DETR")
-    
+        """Cargar modelo RF-DETR con pesos entrenados."""
+        try:
+            from rfdetr import RFDETRBase
+        except ImportError:
+            raise ImportError(
+                "rfdetr no está instalado. Instalar con: pip install rfdetr>=1.4.0"
+            )
+
+        self.model = RFDETRBase(
+            pretrain_weights=str(self.weights_path),
+            resolution=self.resolution,
+        )
+        print(f"[RF-DETR] Modelo cargado: {self.weights_path}")
+        print(f"[RF-DETR] Resolución: {self.resolution}px, Clases: {self.RFDETR_CLASSES}")
+
     def detect(
         self,
         image: np.ndarray,
         conf_threshold: float = 0.25,
-        iou_threshold: float = 0.45,  # No se usa en DETR, pero se mantiene por interfaz
+        iou_threshold: float = 0.45,  # No se usa en DETR, se mantiene por interfaz
     ) -> List[Detection]:
         """
-        Detectar objetos con RF-DETR.
-        
-        Nota: RF-DETR no requiere NMS ya que usa Hungarian matching.
+        Detectar jugadores con RF-DETR.
+
+        RF-DETR no requiere NMS (usa Hungarian matching).
         El parámetro iou_threshold se ignora pero se mantiene por compatibilidad.
-        
-        TODO:
-            - Preprocesar imagen
-            - Ejecutar inferencia
-            - Postprocesar y filtrar por confianza
-            - Convertir a List[Detection]
+
+        Args:
+            image: Imagen BGR (numpy array)
+            conf_threshold: Umbral de confianza mínimo
+            iou_threshold: Ignorado (DETR no usa NMS)
+
+        Returns:
+            Lista de detecciones de jugadores
         """
-        # TODO: Implementar
-        raise NotImplementedError("TODO: Implementar detección RF-DETR")
-    
+        if self.model is None:
+            raise RuntimeError("Modelo no cargado. Llamar load_model() primero.")
+
+        from PIL import Image
+        import cv2
+
+        # RF-DETR espera PIL Image en RGB
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        pil_img = Image.fromarray(rgb)
+
+        # Inferencia — devuelve supervision.Detections
+        sv_detections = self.model.predict(pil_img, threshold=conf_threshold)
+
+        # Convertir a List[Detection]
+        detections = []
+        for i in range(len(sv_detections)):
+            # RF-DETR trained class_id 0 = "player" (unified)
+            rfdetr_class_id = int(sv_detections.class_id[i])
+            class_name = self.RFDETR_CLASSES[rfdetr_class_id] if rfdetr_class_id < len(self.RFDETR_CLASSES) else "unknown"
+
+            detections.append(Detection(
+                bbox=sv_detections.xyxy[i],     # [x1, y1, x2, y2]
+                class_id=rfdetr_class_id,
+                class_name=class_name,
+                confidence=float(sv_detections.confidence[i]),
+            ))
+
+        return detections
+
     def detect_batch(
         self,
         images: List[np.ndarray],
         conf_threshold: float = 0.25,
         iou_threshold: float = 0.45,
     ) -> List[List[Detection]]:
-        """Detectar en batch de imágenes."""
-        # TODO: Implementar
-        raise NotImplementedError("TODO: Implementar batch detection RF-DETR")
-    
-    def _preprocess(self, image: np.ndarray) -> "torch.Tensor":
-        """
-        Preprocesar imagen para RF-DETR.
-        
-        TODO:
-            - Redimensionar a imgsz
-            - Normalizar (ImageNet mean/std)
-            - BGR a RGB
-            - HWC a CHW
-            - Convertir a tensor
-        """
-        # TODO: Implementar
-        raise NotImplementedError("TODO: Preprocesamiento RF-DETR")
-    
-    def _postprocess(self, outputs, conf_threshold: float) -> List[Detection]:
-        """
-        Postprocesar salidas de RF-DETR.
-        
-        TODO:
-            - Extraer predicciones de bboxes y clases
-            - Filtrar por confianza
-            - Convertir coordenadas normalizadas a píxeles
-            - Crear objetos Detection
-        """
-        # TODO: Implementar
-        raise NotImplementedError("TODO: Postprocesamiento RF-DETR")
-
-
-# Notas de entrenamiento RF-DETR:
-# 
-# Para entrenar RF-DETR con el dataset SoccerNet:
-# 
-# 1. Convertir dataset a formato COCO:
-#    - Estructura: images/, annotations.json
-#    - Formato: {"images": [...], "annotations": [...], "categories": [...]}
-# 
-# 2. Entrenar:
-#    from rfdetr import RFDETR
-#    model = RFDETR(num_classes=6)
-#    model.train(
-#        train_annots="path/to/train.json",
-#        val_annots="path/to/val.json", 
-#        epochs=50,
-#        batch_size=8,
-#        lr=1e-4
-#    )
-# 
-# 3. Guardar:
-#    model.save("models/rfdetr_football.pt")
+        """Detectar en batch de imágenes (secuencial, RF-DETR no soporta batch nativo)."""
+        return [self.detect(img, conf_threshold, iou_threshold) for img in images]
