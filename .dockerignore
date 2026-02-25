@@ -1,0 +1,18 @@
+# Exclude large files from Docker build context
+datasets/
+*.pt
+*.pth
+*.onnx
+__pycache__/
+.git/
+.gitignore
+node_modules/
+dashboard/
+*.mp4
+*.avi
+*.mov
+*.png
+*.jpg
+*.jpeg
+.env
+*.log

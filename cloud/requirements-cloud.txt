@@ -1,0 +1,39 @@
+# VM_FOOTBALL Cloud Training - Dependencies
+# Base: us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-2.py310:latest
+
+# === Critical System Libs (Install First) ===
+# Use headless OpenCV to avoid libGL errors in cloud
+opencv-python-headless>=4.8.0
+
+# === Detection Frameworks ===
+ultralytics>=8.1.0
+rfdetr>=1.4.0
+roboflow>=1.0.0
+supervision>=0.25.0
+
+# === Core ML ===
+# Note: torch & torchvision are pre-installed. DO NOT reinstall to avoid CUDA mismatch.
+transformers>=4.30.0
+timm>=0.9.0
+pydantic>=2.5.0  # Force V2 for field_validator support
+accelerate>=0.27.0
+
+# === ML Utils ===
+# Constrain numpy to <2 to avoid ABI issues with PyTorch 2.1
+# But DO NOT force a specific version (let env decide)
+numpy>=1.23.0,<2.0.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# === Data ===
+pandas>=2.0.0
+pillow>=10.0.0
+
+# === Cloud & Monitoring ===
+google-cloud-storage>=2.14.0
+gdown>=5.1.0
+requests>=2.31.0
+tqdm>=4.65.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+tensorboard>=2.14.0

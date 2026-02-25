@@ -1,0 +1,142 @@
+# ============================================================
+# VM_FOOTBALL - Pipeline Configuration
+# ============================================================
+# Central config for all training jobs and cloud resources
+
+# GCP Project
+gcp:
+  project_id: "project-ad19fdc6-8493-43e5-b82"
+  region: "us-central1"
+  zone: "us-central1-a"
+  bucket_name: "vm-football-data"
+  models_bucket: "vm-football-models"
+
+# VM Configuration (legacy, kept for reference)
+vm:
+  name: "vm-football-training"
+  machine_type: "n1-standard-8"
+  gpu_type: "nvidia-tesla-t4"
+  gpu_count: 1
+  disk_size_gb: 200
+
+# Vertex AI Configuration
+vertex_ai:
+  machine_type: "n1-standard-8"
+  accelerator_type: "NVIDIA_TESLA_T4"
+  accelerator_count: 1
+  image_uri: "us-central1-docker.pkg.dev/project-ad19fdc6-8493-43e5-b82/vm-football/training:latest"
+
+# Dataset
+dataset:
+  gcs_path: "gs://vm-football-data/reorganized_dataset/"
+  local_path: "/workspace/datasets/reorganized_dataset"
+  kaggle_id: "2cb9de2c0e5e970ee54404d3fd55c2ffcb45cc689bc3b6030fecf53d82200d01"
+  # Class mapping for unified detection
+  classes:
+    original: ["player_left", "player_right", "goalkeeper_left", "goalkeeper_right", "referee", "ball"]
+    unified_detection: ["player", "goalkeeper"]
+    unified_mapping:
+      0: 0   # player_left -> player
+      1: 0   # player_right -> player
+      2: 1   # goalkeeper_left -> goalkeeper
+      3: 1   # goalkeeper_right -> goalkeeper
+      4: -1  # referee -> IGNORE
+      5: -1  # ball -> IGNORE
+
+# Training: YOLO v11
+yolo:
+  enabled: true
+  experiments:
+    yolo_n_baseline:
+      description: "YOLO v11 Nano - baseline rapido"
+      model: "yolo11n.pt"
+      epochs: 100
+      batch_size: 16
+      imgsz: 640
+      lr0: 0.01
+      lrf: 0.01
+      optimizer: "AdamW"
+      augment: true
+      patience: 20
+      
+    yolo_s_improved:
+      description: "YOLO v11 Small - mas capacidad"
+      model: "yolo11s.pt"
+      epochs: 100
+      batch_size: 16
+      imgsz: 640
+      lr0: 0.01
+      lrf: 0.01
+      optimizer: "AdamW"
+      augment: true
+      patience: 20
+
+    yolo_m_full:
+      description: "YOLO v11 Medium - maximo rendimiento"
+      model: "yolo11m.pt"
+      epochs: 150
+      batch_size: 8
+      imgsz: 640
+      lr0: 0.005
+      lrf: 0.01
+      optimizer: "AdamW"
+      augment: true
+      patience: 30
+
+# Training: RF-DETR
+rfdetr:
+  enabled: true
+  coco_dir: "/workspace/dataset_coco"
+  experiments:
+    rfdetr_base_optimized:
+      description: "RF-DETR Base - T4 Optimized (FP16, 480px, 60ep)"
+      model_class: "RFDETRBase"
+      epochs: 60                     # Converges by ~40-50 on COCO-like
+      batch_size: 4
+      grad_accum_steps: 8            # Effective batch = 32
+      lr: 2.0e-4                     # Scaled LR (linear rule: 2x batch -> 2x LR)
+      lr_encoder: 2.0e-5
+      resolution: 480                # 480px: 44% less compute vs 640px, sufficient for football
+      weight_decay: 1.0e-4
+      use_ema: true
+
+    # Uncomment after Base results are validated
+    # rfdetr_large_sota:
+    #   description: "RF-DETR Large - T4 Optimized (FP16, 560px, 60ep)"
+    #   model_class: "RFDETRLarge"
+    #   epochs: 60
+    #   batch_size: 2
+    #   grad_accum_steps: 8          # Effective batch = 16
+    #   lr: 5.0e-5
+    #   lr_encoder: 5.0e-6
+    #   resolution: 560              # 560px: 41% less compute vs 728px
+    #   weight_decay: 1.0e-4
+    #   use_ema: true
+
+# Output paths
+output:
+  base_dir: "/workspace/outputs"
+  models_dir: "/workspace/outputs/models"
+  logs_dir: "/workspace/outputs/logs"
+  metrics_dir: "/workspace/outputs/metrics"
+
+# Google Drive sync
+drive:
+  folder_name: "VM_FOOTBALL_Models"
+  sync_after_each_model: true
+  sync_formats: [".pt", ".pth", ".json", ".csv", ".png"]
+
+# Monitoring Dashboard (Cloudflare)
+dashboard:
+  enabled: true
+  worker_url: ""    # Set after deploying Cloudflare Worker
+  api_key: ""       # Set in .env file
+  update_interval: "epoch"   # Send update every epoch
+
+# Trazabilidad - 3 formas de monitorear:
+# 1. GCP Console: https://console.cloud.google.com/vertex-ai/training/custom-jobs
+# 2. CLI: gcloud ai custom-jobs stream-logs <JOB_ID> --region=us-central1
+# 3. Dashboard Cloudflare: abrir dashboard/index.html (si worker_url esta configurado)
+
+# Seed for reproducibility
+seed: 42

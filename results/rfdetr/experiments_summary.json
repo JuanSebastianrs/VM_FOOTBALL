@@ -1,0 +1,14 @@
+{
+  "rfdetr_base_conservative": {
+    "status": "error",
+    "error": "cannot import name 'field_validator' from 'pydantic' (/opt/conda/lib/python3.10/site-packages/pydantic/__init__.cpython-310-x86_64-linux-gnu.so)"
+  },
+  "rfdetr_base_longer": {
+    "status": "error",
+    "error": "cannot import name 'field_validator' from 'pydantic' (/opt/conda/lib/python3.10/site-packages/pydantic/__init__.cpython-310-x86_64-linux-gnu.so)"
+  },
+  "rfdetr_large": {
+    "status": "error",
+    "error": "cannot import name 'field_validator' from 'pydantic' (/opt/conda/lib/python3.10/site-packages/pydantic/__init__.cpython-310-x86_64-linux-gnu.so)"
+  }
+}

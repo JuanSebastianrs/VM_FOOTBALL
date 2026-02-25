@@ -1,0 +1,42 @@
+Crash at: Mon Feb 23 22:26:03 UTC 2026
+Exit code: 0
+Last command: python3 -u train_yolo_ball.py
+
+GPU info:
+Mon Feb 23 22:26:03 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.274.02             Driver Version: 535.274.02   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  Tesla T4                       Off | 00000000:00:04.0 Off |                    0 |
+| N/A   42C    P8              16W /  70W |      2MiB / 15360MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+
+Disk usage:
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         292G   37G  255G  13% /
+tmpfs            64M     0   64M   0% /dev
+_               1.0P     0  1.0P   0% /gcs
+/dev/sda1       292G   37G  255G  13% /etc/hosts
+tmpfs            26G     0   26G   0% /dev/shm
+tmpfs            26G   12K   26G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs            15G     0   15G   0% /proc/acpi
+tmpfs            15G     0   15G   0% /proc/scsi
+tmpfs            15G     0   15G   0% /sys/firmware
+
+Memory:
+               total        used        free      shared  buff/cache   available
+Mem:            29Gi       2.1Gi       391Mi        46Mi        26Gi        26Gi
+Swap:             0B          0B          0B

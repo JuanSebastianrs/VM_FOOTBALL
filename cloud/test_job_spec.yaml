@@ -1,0 +1,22 @@
+﻿workerPoolSpecs:
+  - machineSpec:
+      machineType: g2-standard-8
+      acceleratorType: NVIDIA_L4
+      acceleratorCount: 1
+    replicaCount: 1
+    diskSpec:
+      bootDiskType: pd-ssd
+      bootDiskSizeGb: 300
+    containerSpec:
+      imageUri: us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-2.py310:latest
+      command:
+        - bash
+        - -c
+        - |
+          gcloud storage cp gs://vm-football-data/code/ball_detection/startup.sh /tmp/startup.sh
+          chmod +x /tmp/startup.sh
+          bash /tmp/startup.sh
+scheduling:
+  timeout: 172800s
+  strategy: SPOT
+  restartJobOnWorkerRestart: true
