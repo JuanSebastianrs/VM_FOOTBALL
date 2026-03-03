@@ -281,7 +281,8 @@ Write-Host ""
 Write-Host "[4/5] Submitting Job to Vertex AI..." -ForegroundColor Yellow
 
 # Generate YAML job spec
-# STANDARD strategy: On-demand pricing, guaranteed no preemptions
+# SPOT strategy: 60-91% cheaper, auto-restarts on preemption
+# restartJobOnWorkerRestart: true + resume logic in train_cloud.py
 $jobSpecYaml = @"
 workerPoolSpecs:
   - machineSpec:
@@ -303,7 +304,8 @@ workerPoolSpecs:
           bash /tmp/startup.sh
 scheduling:
   timeout: 172800s
-  strategy: STANDARD
+  strategy: SPOT
+  restartJobOnWorkerRestart: true
 "@
 
 $yamlPath = [System.IO.Path]::Combine($env:TEMP, "rfdetr_job_spec.yaml")
@@ -331,8 +333,8 @@ if ([string]::IsNullOrWhiteSpace($JOB_ID)) {
 }
 
 Remove-Item $yamlPath -ErrorAction SilentlyContinue
-Write-Host "   [OK] Job Submitted! ID: $JOB_ID" -ForegroundColor Green
-Write-Host "   [INFO] STANDARD Strategy: Dedicated GPU for uninterrupted training" -ForegroundColor DarkGray
+Write-Host "   [OK] Spot Job Submitted! ID: $JOB_ID" -ForegroundColor Green
+Write-Host "   [INFO] Spot: if preempted, will auto-restart and resume from checkpoint" -ForegroundColor DarkGray
 
 # --- Step 5: Streaming Logs ---
 Write-Host ""
