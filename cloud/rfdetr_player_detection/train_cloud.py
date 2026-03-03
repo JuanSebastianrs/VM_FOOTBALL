@@ -704,7 +704,7 @@ def train_single_experiment(
             use_ema=exp_config.get("use_ema", True),
             amp=use_amp,
             output_dir=str(exp_dir),
-            device="cuda:0",
+            device="cuda",
             num_workers=num_workers,
             persistent_workers=True,
         )
