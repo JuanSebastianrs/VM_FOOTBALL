@@ -6,24 +6,24 @@
 # Supports auto-resume on Spot preemption.
 #
 # Usage:
-#   .\cloud\submit_rfdetr_job.ps1                 # L4 GPU (default)
-#   .\cloud\submit_rfdetr_job.ps1 -GPU T4         # T4 GPU (cheaper)
+#   .\cloud\submit_rfdetr_job.ps1                 # T4 GPU (default)
+#   .\cloud\submit_rfdetr_job.ps1 -GPU L4         # L4 GPU (if available)
 #   .\cloud\submit_rfdetr_job.ps1 -SmokeTest      # 1 epoch validation
 #   .\cloud\submit_rfdetr_job.ps1 -DryRun         # Config check only
 # ============================================================
 
 param(
     [ValidateSet("L4", "T4")]
-    [string]$GPU = "L4",
+    [string]$GPU = "T4",
     [switch]$DryRun,
     [switch]$SmokeTest
 )
 
-$PROJECT_ID    = "project-ad19fdc6-8493-43e5-b82"
-$REGION        = "us-central1"
-$DATA_BUCKET   = "vm-football-data"
-$TIMESTAMP     = Get-Date -Format "yyyyMMdd-HHmmss"
-$JOB_NAME      = "rfdetr-player-$($GPU.ToLower())-$TIMESTAMP"
+$PROJECT_ID = "vm-football-489116"
+$REGION = "us-central1"
+$DATA_BUCKET = "vm-football-data"
+$TIMESTAMP = Get-Date -Format "yyyyMMdd-HHmmss"
+$JOB_NAME = "rfdetr-player-$($GPU.ToLower())-$TIMESTAMP"
 
 # Pre-built PyTorch 2.2 container (CUDA 12.1, Python 3.10)
 $CONTAINER_URI = "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-2.py310:latest"
@@ -32,7 +32,8 @@ $CONTAINER_URI = "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-2.py310:lat
 if ($GPU -eq "L4") {
     $ACCELERATOR_TYPE = "NVIDIA_L4"
     $MACHINE_TYPE = "g2-standard-8"
-} else {
+}
+else {
     $ACCELERATOR_TYPE = "NVIDIA_TESLA_T4"
     $MACHINE_TYPE = "n1-standard-8"
 }
@@ -262,7 +263,8 @@ print('[SMOKE] Config overridden: 1 epoch, batch 2, grad_accum 1')
 "
 '@
     $startupScript = $startupScript.Replace("PLACEHOLDER_SMOKE_OVERRIDE", $smokeBlock)
-} else {
+}
+else {
     $startupScript = $startupScript.Replace("PLACEHOLDER_SMOKE_OVERRIDE", "# No smoke test override")
 }
 
@@ -319,7 +321,8 @@ try {
         --config=$yamlPath `
         --format="value(name)"
     $JOB_ID = $submitOutput -replace "projects/.*/customJobs/", ""
-} catch {
+}
+catch {
     Write-Host "   [ERROR] Submission Failed:" -ForegroundColor Red
     Write-Host $_.Exception.Message
     exit 1
@@ -344,7 +347,8 @@ Write-Host "Streaming logs... (Ctrl+C to stop, job continues)" -ForegroundColor 
 Start-Sleep -Seconds 10
 try {
     gcloud ai custom-jobs stream-logs $JOB_ID --region=$REGION
-} catch {
+}
+catch {
     Write-Host "`n   [INFO] Log streaming interrupted." -ForegroundColor Yellow
 }
 
@@ -374,7 +378,8 @@ if ($status -eq "JOB_STATE_SUCCEEDED") {
     Write-Host ""
     Write-Host "   [OK] Results saved to: $localResults" -ForegroundColor Green
     Write-Host "   Contains: weights (.pth), training history, plots"
-} else {
+}
+else {
     Write-Host "   [ERROR] Job finished with status: $status" -ForegroundColor Red
     Write-Host "   Check logs: gcloud ai custom-jobs stream-logs $JOB_ID --region=$REGION"
 
