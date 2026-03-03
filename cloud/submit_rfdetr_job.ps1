@@ -282,8 +282,7 @@ Write-Host ""
 Write-Host "[4/5] Submitting Spot Job to Vertex AI..." -ForegroundColor Yellow
 
 # Generate YAML job spec
-# SPOT strategy: 60-91% cheaper, auto-restarts on preemption
-# restartJobOnWorkerRestart: true + resume logic in train_cloud.py
+# STANDARD strategy: On-demand pricing, guaranteed no preemptions
 $jobSpecYaml = @"
 workerPoolSpecs:
   - machineSpec:
@@ -305,8 +304,7 @@ workerPoolSpecs:
           bash /tmp/startup.sh
 scheduling:
   timeout: 172800s
-  strategy: SPOT
-  restartJobOnWorkerRestart: true
+  strategy: STANDARD
 "@
 
 $yamlPath = [System.IO.Path]::Combine($env:TEMP, "rfdetr_job_spec.yaml")
