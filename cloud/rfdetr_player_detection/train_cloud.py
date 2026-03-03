@@ -125,31 +125,34 @@ COCO_CATEGORIES = [
 ]
 
 # Watchdog: kill process if stuck during TRAINING (not download)
-WATCHDOG_TIMEOUT = 3600  # 60 minutes
-_watchdog_enabled = False
+WATCHDOG_TIMEOUT = 14400  # 4 hours (1 epoch can take 2+ hours)
+_watchdog_timer = None
 
 
-def watchdog_handler(signum, frame):
-    """Called by SIGALRM if training appears stuck."""
-    if _watchdog_enabled:
-        print(f"\n[WATCHDOG] No progress for {WATCHDOG_TIMEOUT}s — killing process")
-        _emergency_upload()
-        sys.exit(1)
+def _watchdog_expired():
+    """Called by the watchdog timer when no progress is detected."""
+    print(f"\n[WATCHDOG] No progress for {WATCHDOG_TIMEOUT}s — killing process")
+    _emergency_upload()
+    os._exit(1)
 
 
 def enable_watchdog():
     """Enable the watchdog timer (call AFTER data download)."""
-    global _watchdog_enabled
-    _watchdog_enabled = True
-    if hasattr(signal, "SIGALRM"):
-        signal.signal(signal.SIGALRM, watchdog_handler)
-        signal.alarm(WATCHDOG_TIMEOUT)
+    global _watchdog_timer
+    _watchdog_timer = threading.Timer(WATCHDOG_TIMEOUT, _watchdog_expired)
+    _watchdog_timer.daemon = True
+    _watchdog_timer.start()
+    print(f"  [WATCHDOG] Enabled: {WATCHDOG_TIMEOUT}s timeout")
 
 
 def reset_watchdog():
     """Reset the watchdog timer. Called periodically during training."""
-    if _watchdog_enabled and hasattr(signal, "SIGALRM"):
-        signal.alarm(WATCHDOG_TIMEOUT)
+    global _watchdog_timer
+    if _watchdog_timer is not None:
+        _watchdog_timer.cancel()
+        _watchdog_timer = threading.Timer(WATCHDOG_TIMEOUT, _watchdog_expired)
+        _watchdog_timer.daemon = True
+        _watchdog_timer.start()
 
 
 def _emergency_upload():
