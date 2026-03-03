@@ -1,9 +1,8 @@
 # ============================================================
 # RF-DETR Player Detection - Vertex AI Spot Job Launcher
 # ============================================================
-# Submits a Custom Spot Job to train RF-DETR for player detection.
+# Submits a Custom Job to train RF-DETR for player detection.
 # Downloads dataset tar from GCS, converts YOLO→COCO, trains RF-DETR.
-# Supports auto-resume on Spot preemption.
 #
 # Usage:
 #   .\cloud\submit_rfdetr_job.ps1                 # T4 GPU (default)
@@ -39,7 +38,7 @@ else {
 }
 
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host " RF-DETR Player Detection - Vertex AI Spot Job" -ForegroundColor Cyan
+Write-Host " RF-DETR Player Detection - Vertex AI Job" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  GPU:       $GPU ($ACCELERATOR_TYPE)"
 Write-Host "  Machine:   $MACHINE_TYPE"
@@ -277,9 +276,9 @@ Remove-Item $scriptPath -ErrorAction SilentlyContinue
 
 Write-Host "   [OK] Job configured (with error trapping and crash upload)" -ForegroundColor Green
 
-# --- Step 4: Submit Spot Job ---
+# --- Step 4: Submit Job ---
 Write-Host ""
-Write-Host "[4/5] Submitting Spot Job to Vertex AI..." -ForegroundColor Yellow
+Write-Host "[4/5] Submitting Job to Vertex AI..." -ForegroundColor Yellow
 
 # Generate YAML job spec
 # STANDARD strategy: On-demand pricing, guaranteed no preemptions
@@ -332,8 +331,8 @@ if ([string]::IsNullOrWhiteSpace($JOB_ID)) {
 }
 
 Remove-Item $yamlPath -ErrorAction SilentlyContinue
-Write-Host "   [OK] Spot Job Submitted! ID: $JOB_ID" -ForegroundColor Green
-Write-Host "   [INFO] Spot: if preempted, will auto-restart and resume from checkpoint" -ForegroundColor DarkGray
+Write-Host "   [OK] Job Submitted! ID: $JOB_ID" -ForegroundColor Green
+Write-Host "   [INFO] STANDARD Strategy: Dedicated GPU for uninterrupted training" -ForegroundColor DarkGray
 
 # --- Step 5: Streaming Logs ---
 Write-Host ""
