@@ -15,6 +15,8 @@ dataset:
   gcs_path: "gs://vm-football-data/reorganized_dataset"
   # Local path after extraction (fast NVMe/SSD)
   local_path: "/workspace/dataset/reorganized_dataset"
+  # Limit validation set size to speed up epoch evaluation (Test-ema)
+  limit_valid_images: 3000
 
 # Class mapping: 6 original → 1 unified
 # 0: player_left     → 0 (player)
