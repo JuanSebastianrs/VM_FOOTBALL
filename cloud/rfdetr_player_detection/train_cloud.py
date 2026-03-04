@@ -163,7 +163,7 @@ def _emergency_upload():
         try:
             print(f"[EMERGENCY] Uploading {output_dir} to {gcs_output}")
             subprocess.run(
-                ["gcloud", "storage", "rsync", "-r", output_dir, gcs_output],
+                ["gcloud", "storage", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
                 capture_output=True, text=True, timeout=120,
             )
             print("[EMERGENCY] Upload complete")
@@ -571,8 +571,8 @@ class GCSSyncThread(threading.Thread):
     def sync(self):
         try:
             subprocess.run(
-                ["gcloud", "storage", "rsync", "-r",
-                 str(self.local_dir), self.gcs_target],
+                ["gcloud", "storage", "cp", "-r",
+                 f"{self.local_dir}/*", f"{self.gcs_target}/"],
                 capture_output=True, text=True, timeout=120,
             )
         except Exception:
@@ -867,7 +867,7 @@ def main():
     if gcs_output:
         print(f"Uploading results to {gcs_output}")
         result = subprocess.run(
-            ["gcloud", "storage", "rsync", "-r", str(output_dir), gcs_output],
+            ["gcloud", "storage", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
             capture_output=True, text=True,
         )
         if result.returncode == 0:

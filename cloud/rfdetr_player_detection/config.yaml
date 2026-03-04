@@ -42,14 +42,14 @@ output:
 rfdetr:
   coco_dir: "/workspace/dataset_coco"
   experiments:
-    rfdetr_base_480:
-      description: "RF-DETR Base - T4 optimized (FP16, 480px, 60ep)"
+    rfdetr_base_560:
+      description: "RF-DETR Base - T4 optimized (FP16, 560px, 60ep)"
       model_class: "RFDETRBase"
       epochs: 60
       batch_size: 4
       grad_accum_steps: 8      # Effective batch = 32
       lr: 2.0e-4
       lr_encoder: 2.0e-5
-      resolution: 480           # 480px: 44% less compute vs 640px
+      resolution: 560           # Must be divisible by 56 (DINOv2 backbone)
       weight_decay: 1.0e-4
       use_ema: true

@@ -123,7 +123,7 @@ cleanup_on_error() {
         pip list 2>/dev/null | grep -iE "rfdetr|pydantic|torch|numpy|transformers|accelerate|timm" || true
     } > "$OUTPUT_DIR/CRASH_LOG.txt"
     
-    gcloud storage rsync -r "$OUTPUT_DIR" "$GCS_OUTPUT/" 2>/dev/null || true
+    gcloud storage cp -r "$OUTPUT_DIR/*" "$GCS_OUTPUT/" 2>/dev/null || true
     echo "[OK] Crash artifacts uploaded to $GCS_OUTPUT"
 }
 
