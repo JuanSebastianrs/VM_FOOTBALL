@@ -1,0 +1,32 @@
+seed: 42
+dataset:
+  tar_path: gs://vm-football-data/reorganized_dataset.tar.gz
+  gcs_path: gs://vm-football-data/reorganized_dataset
+  local_path: /workspace/dataset/reorganized_dataset
+  limit_valid_images: 20
+  limit_train_images: 50
+classes:
+  unified:
+  - player
+  mapping:
+    0: 0
+    1: 0
+    2: 0
+    3: 0
+    4: -1
+    5: -1
+output:
+  base_dir: /workspace/runs
+  gcs_path: gs://vm-football-data/models/rfdetr_player
+rfdetr:
+  coco_dir: /workspace/dataset_coco
+  experiments:
+    rfdetr_smoketest:
+      description: Ultra-fast smoke test to verify resumption mechanics
+      model_class: RFDETRBase
+      epochs: 3
+      batch_size: 2
+      grad_accum_steps: 1
+      lr: 0.0002
+      resolution: 448
+      use_ema: true

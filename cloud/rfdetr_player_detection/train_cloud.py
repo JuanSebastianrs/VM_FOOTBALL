@@ -379,6 +379,7 @@ def prepare_coco_dataset(
     dataset_path: Path,
     coco_dir: Path,
     limit_valid_images: int = 0,
+    limit_train_images: int = 0,
     force_conversion: bool = False,
 ) -> Path:
     """Full YOLO→COCO conversion pipeline with GCS caching."""
@@ -437,6 +438,7 @@ def prepare_coco_dataset(
         dataset_path / "images" / "train",
         dataset_path / "labels" / "train",
         coco_dir, "train",
+        max_images=limit_train_images,
     )
 
     # Valid (uses "test" split from YOLO dataset as validation)
@@ -587,6 +589,54 @@ class GCSSyncThread(threading.Thread):
             pass  # Never crash the training
 
 
+def download_latest_checkpoint(gcs_target: str, local_dir: Path) -> str:
+    """Find and download the most recent checkpoint from GCS for resuming."""
+    import re
+    try:
+        print(f"  [RESUME] Checking GCS for previous checkpoints at {gcs_target}...")
+        result = subprocess.run(
+            ["gcloud", "storage", "ls", f"{gcs_target}/checkpoint*.pth"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            return None
+            
+        files = result.stdout.strip().split('\n')
+        checkpoints = []
+        for f in files:
+            name = f.split('/')[-1]
+            match = re.search(r'checkpoint(\d+)\.pth', name)
+            if match:
+                checkpoints.append((int(match.group(1)), f, name))
+                
+        if not checkpoints:
+            return None
+            
+        # Keep highest epoch
+        checkpoints.sort(key=lambda x: x[0], reverse=True)
+        epoch, gcs_path, filename = checkpoints[0]
+        
+        local_path = local_dir / filename
+        if local_path.exists():
+            print(f"  [RESUME] Found {filename} (Epoch {epoch}) already downloaded")
+            return str(local_path)
+            
+        print(f"  [RESUME] Downloading {filename} (Epoch {epoch}) from GCS...")
+        dl_result = subprocess.run(
+            ["gcloud", "storage", "cp", gcs_path, str(local_path)],
+            capture_output=True, text=True, timeout=120
+        )
+        
+        if dl_result.returncode == 0 and local_path.exists():
+            print("  [RESUME] Download complete")
+            return str(local_path)
+            
+    except Exception as e:
+        print(f"  [WARN] Resume check failed: {e}")
+        
+    return None
+
+
 # ============================================================
 # RF-DETR Training
 # ============================================================
@@ -665,11 +715,22 @@ def train_single_experiment(
         # Setup AMP
         use_amp = setup_amp_for_gpu()
 
-        # Start background GCS sync
+        # Start background GCS sync and check for resume
         sync_thread = None
+        resume_checkpoint = None
+        
         gcs_output = os.environ.get("GCS_OUTPUT_PATH", "")
         if gcs_output:
             gcs_target = f"{gcs_output}/rfdetr/{exp_name}"
+            
+            # 1. Attempt to download latest checkpoint
+            resume_checkpoint = download_latest_checkpoint(gcs_target, exp_dir)
+            if resume_checkpoint:
+                print(f"  [RESUME] Will resume training from: {resume_checkpoint}")
+            else:
+                print("  [RESUME] No existing checkpoints found. Starting fresh.")
+                
+            # 2. Start sync thread
             sync_thread = GCSSyncThread(exp_dir, gcs_target, interval=300)
             sync_thread.start()
             print(f"  [SYNC] Background sync to {gcs_target} every 5 min")
@@ -718,6 +779,7 @@ def train_single_experiment(
             device="cuda",
             num_workers=num_workers,
             persistent_workers=True,
+            resume=resume_checkpoint,
         )
 
         end_time = datetime.now()
@@ -840,8 +902,15 @@ def main():
 
     coco_dir = Path(config["rfdetr"]["coco_dir"])
     if args.force_conversion:
-        limit = config["dataset"].get("limit_valid_images", 0)
-        prepare_coco_dataset(dataset_path, coco_dir, limit_valid_images=limit, force_conversion=True)
+        limit_valid = config["dataset"].get("limit_valid_images", 0)
+        limit_train = config["dataset"].get("limit_train_images", 0)
+        prepare_coco_dataset(
+            dataset_path, 
+            coco_dir, 
+            limit_valid_images=limit_valid, 
+            limit_train_images=limit_train,
+            force_conversion=True
+        )
     else:
         print("[SKIP] COCO conversion skipped")
         if not (coco_dir / "train" / "_annotations.coco.json").exists():
