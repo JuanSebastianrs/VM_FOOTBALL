@@ -304,6 +304,7 @@ def convert_yolo_to_coco(
     labels_dir: Path,
     output_dir: Path,
     split: str,
+    max_images: int = 0,
 ) -> Path:
     """Convert YOLO format labels to COCO format for RF-DETR."""
     split_dir = output_dir / split
@@ -318,6 +319,11 @@ def convert_yolo_to_coco(
 
     ann_id = 0
     images = sorted(images_dir.glob("*.jpg"))
+    
+    if max_images > 0 and len(images) > max_images:
+        print(f"   [INFO] Downsampling {split} from {len(images)} to {max_images} images")
+        random.shuffle(images)
+        images = images[:max_images]
 
     print(f"   Converting {len(images)} images for {split}...")
 
@@ -372,6 +378,7 @@ def convert_yolo_to_coco(
 def prepare_coco_dataset(
     dataset_path: Path,
     coco_dir: Path,
+    limit_valid_images: int = 0,
     force_conversion: bool = False,
 ) -> Path:
     """Full YOLO→COCO conversion pipeline with GCS caching."""
@@ -437,6 +444,7 @@ def prepare_coco_dataset(
         dataset_path / "images" / "test",
         dataset_path / "labels" / "test",
         coco_dir, "valid",
+        max_images=limit_valid_images,
     )
 
     # Test — subset of validation (RF-DETR requires 3 splits)
@@ -777,8 +785,8 @@ def main():
     parser.add_argument("--config", type=Path, default=Path("config.yaml"))
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--experiment", type=str, default=None)
-    parser.add_argument("--skip-conversion", action="store_true",
-                        help="Skip YOLO→COCO conversion (if already done)")
+    parser.add_argument("--force-conversion", action="store_true", default=True,
+                        help="Force YOLO→COCO conversion instead of using GCS cache")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -831,12 +839,13 @@ def main():
     print("=" * 70)
 
     coco_dir = Path(config["rfdetr"]["coco_dir"])
-    if not args.skip_conversion:
-        prepare_coco_dataset(dataset_path, coco_dir)
+    if args.force_conversion:
+        limit = config["dataset"].get("limit_valid_images", 0)
+        prepare_coco_dataset(dataset_path, coco_dir, limit_valid_images=limit, force_conversion=True)
     else:
         print("[SKIP] COCO conversion skipped")
         if not (coco_dir / "train" / "_annotations.coco.json").exists():
-            print("[ERROR] COCO dataset not found despite --skip-conversion")
+            print("[ERROR] COCO dataset not found despite lacking --force-conversion")
             sys.exit(1)
 
     # --- Step 3: Train RF-DETR ---
