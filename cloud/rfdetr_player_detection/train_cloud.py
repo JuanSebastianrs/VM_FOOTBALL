@@ -163,7 +163,7 @@ def _emergency_upload():
         try:
             print(f"[EMERGENCY] Uploading {output_dir} to {gcs_output}")
             subprocess.run(
-                ["gcloud", "storage", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
+                ["gsutil", "-m", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
                 capture_output=True, text=True, timeout=120,
             )
             print("[EMERGENCY] Upload complete")
@@ -513,7 +513,7 @@ def prepare_coco_dataset(
             json_file = coco_dir / split / "_annotations.coco.json"
             if json_file.exists():
                 subprocess.run(
-                    ["gcloud", "storage", "cp", str(json_file),
+                    ["gsutil", "cp", str(json_file),
                      f"{gcs_coco_cache}/{split}/_annotations.coco.json"],
                     capture_output=True, text=True,
                 )
@@ -581,7 +581,7 @@ class GCSSyncThread(threading.Thread):
     def sync(self):
         try:
             subprocess.run(
-                ["gcloud", "storage", "cp", "-r",
+                ["gsutil", "-m", "cp", "-r",
                  f"{self.local_dir}/*", f"{self.gcs_target}/"],
                 capture_output=True, text=True, timeout=120,
             )
@@ -790,11 +790,14 @@ def train_single_experiment(
                 if ckpt_file.exists():
                     gcs_ckpt = f"{gcs_output}/rfdetr/{exp_name}/checkpoint.pth"
                     try:
-                        subprocess.run(
-                            ["gcloud", "storage", "cp", str(ckpt_file), gcs_ckpt],
+                        result = subprocess.run(
+                            ["gsutil", "cp", str(ckpt_file), gcs_ckpt],
                             capture_output=True, text=True, timeout=120,
                         )
-                        print(f"  [SYNC] checkpoint.pth uploaded to GCS (epoch {epoch})")
+                        if result.returncode == 0:
+                            print(f"  [SYNC] checkpoint.pth uploaded to GCS (epoch {epoch})")
+                        else:
+                            print(f"  [SYNC] WARNING: checkpoint upload failed (rc={result.returncode}): {result.stderr[:200]}")
                     except Exception as sync_err:
                         print(f"  [SYNC] Failed to upload checkpoint: {sync_err}")
 
@@ -1142,8 +1145,8 @@ def main():
     if gcs_output:
         print(f"Uploading results to {gcs_output}")
         result = subprocess.run(
-            ["gcloud", "storage", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
-            capture_output=True, text=True,
+            ["gsutil", "-m", "cp", "-r", f"{output_dir}/*", f"{gcs_output}/"],
+            capture_output=True, text=True, timeout=600,
         )
         if result.returncode == 0:
             print(f"[OK] Results uploaded to {gcs_output}")

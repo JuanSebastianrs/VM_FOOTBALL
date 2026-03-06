@@ -123,7 +123,7 @@ cleanup_on_error() {
         pip list 2>/dev/null | grep -iE "rfdetr|pydantic|torch|numpy|transformers|accelerate|timm" || true
     } > "$OUTPUT_DIR/CRASH_LOG.txt"
     
-    gcloud storage cp -r "$OUTPUT_DIR/*" "$GCS_OUTPUT/" 2>/dev/null || true
+    gsutil -m cp -r "$OUTPUT_DIR/*" "$GCS_OUTPUT/" 2>/dev/null || true
     echo "[OK] Crash artifacts uploaded to $GCS_OUTPUT"
 }
 
@@ -204,6 +204,21 @@ pip install -q --force-reinstall "pydantic>=2.5.0"
 
 # Force headless opencv LAST (prevents rfdetr/ultralytics from overwriting)
 pip install -q --force-reinstall --no-deps "opencv-python-headless>=4.8.0"
+
+# Restore pythonjsonlogger (Vertex AI container's sitecustomize.py needs it;
+# pip installs above can remove it, breaking ALL subsequent gcloud commands)
+pip install -q "python-json-logger<3" 2>/dev/null || pip install -q python-json-logger 2>/dev/null || true
+# Verify it actually works, create stub if not
+python3 -c "import pythonjsonlogger" 2>/dev/null || {
+    echo '[WARN] pythonjsonlogger missing after pip install — creating stub...'
+    SITE=$(python3 -c "import site; print(site.getsitepackages()[0])")
+    mkdir -p "$SITE/pythonjsonlogger"
+    echo '# Stub for Vertex AI sitecustomize.py' > "$SITE/pythonjsonlogger/__init__.py"
+    echo "  Created stub at $SITE/pythonjsonlogger"
+}
+# Verify gcloud still works after all pip installs
+echo 'Verifying gcloud connectivity...'
+gcloud storage ls gs://PLACEHOLDER_BUCKET/ > /dev/null 2>&1 && echo '[OK] gcloud storage operational' || echo '[WARN] gcloud storage not working'
 
 echo '[OK] Dependencies installed'
 echo "Key packages:"
@@ -303,7 +318,9 @@ workerPoolSpecs:
           chmod +x /tmp/startup.sh
           bash /tmp/startup.sh
 scheduling:
+  strategy: SPOT
   timeout: 172800s
+  restartJobOnWorkerRestart: true
 "@
 
 $yamlPath = [System.IO.Path]::Combine($env:TEMP, "rfdetr_job_spec.yaml")
