@@ -1,0 +1,10 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '$_IMAGE_URI', '-f', 'Dockerfile.predict', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_IMAGE_URI']
+images:
+  - '$_IMAGE_URI'
+substitutions:
+  _IMAGE_URI: 'us-central1-docker.pkg.dev/project-ad19fdc6-8493-43e5-b82/vm-football/sahi-predictor:latest'
+timeout: 600s

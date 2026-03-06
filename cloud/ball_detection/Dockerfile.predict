@@ -1,0 +1,19 @@
+# Slim Container for ASAHI Inference on Vertex AI
+FROM us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-2.py310:latest
+
+WORKDIR /app
+
+# Install inference-only dependencies (no training libs)
+RUN pip install --no-cache-dir \
+    ultralytics>=8.0.0 \
+    google-cloud-storage \
+    "numpy>=1.23.0,<2.0.0" \
+    opencv-python-headless
+
+# Force headless opencv LAST (ultralytics may overwrite)
+RUN pip install --no-cache-dir --force-reinstall --no-deps "opencv-python-headless>=4.8.0"
+
+COPY predict_cloud.py /app/predict_cloud.py
+
+# Entrypoint receives --args from gcloud ai custom-jobs create
+ENTRYPOINT ["python", "-u", "/app/predict_cloud.py"]

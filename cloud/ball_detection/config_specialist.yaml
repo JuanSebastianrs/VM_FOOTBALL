@@ -10,36 +10,36 @@ output:
 
 yolo:
   experiments:
-    # EXPERIMENTO 1: Baseline (Para demostrar el problema de objetos pequeños)
-    exp_01_baseline:
-      description: "YOLO11 Nano por defecto. Baseline para comparar métricas."
-      model: "yolo11n.pt"
-      epochs: 50
-      batch_size: 16  # Asumiendo 10GB VRAM
-      imgsz: 1280
-      hyperparameters:
-        mixup: 0.1 # Por defecto (destructivo para el balón)
-        copy_paste: 0.0
+    # EXPERIMENTO 1: Baseline (Completado)
+    # exp_01_baseline:
+    #   description: "YOLO11 Nano por defecto. Baseline para comparar métricas."
+    #   model: "yolo11n.pt"
+    #   epochs: 50
+    #   batch_size: 16  # Asumiendo 10GB VRAM
+    #   imgsz: 1280
+    #   hyperparameters:
+    #     mixup: 0.1 # Por defecto (destructivo para el balón)
+    #     copy_paste: 0.0
       
-    # EXPERIMENTO 2: Data-Centric (Aislamiento de la variable de datos)
-    exp_02_data_centric:
-      description: "YOLO11 Nano con aumentos optimizados para micro-geometría."
-      model: "yolo11n.pt"
-      epochs: 50
-      batch_size: 16
-      imgsz: 1280
-      hyperparameters:
-        mixup: 0.0       # PROHIBIDO: Destruye los tensores pequeños
-        copy_paste: 0.3  # OBLIGATORIO: Balancea clases artificialmente
-        bgr: 0.2         # OJO: Esto altera los canales de color (Color Jittering), NO es Motion Blur
-        degrees: 0.0     # Desactivado: Rotar el balón no aporta valor (es redondo)
+    # EXPERIMENTO 2: Data-Centric (Completado)
+    # exp_02_data_centric:
+    #   description: "YOLO11 Nano con aumentos optimizados para micro-geometría."
+    #   model: "yolo11n.pt"
+    #   epochs: 50
+    #   batch_size: 16
+    #   imgsz: 1280
+    #   hyperparameters:
+    #     mixup: 0.0       # PROHIBIDO: Destruye los tensores pequeños
+    #     copy_paste: 0.3  # OBLIGATORIO: Balancea clases artificialmente
+    #     bgr: 0.2         # OJO: Esto altera los canales de color (Color Jittering), NO es Motion Blur
+    #     degrees: 0.0     # Desactivado: Rotar el balón no aporta valor (es redondo)
 
     # EXPERIMENTO 3: Arquitectura SOTA (El modelo definitivo para inferencia)
     exp_03_p2_sota:
       description: "YOLO11 Nano modificado con Capa P2 (Stride 4) y Data-Centric configs."
       model: "yolo11n-p2.yaml" # Arquitectura custom que creamos
-      epochs: 50
-      batch_size: 8      # CRÍTICO: Reducido a la mitad porque la capa P2 duplicará el uso de VRAM
+      epochs: 35         # CRÍTICO: Reducido a 35 épocas para agilizar el proceso
+      batch_size: 4      # CRÍTICO: Reducido a 4 para prevenir OOM en T4 con feature map Stride 4
       imgsz: 1280
       hyperparameters:
         mixup: 0.0

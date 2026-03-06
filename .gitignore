@@ -79,3 +79,4 @@ temp/
 !data/.gitkeep
 !outputs/.gitkeep
 .agent/
+cloud/ball_detection/results/inference_video/
