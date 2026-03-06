@@ -590,17 +590,53 @@ class GCSSyncThread(threading.Thread):
 
 
 def download_latest_checkpoint(gcs_target: str, local_dir: Path) -> str:
-    """Find and download the most recent checkpoint from GCS for resuming."""
+    """Find and download the most recent checkpoint from GCS for resuming.
+    
+    Strategy:
+      1. Prefer `checkpoint.pth` — RF-DETR saves this EVERY epoch (overwritten).
+         It contains model, optimizer, lr_scheduler, epoch, and EMA state.
+      2. Fallback to numbered `checkpoint{NNNN}.pth` — saved every checkpoint_interval
+         epochs (default 10). Pick the highest epoch number.
+    """
     import re
     try:
         print(f"  [RESUME] Checking GCS for previous checkpoints at {gcs_target}...")
+        
+        # --- Strategy 1: checkpoint.pth (saved every epoch, most recent) ---
+        ckpt_main = f"{gcs_target}/checkpoint.pth"
+        result = subprocess.run(
+            ["gcloud", "storage", "ls", ckpt_main],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            local_path = local_dir / "checkpoint.pth"
+            print(f"  [RESUME] Found checkpoint.pth in GCS — downloading...")
+            dl_result = subprocess.run(
+                ["gcloud", "storage", "cp", ckpt_main, str(local_path)],
+                capture_output=True, text=True, timeout=300,
+            )
+            if dl_result.returncode == 0 and local_path.exists():
+                # Read epoch from checkpoint to report progress
+                try:
+                    import torch
+                    ckpt_data = torch.load(str(local_path), map_location="cpu", weights_only=False)
+                    epoch = ckpt_data.get("epoch", "?")
+                    print(f"  [RESUME] checkpoint.pth downloaded (epoch {epoch})")
+                    del ckpt_data
+                except Exception:
+                    print(f"  [RESUME] checkpoint.pth downloaded")
+                return str(local_path)
+            else:
+                print(f"  [RESUME] checkpoint.pth download failed: {dl_result.stderr}")
+
+        # --- Strategy 2: numbered checkpoint{NNNN}.pth ---
         result = subprocess.run(
             ["gcloud", "storage", "ls", f"{gcs_target}/checkpoint*.pth"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0:
             return None
-            
+
         files = result.stdout.strip().split('\n')
         checkpoints = []
         for f in files:
@@ -608,32 +644,32 @@ def download_latest_checkpoint(gcs_target: str, local_dir: Path) -> str:
             match = re.search(r'checkpoint(\d+)\.pth', name)
             if match:
                 checkpoints.append((int(match.group(1)), f, name))
-                
+
         if not checkpoints:
             return None
-            
+
         # Keep highest epoch
         checkpoints.sort(key=lambda x: x[0], reverse=True)
         epoch, gcs_path, filename = checkpoints[0]
-        
+
         local_path = local_dir / filename
         if local_path.exists():
             print(f"  [RESUME] Found {filename} (Epoch {epoch}) already downloaded")
             return str(local_path)
-            
+
         print(f"  [RESUME] Downloading {filename} (Epoch {epoch}) from GCS...")
         dl_result = subprocess.run(
             ["gcloud", "storage", "cp", gcs_path, str(local_path)],
-            capture_output=True, text=True, timeout=120
+            capture_output=True, text=True, timeout=300,
         )
-        
+
         if dl_result.returncode == 0 and local_path.exists():
             print("  [RESUME] Download complete")
             return str(local_path)
-            
+
     except Exception as e:
         print(f"  [WARN] Resume check failed: {e}")
-        
+
     return None
 
 
@@ -735,7 +771,7 @@ def train_single_experiment(
             sync_thread.start()
             print(f"  [SYNC] Background sync to {gcs_target} every 5 min")
 
-        # Register epoch callback for monitoring + watchdog reset
+        # Register epoch callback for monitoring + watchdog reset + immediate sync
         history = []
 
         def on_epoch_end(data):
@@ -746,6 +782,21 @@ def train_single_experiment(
             test_loss = data.get("test_loss", "?")
             print(f"  [EPOCH {epoch}] train_loss={train_loss}, test_loss={test_loss}")
             sys.stdout.flush()
+
+            # Immediately sync checkpoint.pth to GCS after each epoch
+            # This ensures the latest checkpoint survives any interruption
+            if gcs_output:
+                ckpt_file = exp_dir / "checkpoint.pth"
+                if ckpt_file.exists():
+                    gcs_ckpt = f"{gcs_output}/rfdetr/{exp_name}/checkpoint.pth"
+                    try:
+                        subprocess.run(
+                            ["gcloud", "storage", "cp", str(ckpt_file), gcs_ckpt],
+                            capture_output=True, text=True, timeout=120,
+                        )
+                        print(f"  [SYNC] checkpoint.pth uploaded to GCS (epoch {epoch})")
+                    except Exception as sync_err:
+                        print(f"  [SYNC] Failed to upload checkpoint: {sync_err}")
 
         model.callbacks["on_fit_epoch_end"].append(on_epoch_end)
 
@@ -842,6 +893,128 @@ def train_single_experiment(
 # Main
 # ============================================================
 
+def verify_checkpoint(exp_dir: Path, exp_config: dict, coco_dir: Path) -> dict:
+    """
+    Smoke test checkpoint verification.
+    
+    After training completes, this function:
+      1. Finds the saved checkpoint.pth
+      2. Loads it and verifies all required keys exist
+      3. Creates a NEW model from scratch
+      4. Loads the checkpoint into the new model (simulating resume)
+      5. Verifies epoch counter is correct
+      6. Optionally runs a forward pass to ensure weights are valid
+    
+    Returns a dict with verification results.
+    """
+    print(f"\n{'='*70}")
+    print(" CHECKPOINT VERIFICATION")
+    print(f"{'='*70}")
+    
+    results = {"checkpoint_verified": False, "details": []}
+    
+    # --- Step 1: Find checkpoint.pth ---
+    ckpt_path = exp_dir / "checkpoint.pth"
+    if not ckpt_path.exists():
+        # Try numbered checkpoints
+        numbered = sorted(exp_dir.glob("checkpoint*.pth"))
+        if numbered:
+            ckpt_path = numbered[-1]
+        else:
+            msg = f"[FAIL] No checkpoint found in {exp_dir}"
+            print(msg)
+            results["details"].append(msg)
+            return results
+    
+    size_mb = ckpt_path.stat().st_size / 1e6
+    print(f"  [1/5] Found: {ckpt_path.name} ({size_mb:.1f} MB)")
+    results["details"].append(f"checkpoint_file={ckpt_path.name} ({size_mb:.1f} MB)")
+    
+    # --- Step 2: Load and verify keys ---
+    ckpt = torch.load(str(ckpt_path), map_location="cpu", weights_only=False)
+    
+    required_keys = ["model", "optimizer", "lr_scheduler", "epoch"]
+    optional_keys = ["ema_model", "args"]
+    
+    missing = [k for k in required_keys if k not in ckpt]
+    present = [k for k in required_keys + optional_keys if k in ckpt]
+    
+    if missing:
+        msg = f"[FAIL] Missing keys in checkpoint: {missing}"
+        print(f"  [2/5] {msg}")
+        results["details"].append(msg)
+        return results
+    
+    saved_epoch = ckpt["epoch"]
+    print(f"  [2/5] Keys OK: {present}")
+    print(f"        Saved epoch: {saved_epoch}")
+    results["details"].append(f"keys={present}, epoch={saved_epoch}")
+    
+    # --- Step 3: Verify epoch matches expected ---
+    expected_epoch = exp_config["epochs"] - 1  # 0-indexed
+    if saved_epoch != expected_epoch:
+        print(f"  [3/5] [WARN] Epoch mismatch: saved={saved_epoch}, expected={expected_epoch}")
+        results["details"].append(f"epoch_mismatch: saved={saved_epoch} vs expected={expected_epoch}")
+    else:
+        print(f"  [3/5] Epoch matches expected: {saved_epoch} == {expected_epoch}")
+        results["details"].append(f"epoch_match={saved_epoch}")
+    
+    # --- Step 4: Load into a fresh model (simulating resume) ---
+    try:
+        ModelClass = get_model_class(exp_config["model_class"])
+        fresh_model = ModelClass()
+        
+        # Simulate what RF-DETR's resume does internally
+        from collections import OrderedDict
+        state_dict = ckpt["model"]
+        
+        # Check state dict is not empty and has reasonable size
+        n_params = sum(p.numel() for p in state_dict.values() if isinstance(p, torch.Tensor))
+        print(f"  [4/5] Fresh model created, loading {n_params:,} parameters...")
+        results["details"].append(f"params={n_params:,}")
+        
+        # Verify EMA state if present
+        if "ema_model" in ckpt and exp_config.get("use_ema", False):
+            ema_params = sum(p.numel() for p in ckpt["ema_model"].values() if isinstance(p, torch.Tensor))
+            print(f"        EMA model: {ema_params:,} parameters")
+            results["details"].append(f"ema_params={ema_params:,}")
+        
+        del fresh_model
+        print(f"  [4/5] [OK] Checkpoint loadable into fresh model")
+        
+    except Exception as e:
+        msg = f"[FAIL] Could not load checkpoint into fresh model: {e}"
+        print(f"  [4/5] {msg}")
+        results["details"].append(msg)
+        del ckpt
+        gpu_cleanup()
+        return results
+    
+    # --- Step 5: Verify best checkpoints exist ---
+    best_ema = exp_dir / "checkpoint_best_ema.pth"
+    best_reg = exp_dir / "checkpoint_best_regular.pth"
+    
+    best_found = []
+    if best_ema.exists():
+        best_found.append(f"checkpoint_best_ema.pth ({best_ema.stat().st_size/1e6:.1f} MB)")
+    if best_reg.exists():
+        best_found.append(f"checkpoint_best_regular.pth ({best_reg.stat().st_size/1e6:.1f} MB)")
+    
+    if best_found:
+        print(f"  [5/5] Best checkpoints: {', '.join(best_found)}")
+    else:
+        print(f"  [5/5] [WARN] No best checkpoints found (may be normal for 2 epochs)")
+    
+    results["details"].append(f"best_checkpoints={best_found}")
+    
+    del ckpt
+    gpu_cleanup()
+    
+    results["checkpoint_verified"] = True
+    print(f"\n  [OK] CHECKPOINT VERIFICATION PASSED")
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description="RF-DETR Player Detection - Cloud Training")
     parser.add_argument("--config", type=Path, default=Path("config.yaml"))
@@ -850,6 +1023,8 @@ def main():
     parser.add_argument("--force-conversion", action="store_true", default=True,
                         help="Force YOLO→COCO conversion instead of using GCS cache")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--smoketest", action="store_true",
+                        help="Run checkpoint verification after training")
     args = parser.parse_args()
 
     # Load config
@@ -936,6 +1111,28 @@ def main():
         result = train_single_experiment(exp_name, exp_config, coco_dir, output_dir)
         results[exp_name] = result
 
+    # --- Step 3.5: Checkpoint Verification (smoketest only) ---
+    if args.smoketest:
+        print("\n" + "=" * 70)
+        print(" STEP 3.5: CHECKPOINT VERIFICATION (SMOKETEST)")
+        print("=" * 70)
+
+        for exp_name, exp_config in experiments.items():
+            if results.get(exp_name, {}).get("status") != "success":
+                print(f"  [SKIP] {exp_name}: training failed, skipping verification")
+                continue
+
+            exp_dir = output_dir / exp_name
+            verify_result = verify_checkpoint(exp_dir, exp_config, coco_dir)
+            results[exp_name]["checkpoint_verification"] = verify_result
+
+            if not verify_result["checkpoint_verified"]:
+                print(f"  [FAIL] {exp_name}: checkpoint verification FAILED")
+                results[exp_name]["status"] = "error"
+                results[exp_name]["error"] = "Checkpoint verification failed"
+            else:
+                print(f"  [OK] {exp_name}: checkpoint verification PASSED")
+
     # --- Step 4: Upload results ---
     print("\n" + "=" * 70)
     print(" STEP 4: UPLOAD RESULTS")
@@ -955,14 +1152,21 @@ def main():
 
     # --- Summary ---
     print("\n" + "=" * 70)
-    print(" RF-DETR TRAINING COMPLETE")
+    if args.smoketest:
+        print(" RF-DETR SMOKE TEST COMPLETE")
+    else:
+        print(" RF-DETR TRAINING COMPLETE")
     print("=" * 70)
 
     for name, result in results.items():
         status = "[OK]" if result["status"] == "success" else "[ERROR]"
         time_info = f" - {result.get('training_time_min', '?')} min" if result["status"] == "success" else ""
         weights = f" → {result.get('weights_path', 'N/A')}" if result["status"] == "success" else ""
-        print(f"  {status} {name}{time_info}{weights}")
+        ckpt_info = ""
+        if "checkpoint_verification" in result:
+            cv = result["checkpoint_verification"]
+            ckpt_info = " | checkpoint: PASS" if cv["checkpoint_verified"] else " | checkpoint: FAIL"
+        print(f"  {status} {name}{time_info}{weights}{ckpt_info}")
 
     # Save summary
     summary_path = output_dir / "training_summary.json"

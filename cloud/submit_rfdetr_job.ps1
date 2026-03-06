@@ -246,22 +246,22 @@ $startupScript = $startupScript.Replace("PLACEHOLDER_GPU_INFO", "$GPU ($ACCELERA
 # Handle smoke test override
 if ($SmokeTest) {
     $smokeBlock = @'
-# SMOKE TEST: Override config for quick validation
-echo "[SMOKE] Overriding config to 1 epoch, batch 2..."
-python3 -c "
-import yaml
-with open('config.yaml') as f:
-    c = yaml.safe_load(f)
-for name in c.get('rfdetr',{}).get('experiments',{}):
-    c['rfdetr']['experiments'][name]['epochs'] = 1
-    c['rfdetr']['experiments'][name]['batch_size'] = 2
-    c['rfdetr']['experiments'][name]['grad_accum_steps'] = 1
-with open('config.yaml','w') as f:
-    yaml.dump(c, f, default_flow_style=False)
-print('[SMOKE] Config overridden: 1 epoch, batch 2, grad_accum 1')
-"
+# SMOKE TEST: Use smoketest config (2 epochs, tiny dataset, checkpoint verification)
+echo "[SMOKE] Switching to config_smoketest.yaml..."
+if [ -f "config_smoketest.yaml" ]; then
+    cp config_smoketest.yaml config.yaml
+    echo "[SMOKE] Config replaced with smoketest version"
+    echo "[SMOKE] Contents:"
+    cat config.yaml
+else
+    echo "[FATAL] config_smoketest.yaml not found!"
+    ls -la
+    exit 1
+fi
 '@
     $startupScript = $startupScript.Replace("PLACEHOLDER_SMOKE_OVERRIDE", $smokeBlock)
+    # Append --smoketest flag to training command
+    $startupScript = $startupScript.Replace("python3 -u train_cloud.py", "python3 -u train_cloud.py --smoketest")
 }
 else {
     $startupScript = $startupScript.Replace("PLACEHOLDER_SMOKE_OVERRIDE", "# No smoke test override")
@@ -304,8 +304,6 @@ workerPoolSpecs:
           bash /tmp/startup.sh
 scheduling:
   timeout: 172800s
-  strategy: SPOT
-  restartJobOnWorkerRestart: true
 "@
 
 $yamlPath = [System.IO.Path]::Combine($env:TEMP, "rfdetr_job_spec.yaml")

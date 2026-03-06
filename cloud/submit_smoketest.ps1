@@ -1,20 +1,42 @@
 # ============================================================
-# RF-DETR Player Detection - Vertex AI Custom Job Submission Script - SMOKETEST
-# Trains RF-DETR model on GCP with Spot Instances
-# ==============================================================================
-# Downloads dataset tar from GCS, converts YOLO→COCO, trains RF-DETR.
+# RF-DETR Smoke Test - Thin Wrapper
+# ============================================================
+# DEPRECATED: Use submit_rfdetr_job.ps1 -SmokeTest instead.
+# This script now delegates to the main launcher with -SmokeTest.
 #
 # Usage:
-#   .\cloud\submit_rfdetr_job.ps1                 # T4 GPU (default)
-#   .\cloud\submit_rfdetr_job.ps1 -GPU L4         # L4 GPU (if available)
-#   .\cloud\submit_rfdetr_job.ps1 -SmokeTest      # 1 epoch validation
-#   .\cloud\submit_rfdetr_job.ps1 -DryRun         # Config check only
+#   .\cloud\submit_smoketest.ps1            # Same as: submit_rfdetr_job.ps1 -SmokeTest
+#   .\cloud\submit_smoketest.ps1 -DryRun    # Validate only
+# ============================================================
+
+param(
+    [switch]$DryRun
+)
+
+Write-Host "[INFO] Delegating to submit_rfdetr_job.ps1 -SmokeTest..." -ForegroundColor Yellow
+Write-Host "       (submit_smoketest.ps1 is deprecated, use submit_rfdetr_job.ps1 -SmokeTest directly)" -ForegroundColor DarkGray
+Write-Host ""
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$mainScript = Join-Path $scriptDir "submit_rfdetr_job.ps1"
+
+if ($DryRun) {
+    & $mainScript -SmokeTest -DryRun
+} else {
+    & $mainScript -SmokeTest
+}
+
+# Exit early - everything below is the old duplicate code (kept for reference)
+exit $LASTEXITCODE
+
+# ============================================================
+# OLD CODE BELOW (no longer executed)
 # ============================================================
 
 param(
     [ValidateSet("L4", "T4")]
     [string]$GPU = "T4",
-    [switch]$DryRun,
+    [switch]$DryRun_OLD,
     [switch]$SmokeTest
 )
 
