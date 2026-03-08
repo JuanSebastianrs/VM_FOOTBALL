@@ -319,7 +319,7 @@ workerPoolSpecs:
           bash /tmp/startup.sh
 scheduling:
   strategy: SPOT
-  timeout: 172800s
+  timeout: 432000s
   restartJobOnWorkerRestart: true
 "@
 
