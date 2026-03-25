@@ -1,0 +1,88 @@
+{
+  "config": {
+    "checkpoint": "facebook/sam2.1-hiera-small",
+    "epochs": 8,
+    "batch_size": 4,
+    "lr": 1e-05,
+    "val_split": 0.2,
+    "train_sequences": 46,
+    "val_sequences": 11,
+    "train_samples": 31195,
+    "val_samples": 7492
+  },
+  "best_val_iou": 0.8895,
+  "log": [
+    {
+      "epoch": 1,
+      "train_loss": 0.0772,
+      "train_iou": 0.8589,
+      "val_loss": 0.0801,
+      "val_iou": 0.8541,
+      "lr": 9.62320368593087e-06,
+      "time_sec": 7266.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.0613,
+      "train_iou": 0.8859,
+      "val_loss": 0.0725,
+      "val_iou": 0.8663,
+      "lr": 8.55017856687341e-06,
+      "time_sec": 7265.6
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0556,
+      "train_iou": 0.8962,
+      "val_loss": 0.0705,
+      "val_iou": 0.8699,
+      "lr": 6.9442829902071945e-06,
+      "time_sec": 7273.5
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.051,
+      "train_iou": 0.9045,
+      "val_loss": 0.0686,
+      "val_iou": 0.8731,
+      "lr": 5.05e-06,
+      "time_sec": 7274.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.0466,
+      "train_iou": 0.9121,
+      "val_loss": 0.0651,
+      "val_iou": 0.8798,
+      "lr": 3.1557170097928058e-06,
+      "time_sec": 7276.3
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.0422,
+      "train_iou": 0.9203,
+      "val_loss": 0.062,
+      "val_iou": 0.8845,
+      "lr": 1.54982143312659e-06,
+      "time_sec": 7270.8
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0388,
+      "train_iou": 0.9266,
+      "val_loss": 0.0597,
+      "val_iou": 0.8893,
+      "lr": 4.767963140691307e-07,
+      "time_sec": 7279.3
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.0364,
+      "train_iou": 0.9313,
+      "val_loss": 0.0595,
+      "val_iou": 0.8895,
+      "lr": 1e-07,
+      "time_sec": 7281.7
+    }
+  ]
+}

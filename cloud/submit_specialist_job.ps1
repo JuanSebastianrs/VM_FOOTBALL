@@ -60,9 +60,20 @@ Write-Host "[2/5] Uploading Training Code..." -ForegroundColor Yellow
 # Clean previous ball_detection code
 gcloud storage rm -r "gs://$DATA_BUCKET/code/ball_detection/" 2>$null
 
-# Upload ball_detection package
+# Upload ball_detection package (excluding massive local results folder)
+$ResultsPath = "cloud\ball_detection\results"
+$BackupPath = "cloud\results_backup_temp"
+if (Test-Path $ResultsPath) {
+    Move-Item -Path $ResultsPath -Destination $BackupPath -Force
+}
+
 gcloud storage cp -r "cloud/ball_detection" "gs://$DATA_BUCKET/code/"
-Write-Host "   [OK] Code uploaded to gs://$DATA_BUCKET/code/ball_detection/" -ForegroundColor Green
+
+if (Test-Path $BackupPath) {
+    Move-Item -Path $BackupPath -Destination $ResultsPath -Force
+}
+
+Write-Host "   [OK] Code uploaded to gs://$DATA_BUCKET/code/ball_detection/ (excluding results)" -ForegroundColor Green
 
 # --- Dry Run ---
 if ($DryRun) {

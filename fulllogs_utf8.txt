@@ -1,0 +1,238 @@
+﻿Job failed.
+Finished tearing down training program.
+[0/5] Preparing environment...
+GPU target: A100 (NVIDIA_TESLA_A100)
+Started at: Thu Mar 12 19:07:21 UTC 2026
+==============================================
+Target: Ball only (class 5)
+Optimizer: MuSGD + ProgLoss + STAL
+Model:  YOLO26 Nano P2
+YOLO26 Ball Detection - A100 Vertex AI
+==============================================
+2026-03-12T19:07:21.290046632Z stderr F
+2026-03-12T19:07:21.13867803Z stderr F
+Copying gs://vm-football-data/code/yolo26_ball/startup.sh to file:///tmp/startup.sh
+The replica workerpool0-0 exited with a non-zero status of 1. Termination reason: Error. To find out more about why your job exited please check the logs: https://console.cloud.google.com/logs/viewer?project=595729133004&resource=ml_job%2Fjob_id%2F2907602544819699712&advancedFilter=resource.type%3D%22ml_job%22%0Aresource.labels.job_id%3D%222907602544819699712%22
+ModuleNotFoundError: No module named 'pythonjsonlogger'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+[OK] Crash artifacts uploaded to gs://vm-football-data/models/yolo26_ball_sota
+============================================
+CRASH DETECTED - Uploading error logs
+============================================
+2026-03-12T19:07:11.744558136Z stdout F
+[ERROR] 1 experiment(s) failed: ['yolo26_ball_sota']
+2026-03-12T19:07:11.041067099Z stdout F
+GCS: gs://vm-football-data/models/yolo26_ball_sota
+Results: /workspace/runs
+Total time: 4.2 min (0.07 hours)
+2026-03-12T19:07:11.041055113Z stdout F
+[ERROR] yolo26_ball_sota ([Errno 2] No such file or directory: 'yolo26n-p2.pt')
+============================================================
+YOLO26 TRAINING COMPLETE
+============================================================
+2026-03-12T19:07:11.040968223Z stdout F
+2026-03-12T19:07:10.811445409Z stderr F
+2026-03-12T19:07:10.638930282Z stderr F
+Copying file:///workspace/runs/training_summary.json to gs://vm-football-data/models/yolo26_ball_sota/training_summary.json
+ModuleNotFoundError: No module named 'pythonjsonlogger'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+[yolo26_ball_sota] No best.pt found, skipping
+============================================================
+EVALUATION
+============================================================
+2026-03-12T19:07:09.086495136Z stdout F
+2026-03-12T19:07:08.745366005Z stderr F
+2026-03-12T19:07:08.582292494Z stderr F
+Copying file:///workspace/runs/yolo26_ball_sota/ERROR_LOG.txt to gs://vm-football-data/models/yolo26_ball_sota/yolo26_ball_sota/ERROR_LOG.txt
+At file:///workspace/runs/yolo26_ball_sota/**, worker process 221 thread 137107583589248 listed 1...
+ModuleNotFoundError: No module named 'pythonjsonlogger'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+2026-03-12T19:07:07.169097119Z stdout F
+FileNotFoundError: [Errno 2] No such file or directory: 'yolo26n-p2.pt'
+super().__init__(open(name, mode))
+File "/opt/conda/lib/python3.10/site-packages/torch/serialization.py", line 426, in __init__
+return _open_file(name_or_buffer, mode)
+File "/opt/conda/lib/python3.10/site-packages/torch/serialization.py", line 445, in _open_file_like
+with _open_file_like(f, 'rb') as opened_file:
+File "/opt/conda/lib/python3.10/site-packages/torch/serialization.py", line 998, in load
+return torch.load(*args, **kwargs)
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/utils/patches.py", line 178, in torch_load
+ckpt = torch_load(file, map_location="cpu")
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/nn/tasks.py", line 1463, in torch_safe_load
+ckpt, weight = torch_safe_load(weight)  # load ckpt
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/nn/tasks.py", line 1515, in load_checkpoint
+self.model, self.ckpt = load_checkpoint(weights)
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/engine/model.py", line 283, in _load
+self._load(model, task=task)
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/engine/model.py", line 144, in __init__
+super().__init__(model=model, task=task, verbose=verbose)
+File "/opt/conda/lib/python3.10/site-packages/ultralytics/models/yolo/model.py", line 76, in __init__
+model = YOLO(model_name)
+File "/workspace/yolo26_ball/train_yolo26.py", line 578, in train_experiment
+Traceback (most recent call last):
+Full traceback:
+[ERROR] yolo26_ball_sota: [Errno 2] No such file or directory: 'yolo26n-p2.pt'
+2026-03-12T19:07:07.168976267Z stdout F
+[NEW] Loading pre-trained: yolo26n-p2.pt
+[OK] No previous checkpoint - starting fresh
+Checking for existing checkpoint: gs://vm-football-data/models/yolo26_ball_sota/yolo26_ball_sota/weights/last.pt
+2026-03-12T19:07:05.312650361Z stdout F
+============================================================
+LRf:       0.001
+LR0:       0.01
+Optimizer: MuSGD
+ImgSz:     1280
+Batch:     16
+Epochs:    300
+Model:     yolo26n-p2.pt
+EXPERIMENT: yolo26_ball_sota
+============================================================
+2026-03-12T19:07:05.236077832Z stdout F
+- yolo26_ball_sota: yolo26n-p2.pt | 300 epochs | batch 16 | imgsz 1280 | optimizer MuSGD
+[INFO] Will train 1 experiment(s):
+2026-03-12T19:07:04.113740542Z stdout F
+[OK] Watchdog enabled (90 min timeout for training)
+[OK] data.yaml created and verified: /workspace/runs/data.yaml
+[OK] Total: 159000 files
+[OK] labels/test: 36750 files
+[OK] labels/train: 42750 files
+[OK] images/test: 36750 files
+[OK] images/train: 42750 files
+============================================================
+DATASET VALIDATION
+============================================================
+2026-03-12T19:07:03.58859418Z stdout F
+[OK] Dataset ready: 159003 files at /workspace/dataset/reorganized_dataset
+[OK] Tar file removed (freed 18.3 GB disk)
+[OK] Extracted in 217s
+Extracting to /workspace/dataset...
+[OK] Tar downloaded: 18.3 GB in 23s
+Average throughput: 837.4MiB/s
+2026-03-12T19:03:21.300824363Z stderr F
+.........................................................................................................
+2026-03-12T19:03:00.026774107Z stderr F
+Copying gs://vm-football-data/reorganized_dataset.tar.gz to file:///tmp/dataset.tar.gz
+ModuleNotFoundError: No module named 'pythonjsonlogger'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+Downloading tar... (single file, should be fast)
+[1] Trying tar download: gs://vm-football-data/reorganized_dataset.tar.gz
+2026-03-12T19:02:56.917363291Z stdout F
+Local target:  /workspace/dataset/reorganized_dataset
+Raw source:    gs://vm-football-data/reorganized_dataset
+Tar source:    gs://vm-football-data/reorganized_dataset.tar.gz
+============================================================
+DATASET DOWNLOAD
+============================================================
+2026-03-12T19:02:56.917117304Z stdout F
+[OK] A100 optimizations enabled (TF32, cuDNN benchmark)
+[OK] GPU forward+backward pass works
+[OK] Ampere+ architecture detected ? BF16 and TF32 supported
+CUDA: 12.1
+PyTorch: 2.2.0+cu121
+Compute Capability: 8.0
+VRAM: 42.3 GB
+GPU: NVIDIA A100-SXM4-40GB
+============================================================
+GPU CHECK (A100 Expected)
+============================================================
+[OK] Watchdog handler registered (will enable after data download)
+[OK] Config: /workspace/yolo26_ball/config_yolo26.yaml
+2026-03-12T19:02:56.535953039Z stdout F
+[OK] All 7 imports validated
+[OK] matplotlib 3.7.3
+[OK] Pillow 10.4.0
+[OK] PyYAML 6.0.2
+[OK] opencv 4.13.0
+[OK] ultralytics 8.4.21
+[OK] numpy 1.26.4
+[OK] torch 2.2.0+cu121
+[PHASE 0] Validating imports...
+2026-03-12T19:02:55.795039338Z stdout F
+============================================================
+Target: Ball only (class 5)
+Model: YOLO26 Nano P2 (MuSGD + ProgLoss + STAL)
+Started: 2026-03-12T19:02:55.794821
+YOLO26 Ball Detection - Vertex AI A100 Training
+============================================================
+2026-03-12T19:02:53.847564481Z stdout F
+Python: Python 3.10.15
+Working directory: /workspace/yolo26_ball
+[5/5] Starting YOLO26 Ball Detection Training on A100...
+[4/5] Dataset will be downloaded by train_yolo26.py...
+[OK] YOLO26 Nano model loadable
+[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt to 'yolo26n.pt': 100% ???????????? 5.3MB 57.2MB/s 0.1s
+[OK] YOLO26 import verified
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+View Ultralytics Settings with 'yolo settings' or at '/root/.config/Ultralytics/settings.json'
+Creating new Ultralytics Settings v0.0.6 file ?
+ultralytics-thop                         2.0.18
+ultralytics                              8.4.21
+torchvision                              0.17.0+cu121
+torch                                    2.2.0+cu121
+PyYAML                                   6.0.2
+pillow                                   10.4.0
+opencv-python-headless                   4.13.0.92
+opencv-python                            4.11.0.86
+numpy                                    1.26.4
+matplotlib-inline                        0.1.7
+matplotlib                               3.7.3
+Key packages:
+[OK] Dependencies installed
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+ydata-profiling 4.6.0 requires numpy<1.26,>=1.16.0, but you have numpy 1.26.4 which is incompatible.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+DEPRECATION: Legacy editable install of yolo26-ball-detection==1.0.0 from file:///workspace/yolo26_ball (setup.py develop) is deprecated. pip 25.0 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+ydata-profiling 4.6.0 requires numpy<1.26,>=1.16.0, but you have numpy 1.26.4 which is incompatible.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+[3/5] Installing dependencies...
+[OK] All required files present
+2026-03-12T19:01:53.215689224Z stdout F
+-rw-r--r-- 1 root root 36319 Mar 12 19:01 train_yolo26.py
+-rw-r--r-- 1 root root  4976 Mar 12 19:01 startup.sh
+-rw-r--r-- 1 root root  1017 Mar 12 19:01 setup.py
+-rw-r--r-- 1 root root  3457 Mar 12 19:01 config_yolo26.yaml
+drwxr-xr-x 3 root root  4096 Mar 12 19:01 ..
+drwxr-xr-x 2 root root  4096 Mar 12 19:01 .
+total 60
+Files downloaded:
+Average throughput: 1.4MiB/s
+2026-03-12T19:01:52.852230278Z stderr F
+.
+Copying gs://vm-football-data/code/yolo26_ball/train_yolo26.py to file://./train_yolo26.py
+Copying gs://vm-football-data/code/yolo26_ball/startup.sh to file://./startup.sh
+2026-03-12T19:01:52.450966467Z stderr F
+Copying gs://vm-football-data/code/yolo26_ball/setup.py to file://./setup.py
+Copying gs://vm-football-data/code/yolo26_ball/config_yolo26.yaml to file://./config_yolo26.yaml
+ModuleNotFoundError: No module named 'pythonjsonlogger'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+[2/5] Downloading training code...
+[OK] GPU ready
+[OK] GPU forward+backward pass verified
+[OK] Ampere+ architecture ? BF16/TF32 supported
+Compute Capability: 8.0
+GPU: NVIDIA A100-SXM4-40GB (42.3 GB)
+[1/5] GPU Sanity Check (expecting A100)...
+Successfully uninstalled torch-xla-2.2.0
+Uninstalling torch-xla-2.2.0:
+Found existing installation: torch-xla 2.2.0
+Job is running.
+[0/5] Preparing environment...
+GPU target: A100 (NVIDIA_TESLA_A100)
+Started at: Thu Mar 12 19:01:13 UTC 2026
+==============================================
+Target: Ball only (class 5)
+Optimizer: MuSGD + ProgLoss + STAL
+Model:  YOLO26 Nano P2
+YOLO26 Ball Detection - A100 Vertex AI
+==============================================
+2026-03-12T19:01:13.366775372Z stderr F
+2026-03-12T19:01:13.217096149Z stderr F
+Copying gs://vm-football-data/code/yolo26_ball/startup.sh to file:///tmp/startup.sh
+Job is preparing.
+Waiting for training program to start.
+Vertex AI is setting up this job.
+Vertex AI is provisioning job running framework. First time usage might take couple of minutes, and subsequent runs can be much faster.
+Waiting for job to be provisioned.

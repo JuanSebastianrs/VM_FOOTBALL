@@ -1,0 +1,60 @@
+# ============================================================
+# YOLO26 Ball Detection - SOTA Training Configuration (v2)
+# ============================================================
+# Optimized for Vertex AI A100 GPU (80GB VRAM).
+# Uses YOLO26 features: MuSGD optimizer, ProgLoss, STAL.
+# Architecture: yolo26n (Nano std) — STAL replaces P2 for small objects.
+# Target: Ball only (class 5) — 300 epochs for maximum model quality.
+
+seed: 42
+
+# Dataset
+dataset:
+  # Compressed tar (1 file download, MUCH faster than 42K individual files)
+  tar_path: "gs://vm-football-data/reorganized_dataset.tar.gz"
+  # Fallback: raw GCS path (slow, only if tar doesn't exist)
+  gcs_path: "gs://vm-football-data/reorganized_dataset"
+  # Local path after extraction (fast NVMe/SSD on A100 VM)
+  local_path: "/workspace/dataset/reorganized_dataset"
+
+# Output
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/yolo26_ball_sota"
+
+# YOLO26 Experiments - Ball Detection Only (class 5)
+yolo:
+  experiments:
+    yolo26_ball_sota_v2:
+      description: "YOLO26 Nano — SOTA ball detection (v2 fresh start). MuSGD + ProgLoss + STAL. 300 epochs on A100."
+      # ── Model Architecture ──
+      model: "yolo26n.pt"           # YOLO26 Nano standard — STAL handles small targets (no P2)
+      # ── Training Schedule ──
+      epochs: 300                   # Extended training for maximum convergence
+      patience: 50                  # Survives ProgLoss transition valley without wasting GPU
+      batch_size: 16                # Reduced for A100 40GB stability at 1280px (avoid OOM killer)
+      imgsz: 1280                   # High resolution critical for ball detection
+      save_period: 10               # Checkpoint every 10 epochs for safety
+      # ── Optimizer (YOLO26 MuSGD) ──
+      optimizer: "MuSGD"            # Muon-inspired SGD — stable convergence, fewer tuning knobs
+      lr0: 0.001                    # Reduced: prevents local minima memorization on small datasets
+      lrf: 0.001                    # Final LR ratio — gradual decay across 300 epochs
+      warmup_epochs: 5.0            # Extended warmup for stability
+      warmup_momentum: 0.5          # Smooth momentum ramp-up
+      weight_decay: 0.0005          # Standard L2 regularization
+      # ── Data Augmentation (Ball-Optimized) ──
+      hyperparameters:
+        mixup: 0.0                  # DISABLED: destructive for small objects (blurs ball)
+        copy_paste: 0.3             # CRITICAL: balances rare ball class via synthetic pasting
+        mosaic: 1.0                 # Enabled: forces diverse multi-scene compositions
+        close_mosaic: 30            # Disable mosaic last 30 epochs for fine-tuning on clean images
+        degrees: 0.0                # Rotation disabled: ball is round, rotation = noise
+        scale: 0.9                  # Scale augmentation for multi-scale robustness
+        fliplr: 0.5                 # Horizontal flip (natural in football)
+        flipud: 0.0                 # Vertical flip disabled (unnatural for football)
+        hsv_h: 0.015                # Slight hue variation for different lighting
+        hsv_s: 0.7                  # Saturation variation
+        hsv_v: 0.4                  # Value/brightness variation
+        translate: 0.2              # Translation augmentation
+        perspective: 0.0            # No perspective (can distort ball shape)
+        erasing: 0.0                # No erasing (can remove the ball entirely)

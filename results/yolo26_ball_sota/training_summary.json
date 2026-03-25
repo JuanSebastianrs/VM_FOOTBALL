@@ -1,0 +1,29 @@
+{
+  "pipeline": "YOLO26 Ball Detection SOTA",
+  "gpu_target": "NVIDIA A100 80GB",
+  "features": [
+    "MuSGD optimizer",
+    "ProgLoss",
+    "STAL",
+    "P2 layer"
+  ],
+  "started": "2026-03-12T19:29:13.636029",
+  "finished": "2026-03-14T11:53:26.476349",
+  "total_time_min": 2424.2,
+  "total_time_hours": 40.4,
+  "experiments": {
+    "yolo26_ball_sota": {
+      "metrics/precision(B)": 0.6046649987167618,
+      "metrics/recall(B)": 0.4930555555555556,
+      "metrics/mAP50(B)": 0.47627998553011314,
+      "metrics/mAP50-95(B)": 0.18362830591293106,
+      "fitness": 0.18362830591293106,
+      "training_time_min": 2416.4,
+      "status": "success",
+      "resumed": false,
+      "model": "yolo26n-p2.yaml",
+      "optimizer": "MuSGD",
+      "best_pt_size_mb": 5.9
+    }
+  }
+}

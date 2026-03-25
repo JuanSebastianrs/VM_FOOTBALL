@@ -20,6 +20,17 @@ import signal
 import traceback
 
 # ============================================================
+# PHASE 0.1: Auto-install Missing Cloud Dependencies
+# ============================================================
+try:
+    import pythonjsonlogger
+except ImportError:
+    import subprocess
+    import sys
+    print("[INIT] Installing missing python-json-logger dependency for Vertex AI...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "python-json-logger"])
+
+# ============================================================
 # PHASE 0: Validate ALL imports before anything else
 # ============================================================
 def validate_imports():
@@ -119,7 +130,8 @@ def watchdog_handler(signum, frame):
         _emergency_upload()
     except Exception:
         pass
-    sys.exit(2)
+    # Disable exit to prevent killing long epochs on SOTA P2
+    # sys.exit(2)
 
 
 def enable_watchdog():
