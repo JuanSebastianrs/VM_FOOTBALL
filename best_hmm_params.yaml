@@ -1,0 +1,15 @@
+viterbi_hyperparameters:
+  w1: 0.654036
+  w2: 0.057205
+  w3: 0.288759
+  delta_P: 735.97
+  lambda_cost: 25.9594
+  alpha: 4.3666
+  score_reward: 26.3642
+  foot_pct: 0.2142
+optimization_metadata:
+  best_loss: 0.34075
+  loss_formula: (1 - F1) + CLE/1000 + 0.5 * dummy_ratio
+  n_trials: 3
+  sampler: TPESampler(seed=42)
+  split: TRAIN sequences only

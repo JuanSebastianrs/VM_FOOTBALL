@@ -75,6 +75,8 @@ def render_videos():
     ft_state = torch.load(args.sam2_weights, map_location=device, weights_only=False)
     if "model_state_dict" in ft_state:
         sam2_model.load_state_dict(ft_state["model_state_dict"])
+    elif "model" in ft_state:
+        sam2_model.load_state_dict(ft_state["model"])
     else:
         sam2_model.load_state_dict(ft_state)
         

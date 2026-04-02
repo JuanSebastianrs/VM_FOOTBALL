@@ -21,6 +21,7 @@ def dist_pt(x1, y1, x2, y2):
 def get_args():
     parser = argparse.ArgumentParser(description="Batch TacticalVision Evaluator")
     parser.add_argument("--force", action="store_true", help="Force re-processing of all phases even if JSONs exist")
+    parser.add_argument("--params_yaml", type=str, default=r"d:\sebastian\Tesis\VM_FOOTBALL\best_hmm_params.yaml", help="Path to optimized parameters YAML")
     return parser.parse_args()
 
 def run_batch():
@@ -102,10 +103,14 @@ def run_batch():
         
         # Phase 3-5: Viterbi
         if not os.path.exists(traj_json) or args_batch.force:
-            subprocess.run(["python", r"d:\sebastian\Tesis\VM_FOOTBALL\core\tracking\tactical_vision_hmm.py",
-                            "--detections_json", det_json,
-                            "--cmc_json", cmc_json,
-                            "--output_json", traj_json], check=True)
+            cmd_hmm = ["python", r"d:\sebastian\Tesis\VM_FOOTBALL\core\tracking\tactical_vision_hmm.py",
+                       "--detections_json", det_json,
+                       "--cmc_json", cmc_json,
+                       "--output_json", traj_json]
+            if args_batch.params_yaml and os.path.exists(args_batch.params_yaml):
+                cmd_hmm.extend(["--params_yaml", args_batch.params_yaml])
+            
+            subprocess.run(cmd_hmm, check=True)
                         
         # Phase 8a: Raw YOLO Evaluation (Baseline)
         raw_result = subprocess.run(["python", r"d:\sebastian\Tesis\VM_FOOTBALL\core\detection\tactical_vision_yolo_eval.py",
@@ -422,7 +427,7 @@ def run_batch():
     iou_vi = np.array(global_metrics["iou_viterbi_global"])
     th_iou = np.linspace(0, 1.0, 100)
     yo_iou_pct = [(np.sum(iou_yo >= th) / max(len(iou_yo), 1)) * 100 for th in th_iou]
-    vi_iou_pct = [(np.sum(iou_vi >= th) / max(len(vi_iou_pct), 1)) * 100 for th in th_iou]
+    vi_iou_pct = [(np.sum(iou_vi >= th) / max(len(iou_vi), 1)) * 100 for th in th_iou]
 
     auc_yolo = np.trapezoid([p/100 for p in yo_iou_pct], th_iou)
     auc_vit = np.trapezoid([p/100 for p in vi_iou_pct], th_iou)

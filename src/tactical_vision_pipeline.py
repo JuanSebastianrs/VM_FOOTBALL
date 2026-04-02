@@ -65,7 +65,7 @@ def main():
         "Phase 7: Metrics Evaluation & Plot Generation"
     )
     
-    print("\n✅ TacticalVision AI Pipeline Completed Successfully!")
+    print("\n TacticalVision AI Pipeline Completed Successfully!")
 
 if __name__ == "__main__":
     main()

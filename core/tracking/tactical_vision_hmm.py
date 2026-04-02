@@ -8,6 +8,7 @@ def get_args():
     parser.add_argument("--detections_json", type=str, default="secuencia_197_detections.json")
     parser.add_argument("--cmc_json", type=str, default="secuencia_197_cmc.json")
     parser.add_argument("--output_json", type=str, default="secuencia_197_trajectory.json")
+    parser.add_argument("--params_yaml", type=str, default="", help="Path to best_hmm_params.yaml")
     return parser.parse_args()
 
 class Node:
@@ -55,14 +56,14 @@ def compute_appearance_cost(node_u, node_v):
     ratio = node_u.area / node_v.area
     return abs(np.log(ratio))
 
-def is_intersecting_bottom_30(bx, by, player):
+def is_intersecting_bottom_30(bx, by, player, foot_pct=0.30):
     xmin, ymin, xmax, ymax = player['x_min'], player['y_min'], player['x_max'], player['y_max']
     
     # Check if point is inside player horizontally
     if bx >= xmin and bx <= xmax:
-        # Check if point is in bottom 30% vertically
+        # Check if point is in bottom % vertically
         height = ymax - ymin
-        threshold_y = ymin + 0.7 * height
+        threshold_y = ymin + (1.0 - foot_pct) * height
         if by >= threshold_y and by <= ymax:
             return True
     return False
@@ -76,11 +77,27 @@ def build_graph_and_viterbi():
     with open(args.cmc_json, 'r') as f:
         cmc_matrices = json.load(f)
         
-    # Hyperparameters
+    # Default Hyperparameters
     w1, w2, w3 = 0.6, 0.2, 0.2
-    delta_P = 500.0   # Max pixel distance between frames (increased to prevent path breakage)
-    lambda_cost = 10.0  # High default cost for dummy transition (reduced)
-    alpha = 5.0       # Discount factor when intersecting player
+    delta_P = 500.0
+    lambda_cost = 10.0
+    alpha = 5.0
+    score_reward = 50.0 # Default from original code
+    foot_pct = 0.30
+
+    if args.params_yaml and os.path.exists(args.params_yaml):
+        import yaml
+        with open(args.params_yaml, 'r') as f:
+            y_data = yaml.safe_load(f)
+            if 'viterbi_hyperparameters' in y_data:
+                p = y_data['viterbi_hyperparameters']
+                w1, w2, w3 = p['w1'], p['w2'], p['w3']
+                delta_P = p['delta_P']
+                lambda_cost = p['lambda_cost']
+                alpha = p['alpha']
+                score_reward = p.get('score_reward', score_reward)
+                foot_pct = p.get('foot_pct', foot_pct)
+        print(f"Loaded optimized parameters from {args.params_yaml}")
     
     # Viterbi tables
     # DP State: V[t][node_idx] = (min_cost, prev_node_idx, (x, y, w, h, attached_player_id))
@@ -90,7 +107,7 @@ def build_graph_and_viterbi():
     f0_data = detections[0]
     for idx, c in enumerate(f0_data['ball_candidates']):
         V[0][idx] = {
-            'cost': -50.0 * c['score'], # Huge reward for high confidence
+            'cost': -score_reward * c['score'], # Use optimized reward
             'prev': None,
             'state': Node(idx, 0, c['x_center'], c['y_center'], c['w'], c['h'], c['score'], False)
         }
@@ -149,7 +166,7 @@ def build_graph_and_viterbi():
                 else:
                     C_p = 0.0
                     
-                transition_cost = w1 * C_k + w2 * C_a + w3 * C_p - 50.0 * v_node.score
+                transition_cost = w1 * C_k + w2 * C_a + w3 * C_p - score_reward * v_node.score
                 total_cost = base_cost + transition_cost
                 
                 if total_cost < best_cost:
@@ -183,7 +200,7 @@ def build_graph_and_viterbi():
                 # To be precise, we check intersection in frame t-1, and attach to player's track
                 intersected_player = None
                 for player in prev_data['players']:
-                    if is_intersecting_bottom_30(u_node.x, u_node.y, player):
+                    if is_intersecting_bottom_30(u_node.x, u_node.y, player, foot_pct):
                         intersected_player = player
                         break
                         
