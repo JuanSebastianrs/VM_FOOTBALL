@@ -112,16 +112,46 @@ class FootballDetector(ABC):
         return [d for d in detections if d.class_id in class_ids]
     
     def get_players(self, detections: List[Detection]) -> List[Detection]:
-        """Obtener solo jugadores (excluyendo porteros)."""
-        return self.filter_by_class(detections, [0, 1])
+        """Obtener jugadores de campo (excluyendo porteros)."""
+        return [d for d in detections if self.is_player_detection(d)]
     
     def get_goalkeepers(self, detections: List[Detection]) -> List[Detection]:
         """Obtener solo porteros."""
-        return self.filter_by_class(detections, [2, 3])
+        return [d for d in detections if self.is_goalkeeper_detection(d)]
+
+    def is_player_detection(self, detection: Detection) -> bool:
+        """
+        Detectar si una predicción corresponde a jugador de campo.
+
+        Soporta tanto taxonomía legacy (player_left/player_right/goalkeeper_*)
+        como taxonomía nueva de 2 clases (player/goalkeeper).
+        """
+        name = (detection.class_name or "").lower()
+        if "ref" in name:
+            return False
+        if "goalkeeper" in name or name.startswith("gk"):
+            return False
+        if "player" in name:
+            return True
+        return detection.class_id == 0
+
+    def is_goalkeeper_detection(self, detection: Detection) -> bool:
+        """Detectar si una predicción corresponde a portero."""
+        name = (detection.class_name or "").lower()
+        if "goalkeeper" in name or name.startswith("gk"):
+            return True
+        return detection.class_id in (2, 3)
+
+    def is_referee_detection(self, detection: Detection) -> bool:
+        """Detectar si una predicción corresponde a árbitro."""
+        name = (detection.class_name or "").lower()
+        if "ref" in name:
+            return True
+        return detection.class_id == 4
     
     def get_referees(self, detections: List[Detection]) -> List[Detection]:
         """Obtener solo árbitros."""
-        return self.filter_by_class(detections, [4])
+        return [d for d in detections if self.is_referee_detection(d)]
     
     def get_ball(self, detections: List[Detection]) -> Optional[Detection]:
         """Obtener detección del balón (la de mayor confianza si hay varias)."""

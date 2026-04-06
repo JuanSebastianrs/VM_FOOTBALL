@@ -25,24 +25,24 @@ dataset:
   limit_valid_images: 20
 
 classes:
-  unified: ["player"]
+  unified: ["player", "goalkeeper", "referee"]
   mapping:
     0: 0     # player_left → player
     1: 0     # player_right → player
-    2: 0     # goalkeeper_left → player
-    3: 0     # goalkeeper_right → player
-    4: -1    # referee → IGNORE
+    2: 1     # goalkeeper_left → goalkeeper
+    3: 1     # goalkeeper_right → goalkeeper
+    4: 2     # referee → referee
     5: -1    # ball → IGNORE
 
 output:
   base_dir: /workspace/runs
-  gcs_path: gs://vm-football-data/models/rfdetr_player
+  gcs_path: gs://vm-football-data/models/rfdetr_player_gk_ref
 
 rfdetr:
   coco_dir: /workspace/dataset_coco
   experiments:
-    rfdetr_smoketest:
-      description: "Smoke test: 2 epochs, checkpoint save+load verification"
+    rfdetr_smoketest_3class:
+      description: "Smoke test 3-class: 2 epochs, checkpoint save+load verification"
       model_class: RFDETRBase
       epochs: 2
       batch_size: 2

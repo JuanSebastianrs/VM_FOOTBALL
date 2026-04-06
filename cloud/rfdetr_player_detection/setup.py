@@ -16,10 +16,12 @@ setup(
     install_requires=[
         # RF-DETR framework
         "rfdetr>=1.4.0",
+        # Keep NumPy <2 to avoid ABI mismatch with prebuilt torch/scipy stack
+        "numpy>=1.23.0,<2.0.0",
         # CRITICAL: pydantic V2 required by rfdetr internals
         "pydantic>=2.5.0",
         # Transformer backbone deps
-        "transformers>=4.30.0",
+        "transformers>=4.30.0,<5.0.0",
         "accelerate>=0.27.0",
         "timm>=0.9.0",
         # Visualization & evaluation

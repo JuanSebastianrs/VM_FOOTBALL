@@ -44,7 +44,7 @@ Write-Host "  GPU:       $GPU ($ACCELERATOR_TYPE)"
 Write-Host "  Machine:   $MACHINE_TYPE"
 Write-Host "  Container: pytorch-gpu.2-2.py310"
 Write-Host "  SmokeTest: $($SmokeTest.IsPresent)"
-Write-Host "  Classes:   1 (player)"
+Write-Host "  Classes:   3 (player, goalkeeper, referee)"
 Write-Host ""
 
 # --- Step 1: Validate ---
@@ -95,7 +95,7 @@ set -euo pipefail
 # ============================================================
 # Trap: upload crash log on ANY failure
 # ============================================================
-GCS_OUTPUT="gs://PLACEHOLDER_BUCKET/models/rfdetr_player"
+GCS_OUTPUT="gs://PLACEHOLDER_BUCKET/models/rfdetr_player_gk_ref"
 OUTPUT_DIR="/workspace/runs"
 
 cleanup_on_error() {
@@ -201,6 +201,8 @@ pip install -q --no-cache-dir -e .
 # Re-pin after setup.py install (some deps may pull numpy 2.x or pydantic V1)
 pip install -q --force-reinstall "numpy>=1.23.0,<2.0.0"
 pip install -q --force-reinstall "pydantic>=2.5.0"
+pip install -q --force-reinstall --no-deps "transformers>=4.30.0,<5.0.0"
+pip install -q --force-reinstall "numpy>=1.23.0,<2.0.0" "scipy>=1.10.0,<1.13.0"
 
 # Force headless opencv LAST (prevents rfdetr/ultralytics from overwriting)
 pip install -q --force-reinstall --no-deps "opencv-python-headless>=4.8.0"
@@ -224,13 +226,32 @@ echo '[OK] Dependencies installed'
 echo "Key packages:"
 pip list 2>/dev/null | grep -iE "rfdetr|pydantic|torch|numpy|transformers|accelerate|timm|opencv|supervision" || true
 
+# Hard validation: abort before training if critical ABI/version constraints drifted.
+python3 - <<'PY'
+import sys
+import numpy
+import transformers
+
+n_major = int(numpy.__version__.split('.')[0])
+t_major = int(transformers.__version__.split('.')[0])
+
+if n_major >= 2:
+    print(f"[FATAL] numpy {numpy.__version__} is incompatible with current torch/scipy ABI stack; require <2.0.0")
+    sys.exit(1)
+if t_major >= 5:
+    print(f"[FATAL] transformers {transformers.__version__} is incompatible with rfdetr; require <5.0.0")
+    sys.exit(1)
+
+print(f"[OK] Version guard passed: numpy={numpy.__version__}, transformers={transformers.__version__}")
+PY
+
 PLACEHOLDER_SMOKE_OVERRIDE
 
 # ---- Phase 4: Set GCS env vars ----
 echo '[4/5] Configuring GCS paths...'
 export GCS_DATASET_PATH=gs://PLACEHOLDER_BUCKET/reorganized_dataset/
-export GCS_OUTPUT_PATH=gs://PLACEHOLDER_BUCKET/models/rfdetr_player
-export GCS_COCO_CACHE=gs://PLACEHOLDER_BUCKET/coco_cache_player
+export GCS_OUTPUT_PATH=gs://PLACEHOLDER_BUCKET/models/rfdetr_player_gk_ref
+export GCS_COCO_CACHE=gs://PLACEHOLDER_BUCKET/coco_cache_player_gk_ref
 export VERTEX_AI_JOB=true
 
 # ---- Phase 5: Train ----
@@ -383,11 +404,11 @@ if ($status -eq "JOB_STATE_SUCCEEDED") {
     Write-Host "   [SUCCESS] Training Complete!" -ForegroundColor Green
 
     # Download results
-    $localResults = "results\rfdetr_player_$TIMESTAMP"
+    $localResults = "results\rfdetr_player_gk_ref_$TIMESTAMP"
     New-Item -ItemType Directory -Force -Path $localResults | Out-Null
 
     Write-Host "   Downloading results from GCS..." -ForegroundColor Cyan
-    gcloud storage cp -r "gs://$DATA_BUCKET/models/rfdetr_player/*" "$localResults\"
+    gcloud storage cp -r "gs://$DATA_BUCKET/models/rfdetr_player_gk_ref/*" "$localResults\"
 
     Write-Host ""
     Write-Host "   [OK] Results saved to: $localResults" -ForegroundColor Green
@@ -401,7 +422,7 @@ else {
     Write-Host "   Attempting to download crash log..." -ForegroundColor Yellow
     $crashDir = "results\rfdetr_crash_$TIMESTAMP"
     New-Item -ItemType Directory -Force -Path $crashDir | Out-Null
-    gcloud storage cp "gs://$DATA_BUCKET/models/rfdetr_player/CRASH_LOG.txt" "$crashDir\" 2>$null
+    gcloud storage cp "gs://$DATA_BUCKET/models/rfdetr_player_gk_ref/CRASH_LOG.txt" "$crashDir\" 2>$null
     if (Test-Path "$crashDir\CRASH_LOG.txt") {
         Write-Host "   [INFO] Crash log saved to: $crashDir\CRASH_LOG.txt" -ForegroundColor Yellow
         Get-Content "$crashDir\CRASH_LOG.txt"

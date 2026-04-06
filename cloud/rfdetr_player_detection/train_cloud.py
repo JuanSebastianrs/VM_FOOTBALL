@@ -1,11 +1,11 @@
 """
-RF-DETR Player Detection - Cloud Training Script
-Trains RF-DETR Base for player detection (1 class: player).
+RF-DETR Player+GK+Referee Detection - Cloud Training Script
+Trains RF-DETR Base for 3 classes: player, goalkeeper, referee.
 Designed for Vertex AI Custom Spot Jobs with auto-resume on preemption.
 
 Features:
   - GCS Download: downloads dataset tar to local SSD for fast I/O
-  - YOLO→COCO: converts YOLO labels to COCO format (classes 0-3 → player)
+    - YOLO→COCO: converts YOLO labels to COCO format (0-1 -> player, 2-3 -> goalkeeper, 4 -> referee)
   - bf16→fp16: monkey-patches autocast for T4 GPUs (cc 7.5)
   - Spot Resume: checks GCS for previous checkpoints on restart
   - Crash Handler: uploads crash log + partial results on failure
@@ -69,7 +69,11 @@ def validate_imports():
 
     try:
         import transformers  # noqa: F401
+        t_major = int(transformers.__version__.split(".")[0])
+        assert t_major < 5, f"transformers {transformers.__version__} is incompatible; require <5.0.0"
     except ImportError as e:
+        errors.append(f"transformers: {e}")
+    except Exception as e:
         errors.append(f"transformers: {e}")
 
     try:
@@ -109,14 +113,14 @@ from PIL import Image
 # Constants
 # ============================================================
 
-# 1 unified class: player (merges classes 0-3, ignores 4-5)
-UNIFIED_CLASSES = ["player"]
+# 3 unified classes: player, goalkeeper, referee (ball is ignored)
+UNIFIED_CLASSES = ["player", "goalkeeper", "referee"]
 CLASS_MAPPING = {
     0: 0,   # player_left → player
     1: 0,   # player_right → player
-    2: 0,   # goalkeeper_left → player
-    3: 0,   # goalkeeper_right → player
-    4: -1,  # referee → IGNORE
+    2: 1,   # goalkeeper_left → goalkeeper
+    3: 1,   # goalkeeper_right → goalkeeper
+    4: 2,   # referee → referee
     5: -1,  # ball → IGNORE
 }
 COCO_CATEGORIES = [
@@ -397,7 +401,7 @@ def prepare_coco_dataset(
         return coco_dir
 
     # Check GCS cache (download pre-converted COCO annotations)
-    gcs_coco_cache = os.environ.get("GCS_COCO_CACHE", "gs://vm-football-data/coco_cache_player")
+    gcs_coco_cache = os.environ.get("GCS_COCO_CACHE", "gs://vm-football-data/coco_cache_player_gk_ref")
     if not force_conversion:
         try:
             print(f"[COCO] Checking GCS cache: {gcs_coco_cache}")

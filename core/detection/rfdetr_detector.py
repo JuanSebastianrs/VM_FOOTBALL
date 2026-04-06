@@ -1,7 +1,10 @@
 # rfdetr_detector.py
 """
 Detector de fútbol basado en RF-DETR (Real-Time DETR de Roboflow).
-Entrenado para detección de jugadores (1 clase unificada: player).
+
+Compatible con checkpoints de:
+    - 1 clase: ["player"]
+    - 2 clases: ["player", "goalkeeper"]
 
 RF-DETR maneja preprocesamiento y postprocesamiento internamente
 a través de model.predict(), sin necesidad de NMS.
@@ -50,6 +53,7 @@ class RFDETRDetector(FootballDetector):
         """
         super().__init__(weights_path, device)
         self.resolution = resolution
+        self.class_names = list(self.RFDETR_CLASSES)
 
     def load_model(self) -> None:
         """Cargar modelo RF-DETR con pesos entrenados."""
@@ -64,8 +68,14 @@ class RFDETRDetector(FootballDetector):
             pretrain_weights=str(self.weights_path),
             resolution=self.resolution,
         )
+
+        # RF-DETR puede exponer los nombres de clase según el checkpoint.
+        classes = getattr(self.model, "classes", None)
+        if isinstance(classes, (list, tuple)) and classes:
+            self.class_names = [str(c) for c in classes]
+
         print(f"[RF-DETR] Modelo cargado: {self.weights_path}")
-        print(f"[RF-DETR] Resolución: {self.resolution}px, Clases: {self.RFDETR_CLASSES}")
+        print(f"[RF-DETR] Resolución: {self.resolution}px, Clases: {self.class_names}")
 
     def detect(
         self,
@@ -103,9 +113,12 @@ class RFDETRDetector(FootballDetector):
         # Convertir a List[Detection]
         detections = []
         for i in range(len(sv_detections)):
-            # RF-DETR trained class_id 0 = "player" (unified)
             rfdetr_class_id = int(sv_detections.class_id[i])
-            class_name = self.RFDETR_CLASSES[rfdetr_class_id] if rfdetr_class_id < len(self.RFDETR_CLASSES) else "unknown"
+            class_name = (
+                self.class_names[rfdetr_class_id]
+                if 0 <= rfdetr_class_id < len(self.class_names)
+                else "unknown"
+            )
 
             detections.append(Detection(
                 bbox=sv_detections.xyxy[i],     # [x1, y1, x2, y2]

@@ -79,3 +79,4 @@ temp/
 !data/.gitkeep
 !outputs/.gitkeep
 .agent/
+MASTER_PROMPT.md
