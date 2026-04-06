@@ -100,7 +100,7 @@ ByteTrack mitigates this mathematical problem by implementing a structured bipar
 
 Differentiating teams dynamically is crucial for semantic tactical analysis.
 \begin{itemize}
-\item \textbf{K-Means Clustering on HSV Color Space:} Team assignment is addressed with a three-mode formulation (HSV, SigLIP, and hybrid), where the current baseline is HSV-driven unsupervised clustering. Each tracked player is represented with a torso crop (top=0.15, bottom=0.60, left=0.20, right=0.80), converted to HSV, and filtered with a pitch-green suppression mask ($H \in [35, 90]$) to reduce grass contamination. A normalized H/S histogram descriptor (12 bins per channel) is aggregated at track level and clustered with K-Means ($k=2$), followed by a left/right heuristic on early frames to stabilize cluster identity across time.
+\item \textbf{HSV Team Clustering + Role-Based Goalkeeper Tagging:} Team assignment is currently implemented with a barebones unsupervised stack based on HSV descriptors and two clustering modes (K-Means and DBSCAN+K-Means refinement). Each tracked player is represented with a torso crop (top=0.15, bottom=0.60, left=0.20, right=0.80), converted to HSV, and filtered with a pitch-green suppression mask ($H \in [35, 90]$) to reduce grass contamination. A normalized H/S histogram descriptor (12 bins per channel) is aggregated at track level and clustered with K-Means ($k=2$), followed by a left/right heuristic on early frames to stabilize cluster identity across time. Goalkeepers are modeled as a separate role label (GK) through temporal evidence (rolling window + hysteresis), rather than forcing a third team cluster.
 \end{itemize}
 
 \subsection{Cloud-Native Model Training Infrastructure}
@@ -155,7 +155,9 @@ On the SNMOT-116 sequence (750 frames), the system processed the full video with
 \subsection{Clustering Outputs (Current Baseline)}
 \label{subsec:3_3}
 
-The HSV clustering baseline on SNMOT-116 produced \textbf{84} track assignments, with cluster distribution \textbf{39/45} (team 0/team 1) and \textbf{8,690} accumulated feature samples. This confirms operational viability of the current color-based baseline for team separation in broadcast footage.
+The HSV clustering baseline on SNMOT-116 produced \textbf{84} track assignments, with cluster distribution \textbf{39/45} (team 0/team 1) and \textbf{8,690} accumulated feature samples. The current evaluation stack now supports two goalkeeper assignment modes (\textit{legacy} and \textit{fused}), role-aware detections (player/goalkeeper/referee), and exports extended explainability artifacts (decision confidence, reason codes, and fused component scores) in per-sequence diagnostics. This confirms operational viability of the current color-based baseline while enabling controlled post-training ablations.
+
+This role-aware evaluation path was validated on three representative clips: SNMOT-116, SNMOT-117, and SNMOT-143. Across those sequences, referee tracks remained separate from team clustering and the goalkeeper assignment remained stable under both legacy and fused modes, including a corner-kick scenario in SNMOT-116.
 
 \section{Conclusion and Future Directions}
 \label{sec:4}

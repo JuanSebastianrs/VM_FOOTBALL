@@ -38,13 +38,13 @@ def set_seed(seed: int = 42):
 # ============================================================
 
 # Unified classes for RF-DETR
-UNIFIED_CLASSES = ["player", "goalkeeper"]
+UNIFIED_CLASSES = ["player", "goalkeeper", "referee"]
 CLASS_MAPPING = {
     0: 0,   # player_left -> player
     1: 0,   # player_right -> player
     2: 1,   # goalkeeper_left -> goalkeeper
     3: 1,   # goalkeeper_right -> goalkeeper
-    4: -1,  # referee -> IGNORE
+    4: 2,   # referee -> referee
     5: -1,  # ball -> IGNORE
 }
 COCO_CATEGORIES = [
