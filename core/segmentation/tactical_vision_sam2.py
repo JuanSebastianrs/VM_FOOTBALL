@@ -64,7 +64,7 @@ def render_videos():
     import urllib.request
     
     BASE_CKPT_URL = "https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_small.pt"
-    BASE_CKPT_PATH = "sam2.1_hiera_small.pt"
+    BASE_CKPT_PATH = "models/sam2.1_hiera_small.pt"
     if not os.path.exists(BASE_CKPT_PATH):
         print(f"Downloading base checkpoint...")
         urllib.request.urlretrieve(BASE_CKPT_URL, BASE_CKPT_PATH)

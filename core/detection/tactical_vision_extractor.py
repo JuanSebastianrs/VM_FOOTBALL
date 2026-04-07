@@ -11,7 +11,7 @@ def get_args():
                         help="Path to sequence directory containing 'img1' folder (e.g. SNMOT-197)")
     parser.add_argument("--yolo_weights", type=str, required=True,
                         help="Path to YOLO ball detection weights")
-    parser.add_argument("--rtdetr_weights", type=str, default="rtdetr-l.pt",
+    parser.add_argument("--rtdetr_weights", type=str, default="models/rtdetr-l.pt",
                         help="Path to RT-DETR weights for player detection")
     parser.add_argument("--output_json", type=str, default="secuencia_197_detections.json",
                         help="Path to output JSON file")
