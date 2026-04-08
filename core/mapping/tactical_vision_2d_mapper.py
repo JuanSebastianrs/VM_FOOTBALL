@@ -4,233 +4,349 @@ import json
 import os
 import glob
 import argparse
-from ultralytics import YOLO
+import torch
+import torchvision.transforms as T
+import torchvision.transforms.functional as TF
+import yaml
 from tqdm import tqdm
+from PIL import Image
 
-# Diccionario con las 29 coordenadas geométricas base (105x68 métrico)
-# Origen (0,0) en la esquina superior izquierda. X = 0 a 105, Y = 0 a 68.
-FIFA_29_PTS = {
-    0: (0.0, 0.0),                               # sideline_top_left
-    1: (0.0, 13.85),                             # big_rect_left_top_pt1
-    2: (16.5, 13.85),                            # big_rect_left_top_pt2
-    3: (0.0, 54.15),                             # big_rect_left_bottom_pt1
-    4: (16.5, 54.15),                            # big_rect_left_bottom_pt2
-    5: (0.0, 24.85),                             # small_rect_left_top_pt1
-    6: (5.5, 24.85),                             # small_rect_left_top_pt2
-    7: (0.0, 43.15),                             # small_rect_left_bottom_pt1
-    8: (5.5, 43.15),                             # small_rect_left_bottom_pt2
-    9: (0.0, 68.0),                              # sideline_bottom_left
-    10: (20.15, 34.0),                           # left_semicircle_right (11m + 9.15m radio)
-    11: (52.5, 0.0),                             # center_line_top
-    12: (52.5, 68.0),                            # center_line_bottom
-    13: (52.5, 24.85),                           # center_circle_top
-    14: (52.5, 43.15),                           # center_circle_bottom
-    15: (52.5, 34.0),                            # field_center
-    16: (105.0, 0.0),                            # sideline_top_right
-    17: (105.0, 13.85),                          # big_rect_right_top_pt1
-    18: (88.5, 13.85),                           # big_rect_right_top_pt2
-    19: (105.0, 54.15),                          # big_rect_right_bottom_pt1
-    20: (88.5, 54.15),                           # big_rect_right_bottom_pt2
-    21: (105.0, 24.85),                          # small_rect_right_top_pt1
-    22: (99.5, 24.85),                           # small_rect_right_top_pt2
-    23: (105.0, 43.15),                          # small_rect_right_bottom_pt1
-    24: (99.5, 43.15),                           # small_rect_right_bottom_pt2
-    25: (105.0, 68.0),                           # sideline_bottom_right
-    26: (84.85, 34.0),                           # right_semicircle_left (105 - 11 - 9.15)
-    27: (43.35, 34.0),                           # center_circle_left (52.5 - 9.15)
-    28: (61.65, 34.0),                           # center_circle_right (52.5 + 9.15)
-}
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from vendor.pnlcalib.model import cls_hrnet, cls_hrnet_l
+from vendor.pnlcalib.utils.utils_heatmap import (
+    get_keypoints_from_heatmap_batch_maxpool,
+    get_keypoints_from_heatmap_batch_maxpool_l,
+    coords_to_dict,
+    complete_keypoints
+)
+from vendor.pnlcalib.utils.utils_calib import FramebyFrameCalib
+
+
+# ---------------------------------------------------------------------------
+# Projection helpers (match original PnLCalib inference.py exactly)
+# ---------------------------------------------------------------------------
+
+def build_P_from_cam_params(cam_params):
+    """
+    Build the 3x4 projection matrix P from a PnLCalib cam_params dict.
+    This is identical to `projection_from_cam_params` in the original repo.
+    """
+    x_focal_length = cam_params['x_focal_length']
+    y_focal_length = cam_params['y_focal_length']
+    principal_point = np.array(cam_params['principal_point'])
+    position_meters = np.array(cam_params['position_meters'])
+    rotation = np.array(cam_params['rotation_matrix'])
+
+    It = np.eye(4)[:-1]
+    It[:, -1] = -position_meters
+    Q = np.array([[x_focal_length, 0, principal_point[0]],
+                  [0, y_focal_length, principal_point[1]],
+                  [0, 0, 1]])
+    P = Q @ (rotation @ It)
+    return P
+
+
+def ground_homography_from_P(P):
+    """
+    Extract the 3x3 ground-plane (Z=0) homography from a 3x4 projection matrix.
+    For Z=0, the third column of P is irrelevant, so H = [P[:,0] | P[:,1] | P[:,3]].
+    Returns H_inv (image -> world).
+    """
+    H = P[:, [0, 1, 3]]
+    H_inv = np.linalg.inv(H)
+    return H_inv
+
+
+# ---------------------------------------------------------------------------
+# Homography smoother — smooth the final H_inv matrix directly with EMA.
+# This avoids any Euler angle interpolation issues.
+# ---------------------------------------------------------------------------
+
+class HomographySmoother:
+    """
+    Exponential Moving Average smoother for 3x3 homography matrices.
+    Smooths H_inv directly so projection is stable frame-to-frame.
+    """
+    def __init__(self, alpha=0.3):
+        self.alpha = alpha
+        self.H_inv = None
+
+    def update(self, H_inv_new):
+        if self.H_inv is None:
+            self.H_inv = H_inv_new.copy()
+        else:
+            self.H_inv = self.alpha * H_inv_new + (1.0 - self.alpha) * self.H_inv
+        return self.H_inv
+
+
+# ---------------------------------------------------------------------------
+# Minimap drawing
+# ---------------------------------------------------------------------------
 
 def draw_pitch_cv2(scale=10, margin=50):
-    """
-    Dibuja un minimapa 2D usando OpenCV para máxima velocidad.
-    Retorna la imagen BGR base.
-    """
+    """Draw a 2D pitch minimap using OpenCV."""
     w = int(105 * scale)
     h = int(68 * scale)
-    img_w, img_h = w + 2*margin, h + 2*margin
-    
-    # Césped verde
+    img_w, img_h = w + 2 * margin, h + 2 * margin
+
     pitch = np.zeros((img_h, img_w, 3), dtype=np.uint8)
-    pitch[:] = (60, 120, 50) # BGR
-    
+    pitch[:] = (60, 120, 50)  # BGR green
+
     white = (255, 255, 255)
-    thictness = 2
-    
-    # Función lambda para escalar
+    thickness = 2
+
     pt = lambda x, y: (int(x * scale) + margin, int(y * scale) + margin)
-    
-    # Bordes exteriores
-    cv2.rectangle(pitch, pt(0,0), pt(105, 68), white, thictness)
-    
-    # Línea central
-    cv2.line(pitch, pt(52.5, 0), pt(52.5, 68), white, thictness)
-    
-    # Círculo central
-    cv2.circle(pitch, pt(52.5, 34), int(9.15 * scale), white, thictness)
-    # Punto central
+
+    # Field outline
+    cv2.rectangle(pitch, pt(0, 0), pt(105, 68), white, thickness)
+    # Half-way line
+    cv2.line(pitch, pt(52.5, 0), pt(52.5, 68), white, thickness)
+    # Centre circle
+    cv2.circle(pitch, pt(52.5, 34), int(9.15 * scale), white, thickness)
     cv2.circle(pitch, pt(52.5, 34), 2, white, -1)
-    
-    # Áreas Pequeñas
-    cv2.rectangle(pitch, pt(0, 24.85), pt(5.5, 43.15), white, thictness)
-    cv2.rectangle(pitch, pt(105-5.5, 24.85), pt(105, 43.15), white, thictness)
-    
-    # Áreas Grandes
-    cv2.rectangle(pitch, pt(0, 13.85), pt(16.5, 54.15), white, thictness)
-    cv2.rectangle(pitch, pt(105-16.5, 13.85), pt(105, 54.15), white, thictness)
-    
-    # Puntos de penal
+    # Goal areas
+    cv2.rectangle(pitch, pt(0, 24.85), pt(5.5, 43.15), white, thickness)
+    cv2.rectangle(pitch, pt(105 - 5.5, 24.85), pt(105, 43.15), white, thickness)
+    # Penalty areas
+    cv2.rectangle(pitch, pt(0, 13.85), pt(16.5, 54.15), white, thickness)
+    cv2.rectangle(pitch, pt(105 - 16.5, 13.85), pt(105, 54.15), white, thickness)
+    # Penalty spots
     cv2.circle(pitch, pt(11, 34), 2, white, -1)
-    cv2.circle(pitch, pt(105-11, 34), 2, white, -1)
-    
-    # Semicírculos (aproximado usando arcos)
-    cv2.ellipse(pitch, pt(11, 34), (int(9.15*scale), int(9.15*scale)), 0, -53.13, 53.13, white, thictness)
-    cv2.ellipse(pitch, pt(105-11, 34), (int(9.15*scale), int(9.15*scale)), 0, 126.87, 233.13, white, thictness)
+    cv2.circle(pitch, pt(105 - 11, 34), 2, white, -1)
+    # Penalty arcs
+    cv2.ellipse(pitch, pt(11, 34), (int(9.15 * scale), int(9.15 * scale)),
+                0, -53.13, 53.13, white, thickness)
+    cv2.ellipse(pitch, pt(105 - 11, 34), (int(9.15 * scale), int(9.15 * scale)),
+                0, 126.87, 233.13, white, thickness)
 
     return pitch
 
-def project_point(x, y, H, scale, margin):
-    """Aplica la matriz de homografía H y escapa a la vista del minimapa"""
-    pts = np.array([[[x, y]]], dtype="float32")
-    proj = cv2.perspectiveTransform(pts, H)
-    px, py = proj[0][0]
-    return int(px * scale) + margin, int(py * scale) + margin
+
+# ---------------------------------------------------------------------------
+# Projection: image pixel  ->  minimap pixel   via  H_inv
+# ---------------------------------------------------------------------------
+
+def project_point(x_img, y_img, H_inv, scale, margin, w_pitch, h_pitch):
+    """
+    Project an image-space point (x_img, y_img) onto the minimap using H_inv.
+    H_inv maps image coords -> PnLCalib world coords (centred on pitch centre).
+    Returns (mx, my) minimap pixel coords, or (None, None) if out of bounds.
+    """
+    pt_world = H_inv @ np.array([x_img, y_img, 1.0])
+    pt_world /= pt_world[2]
+
+    # PnLCalib world has origin at pitch centre -> shift to top-left origin
+    x_world = pt_world[0] + 52.5
+    y_world = pt_world[1] + 34.0
+
+    # Loose sanity bounds
+    if x_world < -5 or x_world > 110 or y_world < -5 or y_world > 73:
+        return None, None
+
+    mx = int(x_world * scale) + margin
+    my = int(y_world * scale) + margin
+
+    if 0 <= mx < w_pitch and 0 <= my < h_pitch:
+        return mx, my
+    return None, None
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sequence_dir", type=str, required=True)
     parser.add_argument("--detections", type=str, required=True)
     parser.add_argument("--trajectory", type=str, required=True)
-    parser.add_argument("--keypoints_model", type=str, required=True)
+    parser.add_argument("--pnlcalib_kp_weights", type=str, default="models/SV_kp")
+    parser.add_argument("--pnlcalib_line_weights", type=str, default="models/SV_lines")
+    parser.add_argument("--pnlcalib_kp_cfg", type=str,
+                        default="vendor/pnlcalib/config/hrnetv2_w48.yaml")
+    parser.add_argument("--pnlcalib_l_cfg", type=str,
+                        default="vendor/pnlcalib/config/hrnetv2_w48_l.yaml")
+    parser.add_argument("--kp_threshold", type=float, default=0.3434)
+    parser.add_argument("--line_threshold", type=float, default=0.7867)
+    parser.add_argument("--disable_pnl_refine", action="store_true")
+    parser.add_argument("--smooth_alpha", type=float, default=0.3,
+                        help="EMA alpha for H_inv smoothing (0=frozen, 1=no smooth)")
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
 
-    print(f"Cargando YOLOv11-Pose Soccana desde {args.keypoints_model}...")
-    model_kp = YOLO(args.keypoints_model)
+    # --- Load HRNet configs ---
+    with open(args.pnlcalib_kp_cfg, 'r') as fh:
+        cfg = yaml.safe_load(fh)
+    with open(args.pnlcalib_l_cfg, 'r') as fh:
+        cfgl = yaml.safe_load(fh)
 
-    print(f"Cargando datos de tracking...")
-    with open(args.detections, "r") as f:
-        detections = {d["frame_id"]: d for d in json.load(f)}
-    with open(args.trajectory, "r") as f:
-        trajectory = {t["frame_id"]: t for t in json.load(f)}
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Dispositivo: {device}")
+
+    # --- Load HRNet models (exactly as original PnLCalib inference.py) ---
+    print("Cargando modelo PnLCalib Keypoints HRNet...")
+    model_kp = cls_hrnet.get_cls_net(cfg)
+    model_kp.load_state_dict(
+        torch.load(args.pnlcalib_kp_weights, map_location=device, weights_only=False))
+    model_kp.to(device).eval()
+
+    print("Cargando modelo PnLCalib Lines HRNet...")
+    model_l = cls_hrnet_l.get_cls_net(cfgl)
+    model_l.load_state_dict(
+        torch.load(args.pnlcalib_line_weights, map_location=device, weights_only=False))
+    model_l.to(device).eval()
+
+    transform_resize = T.Resize((540, 960))
+
+    # --- Load tracking data ---
+    print("Cargando datos de tracking...")
+    with open(args.detections, "r") as fh:
+        detections = {d["frame_id"]: d for d in json.load(fh)}
+    with open(args.trajectory, "r") as fh:
+        trajectory = {t["frame_id"]: t for t in json.load(fh)}
 
     img_dir = os.path.join(args.sequence_dir, "img1")
     images = sorted(glob.glob(os.path.join(img_dir, "*.jpg")))
-
     if not images:
         print("Error: No hay imágenes en la ruta de la secuencia.")
         return
 
-    # Video Setup
     frame_0 = cv2.imread(images[0])
     h_ori, w_ori = frame_0.shape[:2]
 
-    # Pre-render pitch (escala 1 metro = 10 pixels p. ej)
+    # --- Video layout ---
     scale = 8
     margin = 40
     base_pitch = draw_pitch_cv2(scale, margin)
     h_pitch, w_pitch = base_pitch.shape[:2]
 
-    # Redimensionar el original para match con el minimapa (side-by-side)
     target_video_h = max(h_ori, h_pitch)
     scale_ori = target_video_h / h_ori
     new_w_ori = int(w_ori * scale_ori)
-    
+
     out_w = new_w_ori + w_pitch
     out_h = target_video_h
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out_video = cv2.VideoWriter(args.output, fourcc, 25.0, (out_w, out_h))
 
-    last_valid_H = None
+    # --- Calibration objects ---
+    cam = FramebyFrameCalib(iwidth=w_ori, iheight=h_ori, denormalize=True)
+    smoother = HomographySmoother(alpha=args.smooth_alpha)
 
-    print(f"Iniciando Renderización Side-By-Side (Total frames: {len(images)})")
-    
+    last_valid_H_inv = None
+    pnl_refine = not args.disable_pnl_refine
+
+    calib_ok = 0
+    calib_fail = 0
+
+    print(f"Procesando {len(images)} frames...")
+
     for img_path in tqdm(images):
         frame_id = int(os.path.splitext(os.path.basename(img_path))[0])
         frame = cv2.imread(img_path)
-        
-        # 1. Extraer 29 puntos clave de la matriz del campo
-        results_kp = model_kp.predict(frame, verbose=False, device='cuda')
-        kpts = results_kp[0].keypoints.data[0].cpu().numpy() # [29, 3]
 
-        src_pts = []
-        dst_pts = []
+        # ---- PnLCalib inference (mirrors original inference.py exactly) ----
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        pil = Image.fromarray(rgb)
+        tensor = TF.to_tensor(pil).float().unsqueeze(0)
+        if tensor.size()[-1] != 960:
+            tensor = transform_resize(tensor)
+        tensor = tensor.to(device)
+        _, _, h_t, w_t = tensor.size()
 
-        for i in range(29):
-            x, y, conf = kpts[i]
-            if conf > 0.5: # Umbral de confianza
-                src_pts.append([x, y])
-                dst_pts.append(FIFA_29_PTS[i])
-        
-        # 2. Computar o Reciclar Homografía
-        H = None
-        if len(src_pts) >= 4:
-            src_arr = np.array(src_pts, dtype=np.float32)
-            dst_arr = np.array(dst_pts, dtype=np.float32)
-            H, _ = cv2.findHomography(src_arr, dst_arr, cv2.RANSAC, 5.0)
-        
-        if H is not None:
-            last_valid_H = H
+        with torch.no_grad():
+            hm_kp = model_kp(tensor)
+            hm_l = model_l(tensor)
+
+        # Exclude background channel (last channel)
+        kp_coords = get_keypoints_from_heatmap_batch_maxpool(hm_kp[:, :-1, :, :])
+        line_coords = get_keypoints_from_heatmap_batch_maxpool_l(hm_l[:, :-1, :, :])
+
+        kp_dict = coords_to_dict(kp_coords, threshold=args.kp_threshold)
+        lines_dict = coords_to_dict(line_coords, threshold=args.line_threshold)
+
+        kp_dict, lines_dict = complete_keypoints(
+            kp_dict[0], lines_dict[0], w=w_t, h=h_t, normalize=True
+        )
+
+        cam.update(kp_dict, lines_dict)
+        result = cam.heuristic_voting(refine_lines=pnl_refine)
+
+        # ---- Build H_inv from raw PnLCalib cam_params (no angle reconstruction) ----
+        if result is not None:
+            cam_params = result['cam_params']
+            P = build_P_from_cam_params(cam_params)
+            H_inv_raw = ground_homography_from_P(P)
+            H_inv = smoother.update(H_inv_raw)
+            last_valid_H_inv = H_inv
+            calib_ok += 1
         else:
-            H = last_valid_H
+            H_inv = last_valid_H_inv
+            calib_fail += 1
 
-        # Preparar marcos visuales
+        # ---- Render minimap ----
         pitch_frame = base_pitch.copy()
-        
-        # Dibujar Kpts en el frame original por validación
-        for x, y in src_pts:
-            cv2.circle(frame, (int(x), int(y)), 4, (0, 255, 255), -1)
 
-        # 3. Proyectar y Renderizar Jugadores
-        frame_data = detections.get(frame_id, {"players": []})
-        for p in frame_data["players"]:
-            x_min, y_min, x_max, y_max = p["x_min"], p["y_min"], p["x_max"], p["y_max"]
-            track_id = p["track_id"]
-            
-            # Dibujar rect original
-            cv2.rectangle(frame, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 0, 0), 2)
-            
-            # Anclaje Inferior (Z=0 aprox)
-            x_center = (x_min + x_max) / 2.0
-            y_bottom = y_max
-            
-            if H is not None:
-                px, py = project_point(x_center, y_bottom, H, scale, margin)
-                # Bounds check
-                if 0 <= px < w_pitch and 0 <= py < h_pitch:
-                    cv2.circle(pitch_frame, (px, py), 6, (255, 0, 0), -1)
-                    cv2.putText(pitch_frame, str(track_id), (px+8, py), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+        if H_inv is not None:
+            # -- Players --
+            frame_data = detections.get(frame_id, {"players": []})
+            for p in frame_data.get("players", []):
+                x_min = p["x_min"]
+                y_min = p["y_min"]
+                x_max = p["x_max"]
+                y_max = p["y_max"]
+                track_id = p.get("track_id", -1)
 
-        # 4. Proyectar y Renderizar Balón (Viterbi)
-        ball_data = trajectory.get(frame_id)
-        if ball_data and H is not None:
-            bx, by = ball_data["x"], ball_data["y"]
-            is_dummy = ball_data.get("is_dummy", False)
-            color_ball = (0, 0, 255) if is_dummy else (0, 255, 255)
-            
-            # Dibujar en video
-            cv2.circle(frame, (int(bx), int(by)), 5, color_ball, -1)
-            
-            # En minimapa, advertencia visual temporal: el balón vuela, homografía puede mentir (fallo Z!=0)
-            px, py = project_point(bx, by, H, scale, margin)
-            if 0 <= px < w_pitch and 0 <= py < h_pitch:
-                cv2.circle(pitch_frame, (px, py), 5, (0, 165, 255), -1) # Naranja
-        
-        # 5. Concatenar y Escribir
+                # Draw bbox on video frame
+                cv2.rectangle(frame,
+                              (int(x_min), int(y_min)),
+                              (int(x_max), int(y_max)),
+                              (255, 0, 0), 2)
+
+                # Project foot-point (bottom-centre of bbox)
+                x_foot = (x_min + x_max) / 2.0
+                y_foot = y_max
+
+                mx, my = project_point(
+                    x_foot, y_foot, H_inv, scale, margin, w_pitch, h_pitch
+                )
+                if mx is not None:
+                    cv2.circle(pitch_frame, (mx, my), 6, (255, 0, 0), -1)
+                    cv2.putText(pitch_frame, str(track_id), (mx + 8, my),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                (255, 255, 255), 1)
+
+            # -- Ball (Viterbi trajectory) --
+            ball = trajectory.get(frame_id)
+            if ball is not None:
+                bx, by = ball["x"], ball["y"]
+                is_dummy = ball.get("is_dummy", False)
+                color = (0, 0, 255) if is_dummy else (0, 255, 255)
+                cv2.circle(frame, (int(bx), int(by)), 5, color, -1)
+
+                mx, my = project_point(
+                    bx, by, H_inv, scale, margin, w_pitch, h_pitch
+                )
+                if mx is not None:
+                    cv2.circle(pitch_frame, (mx, my), 5, (0, 165, 255), -1)
+
+        # ---- Compose side-by-side ----
         frame_resized = cv2.resize(frame, (new_w_ori, target_video_h))
-        pitch_resized = cv2.resize(pitch_frame, (w_pitch, target_video_h)) # No debería redimensionarse mucho, h_pitch ya es 68*8
-        
-        # Superponer pitch frame centrado o escalado
         pad_top = (target_video_h - h_pitch) // 2
         pad_bot = target_video_h - h_pitch - pad_top
-        pitch_padded = cv2.copyMakeBorder(pitch_frame, pad_top, pad_bot, 0, 0, cv2.BORDER_CONSTANT, value=[0,0,0])
+        pitch_padded = cv2.copyMakeBorder(
+            pitch_frame, pad_top, pad_bot, 0, 0,
+            cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
-        final_frame = np.hstack((frame_resized, pitch_padded))
-        out_video.write(final_frame)
+        out_video.write(np.hstack((frame_resized, pitch_padded)))
 
     out_video.release()
-    print(f"Proceso finalizado. Video guardado en: {args.output}")
+    print(f"\nCalibración exitosa: {calib_ok}/{len(images)} frames")
+    print(f"Calibración fallida: {calib_fail}/{len(images)} frames")
+    print(f"Video guardado en: {args.output}")
+
 
 if __name__ == '__main__':
     main()

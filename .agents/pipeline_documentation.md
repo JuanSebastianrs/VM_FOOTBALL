@@ -1,14 +1,16 @@
 # Documentación del Pipeline de TacticalVision AI
 
-Este documento describe la arquitectura técnica, las fases de procesamiento y las optimizaciones recientes aplicadas al pipeline de seguimiento de balón (ball tracking) basado en el Grafo Oculto de Markov (HMM) con decodificación de Viterbi, así como la segmentación con SAM2.
+Este documento describe la arquitectura técnica, las fases de procesamiento y las optimizaciones del pipeline TacticalVision AI. Incluye la detección con YOLO26 y RT-DETR, el seguimiento temporal con Grafo HMM/Viterbi, la segmentación con SAM2 y la reconstrucción 2D del campo con YOLOv11-Pose.
 
 ## Arquitectura del Pipeline (End-to-End)
 
 El pipeline de resolución se divide en 7 fases principales gestionadas por el orquestador principal (`src/tactical_vision_pipeline.py`):
 
 ### Fase 1: Extracción de Características (Feature Extraction)
-*   **Modelos:** Utiliza **YOLOv26** (pesos optimizados) para la detección de candidatos de balón y **RT-DETR** para la detección de jugadores en la cancha.
-*   **Salida:** Un archivo `_detections.json` que almacena las coordenadas espaciales `[x, y, w, h]` y los scores de confianza (conf) para cada frame.
+*   **Modelos:** 
+    *   **YOLO26 Nano:** (SOTA) Especializado en detección de balón. Utiliza una capa **P2 (Stride 4)** y **STAL** (Small-Target-Aware Label Assignment) para capturar el balón incluso a resoluciones bajas. Reemplaza al anterior YOLO11.
+    *   **RT-DETR (Real-Time DEtection TRansformer):** Utilizado para la detección robusta de jugadores y porteros.
+*   **Salida:** Un archivo `_detections.json` con coordenadas `[x, y, w, h]` y scores de confianza.
 
 ### Fase 2: Compensación de Movimiento de Cámara (CMC - Camera Motion Compensation)
 *   **Descripción:** Estima el movimiento afín/homográfico de la cámara entre frames consecutivos extrayendo puntos clave (keypoints) del campo.
@@ -35,20 +37,30 @@ El pipeline de resolución se divide en 7 fases principales gestionadas por el o
 *   **Descripción:** Toma la trayectoria final y efectúa validaciones de métricas con el Ground Truth (dataset original manual).
 *   **Métricas Evaluadas:**
     *   F1-Score, Precisión y Recall.
-    *   Center Location Error (CLE) y perfiles espaciales.
-    *   Métricas de Recuperación de Oclusiones (ORR - Occlusion Recovery Rate).
-    *   Curvas mAP y Gráficos de Éxito (Success Plot).
+### Fase Extra: Reconstrucción 2D y Calibración Geométrica (PnLCalib Minimap)
+*   **Modelo de Extracción:** **Arquitectura Dual HRNet-W48 (PnLCalib)**.
+*   **Descripción Arquitectónica:** En un salto de precisión sobre la heurística de estimaciones pasadas (como YOLOv11-Pose), este módulo integra PnLCalib (Perspective-n-Line/Point Calibration) enfocado al ámbito deportivo. Usa dos redes neuronales estriadas **HRNet** (`SV_kp` y `SV_lines`) funcionando en paralelo. Una predice *mapas de calor (heatmaps)* espaciales correspondientes a 29 puntos clave de la FIFA, y la otra aísla las aristas (líneas) demarcatorias del campo verde.
+*   **Decodificación e Intersección:** Se combinan las matrices de confusión de ambas redes, completando los puntos claves ciegos u ocluidos mediante un cálculo algebraico de las intersecciones de las líneas proyectadas de la cancha, garantizando resistencia a oclusiones topológicas formadas por los propios jugadores.
+*   **Matriz de Proyección (P) y Homografía Pura (H_inv):** 
+    En lugar de calcular una homografía inestable por Direct Linear Transform (DLT) frame a frame, el sistema ejecuta una votación heurística con optimización tipo RANSAC y LM (Levenberg-Marquardt) para deducir el **Espacio 3D completo de la Cámara Broadcast**. 
+    Infiere 8 grados de libertad (DOF): Pan, Tilt, Roll, las Distancias Focales ($f_x, f_y$) y el vector de traslación Posicional ($x,y,z$) con respecto al centro oficial de la cancha.
+    Con esto, se ensambla la **Matriz de Proyección de Cámara $3 \times 4$ ($P = K[R|t]$)** que mapea matemáticamente cualquier sistema de coordenadas Mundiales al Plano de Imagen. Dado que nos interesa el mapeo 2D rasante (`Pitch Ground Plane`), aplicamos la restricción de altura $Z=0$ sobre $P$, lo que nos permite descartar la tercera columna de covarianzas de altura y aislar una estricta **Matriz de Homografía $3 \times 3$ ($H_{inv}$)**. Esta matriz resultante efectúa una traducción milimétrica y matemáticamente perfecta de píxel a coordenadas UTM y viceversa.
+*   **Suavizado Temporal Matemático (EMA - Temporal Smoothing):**
+    Los modelos frame-a-frame puros producen el fenómeno de "flickering" o "nerviosidad", donde variaciones probabilísticas sub-píxel de RANSAC causan que la reconstrucción salte abruptamente, destruyendo un seguimiento fluido continuo. Para neutralizar esto, se implementó un **Filtro Avanzado de Promedio Móvil Exponencial (EMA con $\alpha = 0.3$)** (`HomographySmoother`).
+    En lugar de intentar inestablemente interpolar ángulos de Euler que sufren de Gimbal Lock o posiciones no lineales relativas, **se suaviza estadísticamente y en tiempo real todo el Tensor Lineal de Homografía ($H_{inv}$)** a nivel de matriz. El resultado es que la cámara virtual y el campo logran asimilar un inercia ("momentum") perfecta, permitiendo paneos en el broadcast de una calidad impecable e interpolaciones invisibles si la votación calibradora falla un frame.
+*   **Script Core:** `core/mapping/tactical_vision_2d_mapper.py`
+
 
 ---
 
 ## Organización de Modelos y Pesos
 
-Para mantener la limpieza del repositorio, todos los archivos de pesos (.pt) se encuentran centralizados en la carpeta `models/`:
+1.  **YOLO26 (Balón):** `models/yolo26.pt` (Arquitectura SOTA con P2 y STAL).
+2.  **RT-DETR (Jugadores):** `models/rtdetr-l.pt` (Basado en Transformer).
+3.  **HRNet PnLCalib (Keypoints):** `models/SV_kp` (Genera mapas de calor de puntos de cancha).
+4.  **HRNet PnLCalib (Lines):** `models/SV_lines` (Inferencia paralela de aristas).
+5.  **SAM2 (Segmentación):** `models/sam2.1_hiera_small.pt`.
 
-1.  **YOLO (Balón):** `models/yolo26.pt`
-2.  **RT-DETR (Jugadores):** `models/rtdetr-l.pt`
-3.  **SAM2 (Segmentación):** `models/sam2.1_hiera_small.pt`
-4.  **Base Models (Otros):** `models/yolov8n.pt`, `models/yolo11n.pt`
 
 ---
 

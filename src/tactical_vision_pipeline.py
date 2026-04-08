@@ -17,6 +17,8 @@ def get_args():
     parser.add_argument("--sam2_weights", type=str, required=True, help="Path to SAM2 weights")
     parser.add_argument("--output_dir", type=str, default="tactical_results", help="Directory for output files")
     parser.add_argument("--output_plot", type=str, default="", help="Optional: Path to save Tracking Metrics Graphic (.png)")
+    parser.add_argument("--pnlcalib_kp_weights", type=str, default="models/SV_kp", help="Path to PnLCalib keypoints weights")
+    parser.add_argument("--pnlcalib_line_weights", type=str, default="models/SV_lines", help="Path to PnLCalib line weights")
     return parser.parse_args()
 
 def main():
@@ -63,6 +65,13 @@ def main():
     run_command(
         f"python {os.path.join(base_dir, 'core', 'tracking', 'tactical_vision_eval.py')} --sequence_dir {args.sequence_dir} --trajectory_json {traj_json} --output_plot {plot_path}",
         "Phase 7: Metrics Evaluation & Plot Generation"
+    )
+    
+    # Phase 8: 2D Field Mapping
+    mapper_output = os.path.join(args.output_dir, f"{seq_name}_2d_map.mp4")
+    run_command(
+        f"python {os.path.join(base_dir, 'core', 'mapping', 'tactical_vision_2d_mapper.py')} --sequence_dir {args.sequence_dir} --detections {det_json} --trajectory {traj_json} --pnlcalib_kp_weights {args.pnlcalib_kp_weights} --pnlcalib_line_weights {args.pnlcalib_line_weights} --output {mapper_output}",
+        "Phase 8: 2D Field Mapping with PnLCalib"
     )
     
     print("\n TacticalVision AI Pipeline Completed Successfully!")
