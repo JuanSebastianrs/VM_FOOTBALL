@@ -1,0 +1,57 @@
+# ============================================================
+# RF-DETR Player+GK+Referee Detection - Training Configuration
+# ============================================================
+# Optimized for Vertex AI Custom Spot Jobs with L4/T4 GPUs.
+# Dataset downloaded from GCS tar to local SSD for fast I/O.
+# 3 classes: "player", "goalkeeper", "referee"
+
+seed: 42
+
+# Dataset
+dataset:
+  # Compressed tar (1 file download, MUCH faster than 42K individual files)
+  tar_path: "gs://vm-football-data/reorganized_dataset.tar.gz"
+  # Fallback: raw GCS path (slow, only if tar doesn't exist)
+  gcs_path: "gs://vm-football-data/reorganized_dataset"
+  # Local path after extraction (fast NVMe/SSD)
+  local_path: "/workspace/dataset/reorganized_dataset"
+  # Limit validation set size to speed up epoch evaluation (Test-ema)
+  limit_valid_images: 3000
+
+# Class mapping: 6 original → 3 unified
+# 0: player_left     → 0 (player)
+# 1: player_right    → 0 (player)
+# 2: goalkeeper_left  → 1 (goalkeeper)
+# 3: goalkeeper_right → 1 (goalkeeper)
+# 4: referee         → 2 (referee)
+# 5: ball            → IGNORED
+classes:
+  unified: ["player", "goalkeeper", "referee"]
+  mapping:
+    0: 0    # player_left → player
+    1: 0    # player_right → player
+    2: 1    # goalkeeper_left → goalkeeper
+    3: 1    # goalkeeper_right → goalkeeper
+    4: 2    # referee → referee
+    5: -1   # ball → IGNORE
+
+# Output
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/rfdetr_player_gk_ref"
+
+# RF-DETR Experiments
+rfdetr:
+  coco_dir: "/workspace/dataset_coco"
+  experiments:
+    rfdetr_base_448_3class:
+      description: "RF-DETR Base 3-class (player+goalkeeper+referee) - T4 optimized (FP16, 448px, 60ep)"
+      model_class: "RFDETRBase"
+      epochs: 60
+      batch_size: 2
+      grad_accum_steps: 16     # Effective batch = 32
+      lr: 2.0e-4
+      lr_encoder: 2.0e-5
+      resolution: 448           # 56x8, safe margin on T4 16GB
+      weight_decay: 1.0e-4
+      use_ema: true

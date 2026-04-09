@@ -80,3 +80,4 @@ temp/
 !outputs/.gitkeep
 .agent/
 cloud/ball_detection/results/inference_video/
+MASTER_PROMPT.md

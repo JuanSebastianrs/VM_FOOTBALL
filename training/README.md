@@ -1,6 +1,34 @@
 # Training - VM_FOOTBALL
 
-Scripts y notebooks para entrenamiento de modelos en **Google Colab / Kaggle**.
+Scripts y notebooks para entrenamiento de modelos en **Kaggle/Colab** y en **Vertex AI (GCP)**.
+
+## Estado Actual RF-DETR (2026-04-05)
+
+- RF-DETR role-aware (3 clases) completado: `player`, `goalkeeper`, `referee`.
+- Checkpoint principal (GCS): `gs://vm-football-data/models/rfdetr_player_gk_ref/rfdetr/rfdetr_base_448_3class/checkpoint_best_ema.pth`
+- Resultados (GCS): `gs://vm-football-data/models/rfdetr_player_gk_ref/rfdetr/rfdetr_base_448_3class/results.json`
+- Smoke test de Vertex validado end-to-end (descarga, conversión, train, verificación, upload).
+
+## Validación de evaluación
+
+- El checkpoint 3 clases ya fue validado en SNMOT-116, SNMOT-117 y SNMOT-143 con `eval_team_clustering.py`.
+- La ruta por defecto ya es role-aware fused: GK por clase, árbitros excluidos del clustering de equipos.
+- Debug / overrides disponibles: `--no-use-gk-class`, `--gk-assignment-mode legacy`, `--cluster-referee`.
+
+## Entrenamiento en Vertex AI (recomendado)
+
+```powershell
+# Smoke test (2 epochs)
+pwsh .\cloud\submit_rfdetr_job.ps1 -SmokeTest
+
+# Entrenamiento completo
+pwsh .\cloud\submit_rfdetr_job.ps1
+```
+
+Notas:
+- Se mantiene el mismo proyecto/cuenta/bucket de GCS.
+- El linaje nuevo se guarda en subcarpetas versionadas bajo `models/rfdetr_player_gk_ref`.
+- Dependencias sensibles en cloud: `transformers<5` y `numpy<2`.
 
 ## 🚀 Notebook Principal
 
@@ -24,7 +52,7 @@ Notebook completo para entrenar detectores en Kaggle:
 # 5. Descargar modelos desde /kaggle/working/outputs/
 ```
 
-## ⚙️ Hiperparámetros Clave
+## ⚙️ Hiperparámetros Clave (referencia)
 
 | Param | YOLO | RF-DETR |
 |-------|------|---------|
