@@ -35,7 +35,7 @@ models/
 *.onnx
 *.engine
 *.trt
-
+tactical_results/batch_eval/
 # === Videos y Media ===
 *.mp4
 *.avi
@@ -79,4 +79,5 @@ temp/
 !data/.gitkeep
 !outputs/.gitkeep
 .agent/
+cloud/ball_detection/results/inference_video/
 MASTER_PROMPT.md

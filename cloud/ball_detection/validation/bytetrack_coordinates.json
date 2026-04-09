@@ -1,0 +1,6087 @@
+{
+  "SNMOT-116_000001.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        486,
+        390
+      ],
+      "conf": 0.791,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000002.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        486,
+        391
+      ],
+      "conf": 0.764,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000003.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.754,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000004.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.731,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000005.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.71,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000006.jpg": [
+    {
+      "bbox": [
+        475,
+        380,
+        485,
+        390
+      ],
+      "conf": 0.725,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000007.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.741,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000008.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.715,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000009.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.694,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000010.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.694,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000011.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.693,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000012.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.689,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000013.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        486,
+        391
+      ],
+      "conf": 0.717,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000014.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        391
+      ],
+      "conf": 0.721,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000015.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        486,
+        391
+      ],
+      "conf": 0.729,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000016.jpg": [
+    {
+      "bbox": [
+        475,
+        381,
+        485,
+        390
+      ],
+      "conf": 0.718,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000017.jpg": [
+    {
+      "bbox": [
+        474,
+        381,
+        484,
+        390
+      ],
+      "conf": 0.687,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000018.jpg": [
+    {
+      "bbox": [
+        474,
+        381,
+        484,
+        390
+      ],
+      "conf": 0.729,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000019.jpg": [
+    {
+      "bbox": [
+        473,
+        381,
+        484,
+        390
+      ],
+      "conf": 0.767,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000020.jpg": [
+    {
+      "bbox": [
+        473,
+        381,
+        484,
+        390
+      ],
+      "conf": 0.757,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000021.jpg": [
+    {
+      "bbox": [
+        473,
+        381,
+        483,
+        391
+      ],
+      "conf": 0.751,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000022.jpg": [
+    {
+      "bbox": [
+        473,
+        381,
+        483,
+        391
+      ],
+      "conf": 0.779,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000023.jpg": [
+    {
+      "bbox": [
+        472,
+        381,
+        483,
+        391
+      ],
+      "conf": 0.791,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000024.jpg": [
+    {
+      "bbox": [
+        472,
+        381,
+        482,
+        391
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000025.jpg": [
+    {
+      "bbox": [
+        472,
+        381,
+        482,
+        391
+      ],
+      "conf": 0.805,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000026.jpg": [
+    {
+      "bbox": [
+        471,
+        381,
+        482,
+        391
+      ],
+      "conf": 0.795,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000027.jpg": [
+    {
+      "bbox": [
+        471,
+        381,
+        481,
+        391
+      ],
+      "conf": 0.785,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000028.jpg": [
+    {
+      "bbox": [
+        471,
+        381,
+        481,
+        391
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000029.jpg": [
+    {
+      "bbox": [
+        470,
+        381,
+        480,
+        391
+      ],
+      "conf": 0.795,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000030.jpg": [
+    {
+      "bbox": [
+        470,
+        381,
+        480,
+        391
+      ],
+      "conf": 0.801,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000031.jpg": [
+    {
+      "bbox": [
+        470,
+        381,
+        480,
+        391
+      ],
+      "conf": 0.806,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000032.jpg": [
+    {
+      "bbox": [
+        469,
+        381,
+        479,
+        391
+      ],
+      "conf": 0.793,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000033.jpg": [
+    {
+      "bbox": [
+        469,
+        381,
+        479,
+        391
+      ],
+      "conf": 0.792,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000034.jpg": [
+    {
+      "bbox": [
+        469,
+        381,
+        479,
+        391
+      ],
+      "conf": 0.813,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000035.jpg": [
+    {
+      "bbox": [
+        468,
+        381,
+        479,
+        391
+      ],
+      "conf": 0.826,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000036.jpg": [
+    {
+      "bbox": [
+        468,
+        381,
+        478,
+        392
+      ],
+      "conf": 0.829,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000037.jpg": [
+    {
+      "bbox": [
+        467,
+        381,
+        478,
+        392
+      ],
+      "conf": 0.826,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000038.jpg": [
+    {
+      "bbox": [
+        467,
+        381,
+        477,
+        392
+      ],
+      "conf": 0.815,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000039.jpg": [
+    {
+      "bbox": [
+        467,
+        381,
+        477,
+        392
+      ],
+      "conf": 0.813,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000040.jpg": [
+    {
+      "bbox": [
+        467,
+        382,
+        476,
+        392
+      ],
+      "conf": 0.817,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000041.jpg": [
+    {
+      "bbox": [
+        466,
+        382,
+        476,
+        392
+      ],
+      "conf": 0.814,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000042.jpg": [
+    {
+      "bbox": [
+        466,
+        382,
+        476,
+        392
+      ],
+      "conf": 0.812,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000043.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        476,
+        392
+      ],
+      "conf": 0.808,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000044.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        476,
+        391
+      ],
+      "conf": 0.806,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000045.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.806,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000046.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000047.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000048.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000049.jpg": [
+    {
+      "bbox": [
+        466,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000050.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        475,
+        391
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000051.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.794,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000052.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.794,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000053.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000054.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.793,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000055.jpg": [
+    {
+      "bbox": [
+        465,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.789,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000056.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.789,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000057.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.78,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000058.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        474,
+        391
+      ],
+      "conf": 0.777,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000059.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.762,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000060.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.752,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000061.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.726,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000062.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.695,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000063.jpg": [
+    {
+      "bbox": [
+        464,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.682,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000064.jpg": [
+    {
+      "bbox": [
+        463,
+        381,
+        473,
+        391
+      ],
+      "conf": 0.643,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000065.jpg": [
+    {
+      "bbox": [
+        462,
+        382,
+        472,
+        392
+      ],
+      "conf": 0.667,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000066.jpg": [
+    {
+      "bbox": [
+        462,
+        381,
+        472,
+        392
+      ],
+      "conf": 0.677,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000067.jpg": [
+    {
+      "bbox": [
+        462,
+        381,
+        472,
+        392
+      ],
+      "conf": 0.667,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000068.jpg": [
+    {
+      "bbox": [
+        461,
+        381,
+        472,
+        392
+      ],
+      "conf": 0.69,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000069.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        472,
+        392
+      ],
+      "conf": 0.731,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000070.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        472,
+        392
+      ],
+      "conf": 0.725,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000071.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        472,
+        392
+      ],
+      "conf": 0.728,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000072.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        472,
+        392
+      ],
+      "conf": 0.733,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000073.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.738,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000074.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.743,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000075.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.752,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000076.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.758,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000077.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.763,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000078.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.757,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000079.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.765,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000080.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.765,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000081.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.778,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000082.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.777,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000083.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.791,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000084.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.793,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000085.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.794,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000086.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.793,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000087.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        471,
+        392
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000088.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000089.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000090.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000091.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.794,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000092.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000093.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.795,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000094.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.789,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000095.jpg": [
+    {
+      "bbox": [
+        461,
+        382,
+        470,
+        392
+      ],
+      "conf": 0.79,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000096.jpg": [
+    {
+      "bbox": [
+        461,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.797,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000097.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000098.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000099.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000100.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.801,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000101.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000102.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000103.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000104.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.797,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000105.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000106.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000107.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000108.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000109.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        392
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000110.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.808,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000111.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        470,
+        393
+      ],
+      "conf": 0.801,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000112.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000113.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000114.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000115.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000116.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000117.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000118.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.804,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000119.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000120.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000121.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.802,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000122.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000123.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.803,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000124.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000125.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000126.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.804,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000127.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.805,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000128.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.81,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000129.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.807,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000130.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.809,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000131.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.81,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000132.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.81,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000133.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.809,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000134.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.809,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000135.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.808,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000136.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.809,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000137.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.809,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000138.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.806,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000139.jpg": [
+    {
+      "bbox": [
+        460,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.805,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000140.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.804,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000141.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.805,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000142.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.804,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000143.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000144.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.797,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000145.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.799,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000146.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000147.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        469,
+        393
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000148.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.797,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000149.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.793,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000150.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.8,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000151.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000152.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.801,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000153.jpg": [
+    {
+      "bbox": [
+        459,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.796,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000154.jpg": [
+    {
+      "bbox": [
+        458,
+        383,
+        468,
+        393
+      ],
+      "conf": 0.804,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000155.jpg": [
+    {
+      "bbox": [
+        458,
+        383,
+        467,
+        393
+      ],
+      "conf": 0.798,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000156.jpg": [
+    {
+      "bbox": [
+        458,
+        383,
+        467,
+        393
+      ],
+      "conf": 0.779,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000157.jpg": [
+    {
+      "bbox": [
+        457,
+        383,
+        467,
+        394
+      ],
+      "conf": 0.759,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000158.jpg": [
+    {
+      "bbox": [
+        455,
+        383,
+        465,
+        394
+      ],
+      "conf": 0.724,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000159.jpg": [
+    {
+      "bbox": [
+        453,
+        383,
+        463,
+        394
+      ],
+      "conf": 0.419,
+      "track_id": 1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000160.jpg": [],
+  "SNMOT-116_000161.jpg": [],
+  "SNMOT-116_000162.jpg": [],
+  "SNMOT-116_000163.jpg": [],
+  "SNMOT-116_000164.jpg": [
+    {
+      "bbox": [
+        487,
+        327,
+        499,
+        338
+      ],
+      "conf": 0.635,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000165.jpg": [],
+  "SNMOT-116_000166.jpg": [
+    {
+      "bbox": [
+        506,
+        307,
+        519,
+        319
+      ],
+      "conf": 0.524,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000167.jpg": [
+    {
+      "bbox": [
+        516,
+        298,
+        529,
+        311
+      ],
+      "conf": 0.471,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000168.jpg": [],
+  "SNMOT-116_000169.jpg": [
+    {
+      "bbox": [
+        532,
+        282,
+        547,
+        295
+      ],
+      "conf": 0.346,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000170.jpg": [
+    {
+      "bbox": [
+        543,
+        274,
+        556,
+        287
+      ],
+      "conf": 0.454,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000171.jpg": [
+    {
+      "bbox": [
+        550,
+        267,
+        566,
+        280
+      ],
+      "conf": 0.329,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000172.jpg": [
+    {
+      "bbox": [
+        561,
+        261,
+        577,
+        274
+      ],
+      "conf": 0.39,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000173.jpg": [
+    {
+      "bbox": [
+        571,
+        255,
+        588,
+        269
+      ],
+      "conf": 0.364,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000174.jpg": [],
+  "SNMOT-116_000175.jpg": [],
+  "SNMOT-116_000176.jpg": [],
+  "SNMOT-116_000177.jpg": [
+    {
+      "bbox": [
+        620,
+        239,
+        639,
+        255
+      ],
+      "conf": 0.195,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000178.jpg": [
+    {
+      "bbox": [
+        634,
+        238,
+        652,
+        253
+      ],
+      "conf": 0.321,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000179.jpg": [],
+  "SNMOT-116_000180.jpg": [
+    {
+      "bbox": [
+        662,
+        236,
+        682,
+        253
+      ],
+      "conf": 0.346,
+      "track_id": -1,
+      "source": "ByteTrack"
+    },
+    {
+      "bbox": [
+        1659,
+        515,
+        1675,
+        530
+      ],
+      "conf": 0.22,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000181.jpg": [],
+  "SNMOT-116_000182.jpg": [],
+  "SNMOT-116_000183.jpg": [],
+  "SNMOT-116_000184.jpg": [
+    {
+      "bbox": [
+        1033,
+        453,
+        1053,
+        471
+      ],
+      "conf": 0.156,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000185.jpg": [],
+  "SNMOT-116_000186.jpg": [],
+  "SNMOT-116_000187.jpg": [],
+  "SNMOT-116_000188.jpg": [],
+  "SNMOT-116_000189.jpg": [],
+  "SNMOT-116_000190.jpg": [
+    {
+      "bbox": [
+        830,
+        282,
+        851,
+        302
+      ],
+      "conf": 0.199,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000191.jpg": [],
+  "SNMOT-116_000192.jpg": [
+    {
+      "bbox": [
+        874,
+        305,
+        896,
+        324
+      ],
+      "conf": 0.335,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000193.jpg": [
+    {
+      "bbox": [
+        897,
+        318,
+        920,
+        336
+      ],
+      "conf": 0.383,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000194.jpg": [],
+  "SNMOT-116_000195.jpg": [],
+  "SNMOT-116_000196.jpg": [],
+  "SNMOT-116_000197.jpg": [
+    {
+      "bbox": [
+        1006,
+        384,
+        1027,
+        401
+      ],
+      "conf": 0.233,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000198.jpg": [],
+  "SNMOT-116_000199.jpg": [
+    {
+      "bbox": [
+        1059,
+        418,
+        1082,
+        438
+      ],
+      "conf": 0.332,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000200.jpg": [
+    {
+      "bbox": [
+        1080,
+        437,
+        1098,
+        457
+      ],
+      "conf": 0.284,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000201.jpg": [
+    {
+      "bbox": [
+        1081,
+        455,
+        1100,
+        477
+      ],
+      "conf": 0.156,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000202.jpg": [
+    {
+      "bbox": [
+        1088,
+        476,
+        1106,
+        497
+      ],
+      "conf": 0.347,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000203.jpg": [],
+  "SNMOT-116_000204.jpg": [
+    {
+      "bbox": [
+        1094,
+        521,
+        1115,
+        542
+      ],
+      "conf": 0.312,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000205.jpg": [],
+  "SNMOT-116_000206.jpg": [],
+  "SNMOT-116_000207.jpg": [],
+  "SNMOT-116_000208.jpg": [],
+  "SNMOT-116_000209.jpg": [],
+  "SNMOT-116_000210.jpg": [],
+  "SNMOT-116_000211.jpg": [],
+  "SNMOT-116_000212.jpg": [
+    {
+      "bbox": [
+        1077,
+        482,
+        1095,
+        500
+      ],
+      "conf": 0.21,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000213.jpg": [],
+  "SNMOT-116_000214.jpg": [
+    {
+      "bbox": [
+        1074,
+        465,
+        1092,
+        483
+      ],
+      "conf": 0.418,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000215.jpg": [],
+  "SNMOT-116_000216.jpg": [
+    {
+      "bbox": [
+        1069,
+        454,
+        1085,
+        470
+      ],
+      "conf": 0.167,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000217.jpg": [],
+  "SNMOT-116_000218.jpg": [],
+  "SNMOT-116_000219.jpg": [],
+  "SNMOT-116_000220.jpg": [],
+  "SNMOT-116_000221.jpg": [],
+  "SNMOT-116_000222.jpg": [],
+  "SNMOT-116_000223.jpg": [],
+  "SNMOT-116_000224.jpg": [],
+  "SNMOT-116_000225.jpg": [],
+  "SNMOT-116_000226.jpg": [],
+  "SNMOT-116_000227.jpg": [],
+  "SNMOT-116_000228.jpg": [],
+  "SNMOT-116_000229.jpg": [],
+  "SNMOT-116_000230.jpg": [
+    {
+      "bbox": [
+        1173,
+        483,
+        1193,
+        502
+      ],
+      "conf": 0.184,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000231.jpg": [],
+  "SNMOT-116_000232.jpg": [
+    {
+      "bbox": [
+        1336,
+        389,
+        1354,
+        407
+      ],
+      "conf": 0.151,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000233.jpg": [],
+  "SNMOT-116_000234.jpg": [],
+  "SNMOT-116_000235.jpg": [],
+  "SNMOT-116_000236.jpg": [],
+  "SNMOT-116_000237.jpg": [],
+  "SNMOT-116_000238.jpg": [],
+  "SNMOT-116_000239.jpg": [],
+  "SNMOT-116_000240.jpg": [],
+  "SNMOT-116_000241.jpg": [
+    {
+      "bbox": [
+        1356,
+        383,
+        1375,
+        401
+      ],
+      "conf": 0.158,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000242.jpg": [],
+  "SNMOT-116_000243.jpg": [],
+  "SNMOT-116_000244.jpg": [],
+  "SNMOT-116_000245.jpg": [],
+  "SNMOT-116_000246.jpg": [
+    {
+      "bbox": [
+        909,
+        464,
+        927,
+        482
+      ],
+      "conf": 0.428,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000247.jpg": [],
+  "SNMOT-116_000248.jpg": [],
+  "SNMOT-116_000249.jpg": [],
+  "SNMOT-116_000250.jpg": [],
+  "SNMOT-116_000251.jpg": [],
+  "SNMOT-116_000252.jpg": [
+    {
+      "bbox": [
+        1599,
+        477,
+        1619,
+        495
+      ],
+      "conf": 0.157,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000253.jpg": [],
+  "SNMOT-116_000254.jpg": [],
+  "SNMOT-116_000255.jpg": [],
+  "SNMOT-116_000256.jpg": [],
+  "SNMOT-116_000257.jpg": [],
+  "SNMOT-116_000258.jpg": [],
+  "SNMOT-116_000259.jpg": [],
+  "SNMOT-116_000260.jpg": [],
+  "SNMOT-116_000261.jpg": [],
+  "SNMOT-116_000262.jpg": [],
+  "SNMOT-116_000263.jpg": [],
+  "SNMOT-116_000264.jpg": [],
+  "SNMOT-116_000265.jpg": [],
+  "SNMOT-116_000266.jpg": [],
+  "SNMOT-116_000267.jpg": [],
+  "SNMOT-116_000268.jpg": [],
+  "SNMOT-116_000269.jpg": [],
+  "SNMOT-116_000270.jpg": [],
+  "SNMOT-116_000271.jpg": [],
+  "SNMOT-116_000272.jpg": [],
+  "SNMOT-116_000273.jpg": [
+    {
+      "bbox": [
+        957,
+        450,
+        977,
+        469
+      ],
+      "conf": 0.161,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000274.jpg": [],
+  "SNMOT-116_000275.jpg": [],
+  "SNMOT-116_000276.jpg": [],
+  "SNMOT-116_000277.jpg": [],
+  "SNMOT-116_000278.jpg": [],
+  "SNMOT-116_000279.jpg": [],
+  "SNMOT-116_000280.jpg": [],
+  "SNMOT-116_000281.jpg": [],
+  "SNMOT-116_000282.jpg": [],
+  "SNMOT-116_000283.jpg": [],
+  "SNMOT-116_000284.jpg": [],
+  "SNMOT-116_000285.jpg": [
+    {
+      "bbox": [
+        117,
+        341,
+        135,
+        358
+      ],
+      "conf": 0.183,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000286.jpg": [],
+  "SNMOT-116_000287.jpg": [],
+  "SNMOT-116_000288.jpg": [],
+  "SNMOT-116_000289.jpg": [],
+  "SNMOT-116_000290.jpg": [],
+  "SNMOT-116_000291.jpg": [
+    {
+      "bbox": [
+        220,
+        325,
+        233,
+        338
+      ],
+      "conf": 0.223,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000292.jpg": [],
+  "SNMOT-116_000293.jpg": [],
+  "SNMOT-116_000294.jpg": [],
+  "SNMOT-116_000295.jpg": [],
+  "SNMOT-116_000296.jpg": [],
+  "SNMOT-116_000297.jpg": [],
+  "SNMOT-116_000298.jpg": [
+    {
+      "bbox": [
+        318,
+        336,
+        333,
+        351
+      ],
+      "conf": 0.477,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000299.jpg": [
+    {
+      "bbox": [
+        324,
+        337,
+        339,
+        352
+      ],
+      "conf": 0.435,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000300.jpg": [],
+  "SNMOT-116_000301.jpg": [],
+  "SNMOT-116_000302.jpg": [
+    {
+      "bbox": [
+        215,
+        730,
+        231,
+        745
+      ],
+      "conf": 0.179,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000303.jpg": [],
+  "SNMOT-116_000304.jpg": [],
+  "SNMOT-116_000305.jpg": [],
+  "SNMOT-116_000306.jpg": [],
+  "SNMOT-116_000307.jpg": [],
+  "SNMOT-116_000308.jpg": [],
+  "SNMOT-116_000309.jpg": [],
+  "SNMOT-116_000310.jpg": [],
+  "SNMOT-116_000311.jpg": [],
+  "SNMOT-116_000312.jpg": [],
+  "SNMOT-116_000313.jpg": [],
+  "SNMOT-116_000314.jpg": [],
+  "SNMOT-116_000315.jpg": [
+    {
+      "bbox": [
+        404,
+        342,
+        420,
+        357
+      ],
+      "conf": 0.358,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000316.jpg": [],
+  "SNMOT-116_000317.jpg": [],
+  "SNMOT-116_000318.jpg": [],
+  "SNMOT-116_000319.jpg": [],
+  "SNMOT-116_000320.jpg": [],
+  "SNMOT-116_000321.jpg": [],
+  "SNMOT-116_000322.jpg": [],
+  "SNMOT-116_000323.jpg": [],
+  "SNMOT-116_000324.jpg": [],
+  "SNMOT-116_000325.jpg": [],
+  "SNMOT-116_000326.jpg": [],
+  "SNMOT-116_000327.jpg": [],
+  "SNMOT-116_000328.jpg": [],
+  "SNMOT-116_000329.jpg": [],
+  "SNMOT-116_000330.jpg": [],
+  "SNMOT-116_000331.jpg": [],
+  "SNMOT-116_000332.jpg": [],
+  "SNMOT-116_000333.jpg": [],
+  "SNMOT-116_000334.jpg": [],
+  "SNMOT-116_000335.jpg": [],
+  "SNMOT-116_000336.jpg": [],
+  "SNMOT-116_000337.jpg": [],
+  "SNMOT-116_000338.jpg": [],
+  "SNMOT-116_000339.jpg": [],
+  "SNMOT-116_000340.jpg": [],
+  "SNMOT-116_000341.jpg": [],
+  "SNMOT-116_000342.jpg": [],
+  "SNMOT-116_000343.jpg": [],
+  "SNMOT-116_000344.jpg": [],
+  "SNMOT-116_000345.jpg": [],
+  "SNMOT-116_000346.jpg": [],
+  "SNMOT-116_000347.jpg": [],
+  "SNMOT-116_000348.jpg": [],
+  "SNMOT-116_000349.jpg": [],
+  "SNMOT-116_000350.jpg": [],
+  "SNMOT-116_000351.jpg": [],
+  "SNMOT-116_000352.jpg": [],
+  "SNMOT-116_000353.jpg": [],
+  "SNMOT-116_000354.jpg": [],
+  "SNMOT-116_000355.jpg": [],
+  "SNMOT-116_000356.jpg": [],
+  "SNMOT-116_000357.jpg": [],
+  "SNMOT-116_000358.jpg": [],
+  "SNMOT-116_000359.jpg": [],
+  "SNMOT-116_000360.jpg": [],
+  "SNMOT-116_000361.jpg": [],
+  "SNMOT-116_000362.jpg": [],
+  "SNMOT-116_000363.jpg": [],
+  "SNMOT-116_000364.jpg": [
+    {
+      "bbox": [
+        46,
+        511,
+        65,
+        526
+      ],
+      "conf": 0.164,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000365.jpg": [],
+  "SNMOT-116_000366.jpg": [],
+  "SNMOT-116_000367.jpg": [
+    {
+      "bbox": [
+        154,
+        353,
+        173,
+        368
+      ],
+      "conf": 0.282,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000368.jpg": [],
+  "SNMOT-116_000369.jpg": [],
+  "SNMOT-116_000370.jpg": [],
+  "SNMOT-116_000371.jpg": [],
+  "SNMOT-116_000372.jpg": [],
+  "SNMOT-116_000373.jpg": [],
+  "SNMOT-116_000374.jpg": [],
+  "SNMOT-116_000375.jpg": [],
+  "SNMOT-116_000376.jpg": [],
+  "SNMOT-116_000377.jpg": [],
+  "SNMOT-116_000378.jpg": [],
+  "SNMOT-116_000379.jpg": [],
+  "SNMOT-116_000380.jpg": [],
+  "SNMOT-116_000381.jpg": [],
+  "SNMOT-116_000382.jpg": [],
+  "SNMOT-116_000383.jpg": [],
+  "SNMOT-116_000384.jpg": [],
+  "SNMOT-116_000385.jpg": [],
+  "SNMOT-116_000386.jpg": [],
+  "SNMOT-116_000387.jpg": [],
+  "SNMOT-116_000388.jpg": [
+    {
+      "bbox": [
+        0,
+        308,
+        7,
+        323
+      ],
+      "conf": 0.346,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000389.jpg": [
+    {
+      "bbox": [
+        0,
+        376,
+        7,
+        388
+      ],
+      "conf": 0.604,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000390.jpg": [],
+  "SNMOT-116_000391.jpg": [],
+  "SNMOT-116_000392.jpg": [],
+  "SNMOT-116_000393.jpg": [],
+  "SNMOT-116_000394.jpg": [],
+  "SNMOT-116_000395.jpg": [],
+  "SNMOT-116_000396.jpg": [],
+  "SNMOT-116_000397.jpg": [],
+  "SNMOT-116_000398.jpg": [],
+  "SNMOT-116_000399.jpg": [],
+  "SNMOT-116_000400.jpg": [],
+  "SNMOT-116_000401.jpg": [],
+  "SNMOT-116_000402.jpg": [],
+  "SNMOT-116_000403.jpg": [],
+  "SNMOT-116_000404.jpg": [],
+  "SNMOT-116_000405.jpg": [],
+  "SNMOT-116_000406.jpg": [],
+  "SNMOT-116_000407.jpg": [],
+  "SNMOT-116_000408.jpg": [
+    {
+      "bbox": [
+        1425,
+        380,
+        1440,
+        396
+      ],
+      "conf": 0.362,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000409.jpg": [
+    {
+      "bbox": [
+        1424,
+        379,
+        1439,
+        395
+      ],
+      "conf": 0.314,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000410.jpg": [
+    {
+      "bbox": [
+        1424,
+        378,
+        1439,
+        393
+      ],
+      "conf": 0.338,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000411.jpg": [
+    {
+      "bbox": [
+        1423,
+        377,
+        1438,
+        392
+      ],
+      "conf": 0.683,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000412.jpg": [
+    {
+      "bbox": [
+        1423,
+        376,
+        1439,
+        392
+      ],
+      "conf": 0.64,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000413.jpg": [
+    {
+      "bbox": [
+        1423,
+        375,
+        1438,
+        391
+      ],
+      "conf": 0.57,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000414.jpg": [
+    {
+      "bbox": [
+        1423,
+        375,
+        1438,
+        390
+      ],
+      "conf": 0.605,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000415.jpg": [
+    {
+      "bbox": [
+        1423,
+        375,
+        1438,
+        390
+      ],
+      "conf": 0.496,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000416.jpg": [
+    {
+      "bbox": [
+        1424,
+        375,
+        1439,
+        390
+      ],
+      "conf": 0.471,
+      "track_id": 34,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000417.jpg": [
+    {
+      "bbox": [
+        1427,
+        377,
+        1443,
+        392
+      ],
+      "conf": 0.253,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000418.jpg": [
+    {
+      "bbox": [
+        1428,
+        378,
+        1444,
+        393
+      ],
+      "conf": 0.306,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000419.jpg": [],
+  "SNMOT-116_000420.jpg": [],
+  "SNMOT-116_000421.jpg": [],
+  "SNMOT-116_000422.jpg": [],
+  "SNMOT-116_000423.jpg": [],
+  "SNMOT-116_000424.jpg": [],
+  "SNMOT-116_000425.jpg": [],
+  "SNMOT-116_000426.jpg": [],
+  "SNMOT-116_000427.jpg": [],
+  "SNMOT-116_000428.jpg": [],
+  "SNMOT-116_000429.jpg": [],
+  "SNMOT-116_000430.jpg": [],
+  "SNMOT-116_000431.jpg": [],
+  "SNMOT-116_000432.jpg": [],
+  "SNMOT-116_000433.jpg": [],
+  "SNMOT-116_000434.jpg": [],
+  "SNMOT-116_000435.jpg": [],
+  "SNMOT-116_000436.jpg": [],
+  "SNMOT-116_000437.jpg": [],
+  "SNMOT-116_000438.jpg": [
+    {
+      "bbox": [
+        1434,
+        387,
+        1448,
+        400
+      ],
+      "conf": 0.346,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000439.jpg": [
+    {
+      "bbox": [
+        1431,
+        384,
+        1445,
+        398
+      ],
+      "conf": 0.349,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000440.jpg": [
+    {
+      "bbox": [
+        1430,
+        382,
+        1444,
+        396
+      ],
+      "conf": 0.304,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000441.jpg": [
+    {
+      "bbox": [
+        1429,
+        381,
+        1444,
+        395
+      ],
+      "conf": 0.439,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000442.jpg": [
+    {
+      "bbox": [
+        1429,
+        381,
+        1443,
+        395
+      ],
+      "conf": 0.424,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000443.jpg": [
+    {
+      "bbox": [
+        1429,
+        381,
+        1444,
+        396
+      ],
+      "conf": 0.444,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000444.jpg": [
+    {
+      "bbox": [
+        1430,
+        382,
+        1444,
+        397
+      ],
+      "conf": 0.326,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000445.jpg": [
+    {
+      "bbox": [
+        1430,
+        383,
+        1445,
+        398
+      ],
+      "conf": 0.361,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000446.jpg": [
+    {
+      "bbox": [
+        1430,
+        384,
+        1445,
+        399
+      ],
+      "conf": 0.51,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000447.jpg": [
+    {
+      "bbox": [
+        1430,
+        385,
+        1445,
+        400
+      ],
+      "conf": 0.543,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000448.jpg": [
+    {
+      "bbox": [
+        1430,
+        387,
+        1445,
+        402
+      ],
+      "conf": 0.528,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000449.jpg": [
+    {
+      "bbox": [
+        1431,
+        388,
+        1445,
+        402
+      ],
+      "conf": 0.479,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000450.jpg": [
+    {
+      "bbox": [
+        1431,
+        388,
+        1445,
+        402
+      ],
+      "conf": 0.426,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000451.jpg": [
+    {
+      "bbox": [
+        1431,
+        388,
+        1445,
+        402
+      ],
+      "conf": 0.201,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000452.jpg": [
+    {
+      "bbox": [
+        1432,
+        388,
+        1446,
+        402
+      ],
+      "conf": 0.184,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000453.jpg": [
+    {
+      "bbox": [
+        1432,
+        387,
+        1446,
+        401
+      ],
+      "conf": 0.25,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000454.jpg": [
+    {
+      "bbox": [
+        1432,
+        387,
+        1446,
+        401
+      ],
+      "conf": 0.164,
+      "track_id": 39,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000455.jpg": [],
+  "SNMOT-116_000456.jpg": [
+    {
+      "bbox": [
+        1432,
+        388,
+        1447,
+        402
+      ],
+      "conf": 0.168,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000457.jpg": [],
+  "SNMOT-116_000458.jpg": [],
+  "SNMOT-116_000459.jpg": [],
+  "SNMOT-116_000460.jpg": [
+    {
+      "bbox": [
+        1434,
+        396,
+        1447,
+        410
+      ],
+      "conf": 0.401,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000461.jpg": [
+    {
+      "bbox": [
+        1433,
+        399,
+        1446,
+        412
+      ],
+      "conf": 0.163,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000462.jpg": [],
+  "SNMOT-116_000463.jpg": [],
+  "SNMOT-116_000464.jpg": [],
+  "SNMOT-116_000465.jpg": [],
+  "SNMOT-116_000466.jpg": [],
+  "SNMOT-116_000467.jpg": [],
+  "SNMOT-116_000468.jpg": [],
+  "SNMOT-116_000469.jpg": [],
+  "SNMOT-116_000470.jpg": [],
+  "SNMOT-116_000471.jpg": [],
+  "SNMOT-116_000472.jpg": [],
+  "SNMOT-116_000473.jpg": [],
+  "SNMOT-116_000474.jpg": [],
+  "SNMOT-116_000475.jpg": [],
+  "SNMOT-116_000476.jpg": [],
+  "SNMOT-116_000477.jpg": [],
+  "SNMOT-116_000478.jpg": [],
+  "SNMOT-116_000479.jpg": [],
+  "SNMOT-116_000480.jpg": [],
+  "SNMOT-116_000481.jpg": [],
+  "SNMOT-116_000482.jpg": [],
+  "SNMOT-116_000483.jpg": [],
+  "SNMOT-116_000484.jpg": [],
+  "SNMOT-116_000485.jpg": [],
+  "SNMOT-116_000486.jpg": [
+    {
+      "bbox": [
+        1455,
+        454,
+        1467,
+        465
+      ],
+      "conf": 0.165,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000487.jpg": [
+    {
+      "bbox": [
+        1456,
+        456,
+        1468,
+        467
+      ],
+      "conf": 0.24,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000488.jpg": [
+    {
+      "bbox": [
+        1455,
+        458,
+        1467,
+        469
+      ],
+      "conf": 0.376,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000489.jpg": [],
+  "SNMOT-116_000490.jpg": [],
+  "SNMOT-116_000491.jpg": [],
+  "SNMOT-116_000492.jpg": [],
+  "SNMOT-116_000493.jpg": [],
+  "SNMOT-116_000494.jpg": [],
+  "SNMOT-116_000495.jpg": [],
+  "SNMOT-116_000496.jpg": [],
+  "SNMOT-116_000497.jpg": [],
+  "SNMOT-116_000498.jpg": [],
+  "SNMOT-116_000499.jpg": [],
+  "SNMOT-116_000500.jpg": [],
+  "SNMOT-116_000501.jpg": [],
+  "SNMOT-116_000502.jpg": [],
+  "SNMOT-116_000503.jpg": [],
+  "SNMOT-116_000504.jpg": [],
+  "SNMOT-116_000505.jpg": [],
+  "SNMOT-116_000506.jpg": [],
+  "SNMOT-116_000507.jpg": [],
+  "SNMOT-116_000508.jpg": [],
+  "SNMOT-116_000509.jpg": [],
+  "SNMOT-116_000510.jpg": [],
+  "SNMOT-116_000511.jpg": [],
+  "SNMOT-116_000512.jpg": [],
+  "SNMOT-116_000513.jpg": [],
+  "SNMOT-116_000514.jpg": [],
+  "SNMOT-116_000515.jpg": [],
+  "SNMOT-116_000516.jpg": [],
+  "SNMOT-116_000517.jpg": [],
+  "SNMOT-116_000518.jpg": [],
+  "SNMOT-116_000519.jpg": [],
+  "SNMOT-116_000520.jpg": [],
+  "SNMOT-116_000521.jpg": [
+    {
+      "bbox": [
+        1395,
+        445,
+        1409,
+        457
+      ],
+      "conf": 0.317,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000522.jpg": [
+    {
+      "bbox": [
+        1384,
+        444,
+        1397,
+        456
+      ],
+      "conf": 0.312,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000523.jpg": [
+    {
+      "bbox": [
+        1374,
+        445,
+        1389,
+        458
+      ],
+      "conf": 0.351,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000524.jpg": [
+    {
+      "bbox": [
+        1363,
+        447,
+        1378,
+        460
+      ],
+      "conf": 0.48,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000525.jpg": [
+    {
+      "bbox": [
+        1349,
+        450,
+        1364,
+        462
+      ],
+      "conf": 0.35,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000526.jpg": [
+    {
+      "bbox": [
+        1338,
+        454,
+        1353,
+        467
+      ],
+      "conf": 0.428,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000527.jpg": [
+    {
+      "bbox": [
+        1328,
+        455,
+        1342,
+        467
+      ],
+      "conf": 0.452,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000528.jpg": [
+    {
+      "bbox": [
+        1318,
+        451,
+        1333,
+        464
+      ],
+      "conf": 0.448,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000529.jpg": [
+    {
+      "bbox": [
+        1310,
+        449,
+        1324,
+        461
+      ],
+      "conf": 0.426,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000530.jpg": [
+    {
+      "bbox": [
+        1301,
+        447,
+        1316,
+        459
+      ],
+      "conf": 0.438,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000531.jpg": [
+    {
+      "bbox": [
+        1292,
+        447,
+        1308,
+        460
+      ],
+      "conf": 0.429,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000532.jpg": [
+    {
+      "bbox": [
+        1284,
+        448,
+        1297,
+        459
+      ],
+      "conf": 0.523,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000533.jpg": [
+    {
+      "bbox": [
+        1276,
+        451,
+        1290,
+        463
+      ],
+      "conf": 0.38,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000534.jpg": [
+    {
+      "bbox": [
+        1267,
+        455,
+        1282,
+        468
+      ],
+      "conf": 0.429,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000535.jpg": [
+    {
+      "bbox": [
+        1261,
+        458,
+        1275,
+        470
+      ],
+      "conf": 0.526,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000536.jpg": [
+    {
+      "bbox": [
+        1256,
+        459,
+        1271,
+        472
+      ],
+      "conf": 0.582,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000537.jpg": [
+    {
+      "bbox": [
+        1250,
+        462,
+        1265,
+        476
+      ],
+      "conf": 0.525,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000538.jpg": [
+    {
+      "bbox": [
+        1244,
+        464,
+        1260,
+        478
+      ],
+      "conf": 0.642,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000539.jpg": [
+    {
+      "bbox": [
+        1239,
+        467,
+        1253,
+        480
+      ],
+      "conf": 0.63,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000540.jpg": [
+    {
+      "bbox": [
+        1235,
+        471,
+        1248,
+        483
+      ],
+      "conf": 0.61,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000541.jpg": [
+    {
+      "bbox": [
+        1231,
+        472,
+        1245,
+        485
+      ],
+      "conf": 0.517,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000542.jpg": [
+    {
+      "bbox": [
+        1229,
+        472,
+        1244,
+        485
+      ],
+      "conf": 0.45,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000543.jpg": [
+    {
+      "bbox": [
+        1227,
+        474,
+        1241,
+        487
+      ],
+      "conf": 0.534,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000544.jpg": [
+    {
+      "bbox": [
+        1224,
+        475,
+        1239,
+        488
+      ],
+      "conf": 0.611,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000545.jpg": [
+    {
+      "bbox": [
+        1223,
+        476,
+        1236,
+        488
+      ],
+      "conf": 0.628,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000546.jpg": [
+    {
+      "bbox": [
+        1222,
+        477,
+        1236,
+        489
+      ],
+      "conf": 0.669,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000547.jpg": [
+    {
+      "bbox": [
+        1222,
+        478,
+        1236,
+        491
+      ],
+      "conf": 0.685,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000548.jpg": [
+    {
+      "bbox": [
+        1221,
+        480,
+        1235,
+        493
+      ],
+      "conf": 0.639,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000549.jpg": [
+    {
+      "bbox": [
+        1220,
+        482,
+        1235,
+        495
+      ],
+      "conf": 0.641,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000550.jpg": [
+    {
+      "bbox": [
+        1220,
+        485,
+        1235,
+        498
+      ],
+      "conf": 0.485,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000551.jpg": [
+    {
+      "bbox": [
+        1220,
+        486,
+        1235,
+        499
+      ],
+      "conf": 0.59,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000552.jpg": [
+    {
+      "bbox": [
+        1220,
+        488,
+        1235,
+        501
+      ],
+      "conf": 0.612,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000553.jpg": [
+    {
+      "bbox": [
+        1221,
+        489,
+        1236,
+        502
+      ],
+      "conf": 0.642,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000554.jpg": [
+    {
+      "bbox": [
+        1223,
+        490,
+        1237,
+        503
+      ],
+      "conf": 0.637,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000555.jpg": [
+    {
+      "bbox": [
+        1224,
+        491,
+        1238,
+        504
+      ],
+      "conf": 0.651,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000556.jpg": [
+    {
+      "bbox": [
+        1226,
+        492,
+        1240,
+        505
+      ],
+      "conf": 0.569,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000557.jpg": [
+    {
+      "bbox": [
+        1228,
+        493,
+        1242,
+        506
+      ],
+      "conf": 0.579,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000558.jpg": [
+    {
+      "bbox": [
+        1230,
+        494,
+        1244,
+        507
+      ],
+      "conf": 0.632,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000559.jpg": [
+    {
+      "bbox": [
+        1232,
+        495,
+        1246,
+        508
+      ],
+      "conf": 0.619,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000560.jpg": [
+    {
+      "bbox": [
+        1234,
+        496,
+        1249,
+        509
+      ],
+      "conf": 0.504,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000561.jpg": [
+    {
+      "bbox": [
+        1236,
+        497,
+        1251,
+        511
+      ],
+      "conf": 0.498,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000562.jpg": [
+    {
+      "bbox": [
+        1237,
+        497,
+        1252,
+        510
+      ],
+      "conf": 0.52,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000563.jpg": [
+    {
+      "bbox": [
+        1237,
+        496,
+        1252,
+        510
+      ],
+      "conf": 0.592,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000564.jpg": [
+    {
+      "bbox": [
+        1236,
+        496,
+        1252,
+        509
+      ],
+      "conf": 0.597,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000565.jpg": [
+    {
+      "bbox": [
+        1236,
+        495,
+        1251,
+        509
+      ],
+      "conf": 0.613,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000566.jpg": [
+    {
+      "bbox": [
+        1236,
+        495,
+        1251,
+        509
+      ],
+      "conf": 0.588,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000567.jpg": [
+    {
+      "bbox": [
+        1237,
+        495,
+        1251,
+        508
+      ],
+      "conf": 0.598,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000568.jpg": [
+    {
+      "bbox": [
+        1237,
+        495,
+        1252,
+        509
+      ],
+      "conf": 0.563,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000569.jpg": [
+    {
+      "bbox": [
+        1239,
+        495,
+        1254,
+        509
+      ],
+      "conf": 0.482,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000570.jpg": [
+    {
+      "bbox": [
+        1241,
+        495,
+        1255,
+        508
+      ],
+      "conf": 0.536,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000571.jpg": [
+    {
+      "bbox": [
+        1243,
+        495,
+        1257,
+        508
+      ],
+      "conf": 0.57,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000572.jpg": [
+    {
+      "bbox": [
+        1244,
+        495,
+        1259,
+        508
+      ],
+      "conf": 0.592,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000573.jpg": [
+    {
+      "bbox": [
+        1246,
+        494,
+        1261,
+        508
+      ],
+      "conf": 0.578,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000574.jpg": [
+    {
+      "bbox": [
+        1249,
+        494,
+        1264,
+        507
+      ],
+      "conf": 0.568,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000575.jpg": [
+    {
+      "bbox": [
+        1252,
+        493,
+        1267,
+        507
+      ],
+      "conf": 0.5,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000576.jpg": [
+    {
+      "bbox": [
+        1254,
+        492,
+        1270,
+        506
+      ],
+      "conf": 0.66,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000577.jpg": [
+    {
+      "bbox": [
+        1257,
+        489,
+        1273,
+        504
+      ],
+      "conf": 0.654,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000578.jpg": [
+    {
+      "bbox": [
+        1261,
+        487,
+        1276,
+        501
+      ],
+      "conf": 0.601,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000579.jpg": [
+    {
+      "bbox": [
+        1265,
+        484,
+        1280,
+        499
+      ],
+      "conf": 0.522,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000580.jpg": [
+    {
+      "bbox": [
+        1269,
+        482,
+        1285,
+        496
+      ],
+      "conf": 0.646,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000581.jpg": [
+    {
+      "bbox": [
+        1275,
+        480,
+        1290,
+        494
+      ],
+      "conf": 0.549,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000582.jpg": [
+    {
+      "bbox": [
+        1281,
+        478,
+        1296,
+        492
+      ],
+      "conf": 0.6,
+      "track_id": 62,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000583.jpg": [
+    {
+      "bbox": [
+        1289,
+        474,
+        1304,
+        488
+      ],
+      "conf": 0.438,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000584.jpg": [
+    {
+      "bbox": [
+        1296,
+        471,
+        1312,
+        486
+      ],
+      "conf": 0.448,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000585.jpg": [
+    {
+      "bbox": [
+        1304,
+        468,
+        1320,
+        482
+      ],
+      "conf": 0.532,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000586.jpg": [
+    {
+      "bbox": [
+        1280,
+        453,
+        1302,
+        470
+      ],
+      "conf": 0.355,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000587.jpg": [
+    {
+      "bbox": [
+        1253,
+        438,
+        1276,
+        456
+      ],
+      "conf": 0.343,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000588.jpg": [
+    {
+      "bbox": [
+        1226,
+        422,
+        1250,
+        441
+      ],
+      "conf": 0.278,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000589.jpg": [
+    {
+      "bbox": [
+        1199,
+        405,
+        1221,
+        424
+      ],
+      "conf": 0.32,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000590.jpg": [
+    {
+      "bbox": [
+        1175,
+        387,
+        1198,
+        408
+      ],
+      "conf": 0.307,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000591.jpg": [
+    {
+      "bbox": [
+        1152,
+        373,
+        1175,
+        393
+      ],
+      "conf": 0.333,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000592.jpg": [
+    {
+      "bbox": [
+        1131,
+        358,
+        1153,
+        379
+      ],
+      "conf": 0.385,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000593.jpg": [
+    {
+      "bbox": [
+        1115,
+        344,
+        1136,
+        365
+      ],
+      "conf": 0.368,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000594.jpg": [
+    {
+      "bbox": [
+        1101,
+        332,
+        1120,
+        351
+      ],
+      "conf": 0.408,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000595.jpg": [
+    {
+      "bbox": [
+        1088,
+        318,
+        1108,
+        337
+      ],
+      "conf": 0.361,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000596.jpg": [
+    {
+      "bbox": [
+        1077,
+        306,
+        1096,
+        325
+      ],
+      "conf": 0.424,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000597.jpg": [
+    {
+      "bbox": [
+        1068,
+        295,
+        1088,
+        315
+      ],
+      "conf": 0.449,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000598.jpg": [
+    {
+      "bbox": [
+        1062,
+        284,
+        1082,
+        304
+      ],
+      "conf": 0.541,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000599.jpg": [
+    {
+      "bbox": [
+        1058,
+        274,
+        1077,
+        293
+      ],
+      "conf": 0.489,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000600.jpg": [
+    {
+      "bbox": [
+        1056,
+        264,
+        1075,
+        283
+      ],
+      "conf": 0.453,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000601.jpg": [
+    {
+      "bbox": [
+        1056,
+        255,
+        1074,
+        273
+      ],
+      "conf": 0.467,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000602.jpg": [
+    {
+      "bbox": [
+        1057,
+        246,
+        1076,
+        264
+      ],
+      "conf": 0.471,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000603.jpg": [
+    {
+      "bbox": [
+        1060,
+        236,
+        1079,
+        255
+      ],
+      "conf": 0.422,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000604.jpg": [
+    {
+      "bbox": [
+        1064,
+        228,
+        1083,
+        246
+      ],
+      "conf": 0.404,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000605.jpg": [
+    {
+      "bbox": [
+        1069,
+        222,
+        1087,
+        239
+      ],
+      "conf": 0.325,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000606.jpg": [
+    {
+      "bbox": [
+        1077,
+        214,
+        1094,
+        229
+      ],
+      "conf": 0.422,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000607.jpg": [
+    {
+      "bbox": [
+        1084,
+        208,
+        1101,
+        224
+      ],
+      "conf": 0.361,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000608.jpg": [
+    {
+      "bbox": [
+        1094,
+        202,
+        1111,
+        217
+      ],
+      "conf": 0.313,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000609.jpg": [
+    {
+      "bbox": [
+        1104,
+        195,
+        1120,
+        210
+      ],
+      "conf": 0.298,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000610.jpg": [
+    {
+      "bbox": [
+        1115,
+        192,
+        1131,
+        206
+      ],
+      "conf": 0.424,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000611.jpg": [
+    {
+      "bbox": [
+        1125,
+        187,
+        1141,
+        200
+      ],
+      "conf": 0.376,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000612.jpg": [
+    {
+      "bbox": [
+        1135,
+        182,
+        1152,
+        195
+      ],
+      "conf": 0.41,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000613.jpg": [
+    {
+      "bbox": [
+        1145,
+        178,
+        1162,
+        193
+      ],
+      "conf": 0.44,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000614.jpg": [
+    {
+      "bbox": [
+        1153,
+        177,
+        1170,
+        192
+      ],
+      "conf": 0.437,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000615.jpg": [
+    {
+      "bbox": [
+        1162,
+        175,
+        1179,
+        190
+      ],
+      "conf": 0.461,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000616.jpg": [
+    {
+      "bbox": [
+        1171,
+        174,
+        1188,
+        187
+      ],
+      "conf": 0.349,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000617.jpg": [
+    {
+      "bbox": [
+        1179,
+        173,
+        1194,
+        187
+      ],
+      "conf": 0.38,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000618.jpg": [
+    {
+      "bbox": [
+        1187,
+        172,
+        1203,
+        186
+      ],
+      "conf": 0.449,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000619.jpg": [
+    {
+      "bbox": [
+        1194,
+        171,
+        1209,
+        186
+      ],
+      "conf": 0.447,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000620.jpg": [
+    {
+      "bbox": [
+        1199,
+        171,
+        1214,
+        185
+      ],
+      "conf": 0.551,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000621.jpg": [
+    {
+      "bbox": [
+        1205,
+        171,
+        1220,
+        185
+      ],
+      "conf": 0.435,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000622.jpg": [
+    {
+      "bbox": [
+        1210,
+        172,
+        1225,
+        186
+      ],
+      "conf": 0.508,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000623.jpg": [
+    {
+      "bbox": [
+        1214,
+        173,
+        1229,
+        188
+      ],
+      "conf": 0.391,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000624.jpg": [
+    {
+      "bbox": [
+        1218,
+        174,
+        1233,
+        188
+      ],
+      "conf": 0.527,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000625.jpg": [
+    {
+      "bbox": [
+        1220,
+        175,
+        1236,
+        189
+      ],
+      "conf": 0.452,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000626.jpg": [
+    {
+      "bbox": [
+        1223,
+        177,
+        1237,
+        190
+      ],
+      "conf": 0.583,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000627.jpg": [
+    {
+      "bbox": [
+        1225,
+        180,
+        1238,
+        193
+      ],
+      "conf": 0.559,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000628.jpg": [
+    {
+      "bbox": [
+        1225,
+        183,
+        1240,
+        197
+      ],
+      "conf": 0.469,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000629.jpg": [
+    {
+      "bbox": [
+        1225,
+        187,
+        1239,
+        200
+      ],
+      "conf": 0.45,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000630.jpg": [
+    {
+      "bbox": [
+        1223,
+        191,
+        1237,
+        203
+      ],
+      "conf": 0.531,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000631.jpg": [
+    {
+      "bbox": [
+        1221,
+        195,
+        1234,
+        207
+      ],
+      "conf": 0.441,
+      "track_id": 105,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000632.jpg": [
+    {
+      "bbox": [
+        1215,
+        201,
+        1229,
+        213
+      ],
+      "conf": 0.445,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000633.jpg": [
+    {
+      "bbox": [
+        1210,
+        207,
+        1224,
+        220
+      ],
+      "conf": 0.438,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000634.jpg": [
+    {
+      "bbox": [
+        1206,
+        212,
+        1220,
+        225
+      ],
+      "conf": 0.356,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000635.jpg": [
+    {
+      "bbox": [
+        1201,
+        219,
+        1215,
+        232
+      ],
+      "conf": 0.439,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000636.jpg": [
+    {
+      "bbox": [
+        1197,
+        227,
+        1210,
+        239
+      ],
+      "conf": 0.437,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000637.jpg": [
+    {
+      "bbox": [
+        1191,
+        235,
+        1206,
+        249
+      ],
+      "conf": 0.351,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000638.jpg": [
+    {
+      "bbox": [
+        1188,
+        242,
+        1203,
+        256
+      ],
+      "conf": 0.366,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000639.jpg": [
+    {
+      "bbox": [
+        1186,
+        251,
+        1199,
+        264
+      ],
+      "conf": 0.411,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000640.jpg": [
+    {
+      "bbox": [
+        1183,
+        259,
+        1197,
+        272
+      ],
+      "conf": 0.382,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000641.jpg": [
+    {
+      "bbox": [
+        1182,
+        269,
+        1195,
+        280
+      ],
+      "conf": 0.298,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000642.jpg": [
+    {
+      "bbox": [
+        1178,
+        277,
+        1191,
+        290
+      ],
+      "conf": 0.556,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000643.jpg": [
+    {
+      "bbox": [
+        1173,
+        286,
+        1187,
+        301
+      ],
+      "conf": 0.517,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000644.jpg": [
+    {
+      "bbox": [
+        1168,
+        295,
+        1184,
+        310
+      ],
+      "conf": 0.243,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000645.jpg": [
+    {
+      "bbox": [
+        1161,
+        307,
+        1177,
+        322
+      ],
+      "conf": 0.489,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000646.jpg": [
+    {
+      "bbox": [
+        1154,
+        319,
+        1169,
+        333
+      ],
+      "conf": 0.468,
+      "track_id": -1,
+      "source": "ByteTrack"
+    },
+    {
+      "bbox": [
+        139,
+        668,
+        160,
+        691
+      ],
+      "conf": 0.193,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000647.jpg": [
+    {
+      "bbox": [
+        1146,
+        331,
+        1161,
+        346
+      ],
+      "conf": 0.491,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000648.jpg": [
+    {
+      "bbox": [
+        1136,
+        344,
+        1151,
+        359
+      ],
+      "conf": 0.489,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000649.jpg": [
+    {
+      "bbox": [
+        1124,
+        357,
+        1139,
+        372
+      ],
+      "conf": 0.382,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000650.jpg": [
+    {
+      "bbox": [
+        1109,
+        373,
+        1124,
+        387
+      ],
+      "conf": 0.358,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000651.jpg": [
+    {
+      "bbox": [
+        1088,
+        388,
+        1107,
+        403
+      ],
+      "conf": 0.31,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000652.jpg": [
+    {
+      "bbox": [
+        1069,
+        405,
+        1089,
+        422
+      ],
+      "conf": 0.384,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000653.jpg": [
+    {
+      "bbox": [
+        1044,
+        424,
+        1067,
+        443
+      ],
+      "conf": 0.396,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000654.jpg": [
+    {
+      "bbox": [
+        1020,
+        442,
+        1042,
+        459
+      ],
+      "conf": 0.386,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000655.jpg": [
+    {
+      "bbox": [
+        994,
+        459,
+        1016,
+        477
+      ],
+      "conf": 0.354,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000656.jpg": [
+    {
+      "bbox": [
+        980,
+        477,
+        996,
+        491
+      ],
+      "conf": 0.479,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000657.jpg": [
+    {
+      "bbox": [
+        992,
+        472,
+        1009,
+        486
+      ],
+      "conf": 0.377,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000658.jpg": [
+    {
+      "bbox": [
+        1005,
+        468,
+        1021,
+        482
+      ],
+      "conf": 0.492,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000659.jpg": [
+    {
+      "bbox": [
+        1016,
+        466,
+        1033,
+        480
+      ],
+      "conf": 0.512,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000660.jpg": [
+    {
+      "bbox": [
+        1026,
+        465,
+        1041,
+        478
+      ],
+      "conf": 0.51,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000661.jpg": [
+    {
+      "bbox": [
+        1033,
+        465,
+        1048,
+        478
+      ],
+      "conf": 0.546,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000662.jpg": [
+    {
+      "bbox": [
+        1040,
+        465,
+        1055,
+        478
+      ],
+      "conf": 0.605,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000663.jpg": [
+    {
+      "bbox": [
+        1047,
+        466,
+        1062,
+        479
+      ],
+      "conf": 0.535,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000664.jpg": [
+    {
+      "bbox": [
+        1054,
+        468,
+        1068,
+        480
+      ],
+      "conf": 0.582,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000665.jpg": [
+    {
+      "bbox": [
+        1058,
+        470,
+        1073,
+        482
+      ],
+      "conf": 0.598,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000666.jpg": [
+    {
+      "bbox": [
+        1063,
+        473,
+        1077,
+        485
+      ],
+      "conf": 0.488,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000667.jpg": [
+    {
+      "bbox": [
+        1066,
+        477,
+        1081,
+        490
+      ],
+      "conf": 0.698,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000668.jpg": [
+    {
+      "bbox": [
+        1071,
+        483,
+        1085,
+        495
+      ],
+      "conf": 0.648,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000669.jpg": [
+    {
+      "bbox": [
+        1073,
+        488,
+        1087,
+        501
+      ],
+      "conf": 0.573,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000670.jpg": [
+    {
+      "bbox": [
+        1076,
+        495,
+        1090,
+        508
+      ],
+      "conf": 0.563,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000671.jpg": [
+    {
+      "bbox": [
+        1079,
+        491,
+        1094,
+        505
+      ],
+      "conf": 0.571,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000672.jpg": [
+    {
+      "bbox": [
+        1084,
+        481,
+        1098,
+        495
+      ],
+      "conf": 0.446,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000673.jpg": [
+    {
+      "bbox": [
+        1090,
+        472,
+        1104,
+        486
+      ],
+      "conf": 0.536,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000674.jpg": [
+    {
+      "bbox": [
+        1095,
+        464,
+        1109,
+        478
+      ],
+      "conf": 0.491,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000675.jpg": [
+    {
+      "bbox": [
+        1102,
+        458,
+        1116,
+        471
+      ],
+      "conf": 0.558,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000676.jpg": [
+    {
+      "bbox": [
+        1108,
+        454,
+        1121,
+        466
+      ],
+      "conf": 0.577,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000677.jpg": [
+    {
+      "bbox": [
+        1114,
+        450,
+        1128,
+        462
+      ],
+      "conf": 0.652,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000678.jpg": [
+    {
+      "bbox": [
+        1119,
+        447,
+        1133,
+        460
+      ],
+      "conf": 0.663,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000679.jpg": [
+    {
+      "bbox": [
+        1125,
+        447,
+        1139,
+        459
+      ],
+      "conf": 0.625,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000680.jpg": [
+    {
+      "bbox": [
+        1132,
+        447,
+        1145,
+        458
+      ],
+      "conf": 0.551,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000681.jpg": [
+    {
+      "bbox": [
+        1140,
+        447,
+        1154,
+        459
+      ],
+      "conf": 0.601,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000682.jpg": [
+    {
+      "bbox": [
+        1148,
+        448,
+        1164,
+        460
+      ],
+      "conf": 0.398,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000683.jpg": [
+    {
+      "bbox": [
+        1161,
+        450,
+        1175,
+        462
+      ],
+      "conf": 0.315,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000684.jpg": [
+    {
+      "bbox": [
+        1171,
+        452,
+        1187,
+        465
+      ],
+      "conf": 0.377,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000685.jpg": [
+    {
+      "bbox": [
+        1184,
+        456,
+        1200,
+        468
+      ],
+      "conf": 0.471,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000686.jpg": [
+    {
+      "bbox": [
+        1196,
+        460,
+        1213,
+        473
+      ],
+      "conf": 0.301,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000687.jpg": [],
+  "SNMOT-116_000688.jpg": [
+    {
+      "bbox": [
+        1225,
+        474,
+        1242,
+        487
+      ],
+      "conf": 0.253,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000689.jpg": [],
+  "SNMOT-116_000690.jpg": [],
+  "SNMOT-116_000691.jpg": [],
+  "SNMOT-116_000692.jpg": [],
+  "SNMOT-116_000693.jpg": [],
+  "SNMOT-116_000694.jpg": [],
+  "SNMOT-116_000695.jpg": [],
+  "SNMOT-116_000696.jpg": [],
+  "SNMOT-116_000697.jpg": [],
+  "SNMOT-116_000698.jpg": [
+    {
+      "bbox": [
+        1333,
+        495,
+        1349,
+        509
+      ],
+      "conf": 0.409,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000699.jpg": [
+    {
+      "bbox": [
+        1342,
+        499,
+        1358,
+        513
+      ],
+      "conf": 0.436,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000700.jpg": [
+    {
+      "bbox": [
+        1349,
+        505,
+        1365,
+        520
+      ],
+      "conf": 0.386,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000701.jpg": [
+    {
+      "bbox": [
+        1354,
+        507,
+        1371,
+        521
+      ],
+      "conf": 0.36,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000702.jpg": [
+    {
+      "bbox": [
+        1360,
+        509,
+        1375,
+        523
+      ],
+      "conf": 0.406,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000703.jpg": [
+    {
+      "bbox": [
+        1366,
+        512,
+        1381,
+        526
+      ],
+      "conf": 0.531,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000704.jpg": [
+    {
+      "bbox": [
+        1372,
+        516,
+        1386,
+        530
+      ],
+      "conf": 0.43,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000705.jpg": [
+    {
+      "bbox": [
+        1378,
+        517,
+        1394,
+        533
+      ],
+      "conf": 0.385,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000706.jpg": [
+    {
+      "bbox": [
+        1384,
+        518,
+        1398,
+        532
+      ],
+      "conf": 0.176,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000707.jpg": [],
+  "SNMOT-116_000708.jpg": [],
+  "SNMOT-116_000709.jpg": [],
+  "SNMOT-116_000710.jpg": [],
+  "SNMOT-116_000711.jpg": [],
+  "SNMOT-116_000712.jpg": [],
+  "SNMOT-116_000713.jpg": [],
+  "SNMOT-116_000714.jpg": [],
+  "SNMOT-116_000715.jpg": [
+    {
+      "bbox": [
+        1475,
+        522,
+        1496,
+        536
+      ],
+      "conf": 0.306,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000716.jpg": [
+    {
+      "bbox": [
+        1504,
+        525,
+        1522,
+        540
+      ],
+      "conf": 0.159,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000717.jpg": [],
+  "SNMOT-116_000718.jpg": [
+    {
+      "bbox": [
+        1560,
+        529,
+        1581,
+        543
+      ],
+      "conf": 0.235,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000719.jpg": [
+    {
+      "bbox": [
+        1586,
+        532,
+        1607,
+        547
+      ],
+      "conf": 0.266,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000720.jpg": [
+    {
+      "bbox": [
+        1612,
+        534,
+        1632,
+        547
+      ],
+      "conf": 0.353,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000721.jpg": [
+    {
+      "bbox": [
+        1636,
+        535,
+        1656,
+        548
+      ],
+      "conf": 0.378,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000722.jpg": [
+    {
+      "bbox": [
+        1657,
+        536,
+        1677,
+        549
+      ],
+      "conf": 0.375,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000723.jpg": [
+    {
+      "bbox": [
+        1677,
+        538,
+        1695,
+        550
+      ],
+      "conf": 0.427,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000724.jpg": [
+    {
+      "bbox": [
+        1693,
+        537,
+        1712,
+        551
+      ],
+      "conf": 0.33,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000725.jpg": [
+    {
+      "bbox": [
+        1709,
+        537,
+        1728,
+        551
+      ],
+      "conf": 0.377,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000726.jpg": [
+    {
+      "bbox": [
+        1723,
+        538,
+        1742,
+        553
+      ],
+      "conf": 0.361,
+      "track_id": -1,
+      "source": "ByteTrack"
+    },
+    {
+      "bbox": [
+        1795,
+        292,
+        1809,
+        303
+      ],
+      "conf": 0.31,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000727.jpg": [
+    {
+      "bbox": [
+        1735,
+        538,
+        1755,
+        552
+      ],
+      "conf": 0.378,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000728.jpg": [
+    {
+      "bbox": [
+        1747,
+        537,
+        1768,
+        554
+      ],
+      "conf": 0.358,
+      "track_id": -1,
+      "source": "ByteTrack"
+    },
+    {
+      "bbox": [
+        1755,
+        538,
+        1776,
+        555
+      ],
+      "conf": 0.151,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000729.jpg": [
+    {
+      "bbox": [
+        1757,
+        537,
+        1778,
+        555
+      ],
+      "conf": 0.378,
+      "track_id": -1,
+      "source": "ByteTrack"
+    },
+    {
+      "bbox": [
+        1765,
+        537,
+        1786,
+        555
+      ],
+      "conf": 0.17,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000730.jpg": [
+    {
+      "bbox": [
+        1763,
+        537,
+        1782,
+        555
+      ],
+      "conf": 0.501,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000731.jpg": [],
+  "SNMOT-116_000732.jpg": [],
+  "SNMOT-116_000733.jpg": [],
+  "SNMOT-116_000734.jpg": [],
+  "SNMOT-116_000735.jpg": [
+    {
+      "bbox": [
+        1640,
+        516,
+        1659,
+        533
+      ],
+      "conf": 0.254,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000736.jpg": [
+    {
+      "bbox": [
+        1620,
+        512,
+        1638,
+        529
+      ],
+      "conf": 0.439,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000737.jpg": [
+    {
+      "bbox": [
+        1599,
+        509,
+        1620,
+        526
+      ],
+      "conf": 0.299,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000738.jpg": [
+    {
+      "bbox": [
+        1581,
+        508,
+        1601,
+        525
+      ],
+      "conf": 0.285,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000739.jpg": [
+    {
+      "bbox": [
+        1566,
+        506,
+        1584,
+        521
+      ],
+      "conf": 0.272,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000740.jpg": [
+    {
+      "bbox": [
+        1548,
+        505,
+        1566,
+        520
+      ],
+      "conf": 0.308,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000741.jpg": [
+    {
+      "bbox": [
+        1533,
+        503,
+        1551,
+        519
+      ],
+      "conf": 0.361,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000742.jpg": [
+    {
+      "bbox": [
+        1519,
+        502,
+        1535,
+        517
+      ],
+      "conf": 0.405,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000743.jpg": [
+    {
+      "bbox": [
+        1502,
+        502,
+        1518,
+        517
+      ],
+      "conf": 0.405,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000744.jpg": [
+    {
+      "bbox": [
+        1487,
+        502,
+        1502,
+        517
+      ],
+      "conf": 0.438,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000745.jpg": [
+    {
+      "bbox": [
+        1474,
+        501,
+        1490,
+        517
+      ],
+      "conf": 0.483,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000746.jpg": [
+    {
+      "bbox": [
+        1463,
+        503,
+        1478,
+        517
+      ],
+      "conf": 0.446,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000747.jpg": [
+    {
+      "bbox": [
+        1452,
+        504,
+        1466,
+        517
+      ],
+      "conf": 0.429,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000748.jpg": [
+    {
+      "bbox": [
+        1442,
+        504,
+        1456,
+        519
+      ],
+      "conf": 0.45,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000749.jpg": [
+    {
+      "bbox": [
+        1430,
+        507,
+        1446,
+        523
+      ],
+      "conf": 0.24,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ],
+  "SNMOT-116_000750.jpg": [
+    {
+      "bbox": [
+        1418,
+        507,
+        1432,
+        522
+      ],
+      "conf": 0.167,
+      "track_id": -1,
+      "source": "ByteTrack"
+    }
+  ]
+}
