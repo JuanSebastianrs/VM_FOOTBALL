@@ -34,7 +34,7 @@ import supervision as sv
 from core.clustering.team_classifier import TeamClassifier
 
 # ── Configuración ────────────────────────────────────────────────────────────
-MODEL_PATH      = "results_final/rfdetr/checkpoint_best_ema_3class_gcs.pth"
+MODEL_PATH      = "models/models_rfdetr_player_gk_ref_rfdetr_base_448_3class_checkpoint_best_total.pth"
 SEQUENCE_FOLDER = "data/test_sequences/SNMOT-116"
 OUTPUT_VIDEO    = "outputs/visualizations/SNMOT-116_team_clustering.mp4"
 RESOLUTION      = 448       # debe coincidir con el entrenamiento

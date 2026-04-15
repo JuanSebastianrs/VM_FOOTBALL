@@ -91,7 +91,7 @@ def run_batch():
             subprocess.run(["python", r"d:\sebastian\Tesis\VM_FOOTBALL\core\detection\tactical_vision_extractor.py",
                             "--sequence_dir", seq_dir,
                             "--yolo_weights", r"models\yolo26.pt",
-                            "--rtdetr_weights", "models/rtdetr-l.pt",
+                            "--rfdetr_weights", "models/models_rfdetr_player_gk_ref_rfdetr_base_448_3class_checkpoint_best_total.pth",
                             "--output_json", det_json], check=True)
         
         # Phase 2: CMC
