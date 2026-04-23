@@ -1,0 +1,28 @@
+TOP 5 WINNING SEQUENCES
+Ranked by composite score: 0.30*Ball_F1 + 0.25*MOTA + 0.20*Clustering + 0.15*InvRMSE + 0.10*IDF1
+
+#1: SNMOT-148 (Composite: 0.939)
+   Ball:    F1=0.911  RMSE=43.9px  Prec@50=0.599  Rec@50=0.599
+   Players: MOTA=0.944  IDF1=0.813  IDSW=41
+   Teams:   Accuracy=1.000  Ref_Rec=0.667  GK_Rec=0.000
+
+#2: SNMOT-126 (Composite: 0.935)
+   Ball:    F1=0.935  RMSE=27.9px  Prec@50=0.533  Rec@50=0.542
+   Players: MOTA=0.945  IDF1=0.759  IDSW=17
+   Teams:   Accuracy=0.967  Ref_Rec=0.667  GK_Rec=0.000
+
+#3: SNMOT-134 (Composite: 0.929)
+   Ball:    F1=0.962  RMSE=24.0px  Prec@50=0.849  Rec@50=0.882
+   Players: MOTA=0.888  IDF1=0.745  IDSW=61
+   Teams:   Accuracy=0.974  Ref_Rec=1.000  GK_Rec=1.000
+
+#4: SNMOT-188 (Composite: 0.928)
+   Ball:    F1=0.900  RMSE=95.2px  Prec@50=0.737  Rec@50=0.742
+   Players: MOTA=0.920  IDF1=0.888  IDSW=17
+   Teams:   Accuracy=0.964  Ref_Rec=0.667  GK_Rec=1.000
+
+#5: SNMOT-141 (Composite: 0.926)
+   Ball:    F1=0.945  RMSE=37.8px  Prec@50=0.813  Rec@50=0.822
+   Players: MOTA=0.931  IDF1=0.652  IDSW=35
+   Teams:   Accuracy=0.979  Ref_Rec=1.000  GK_Rec=1.000
+

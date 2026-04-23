@@ -1,5 +1,38 @@
+"""
+TacticalVision AI — Phase 9: 2D Field Mapping
+
+Projects player/ball detections from image space onto a 2D minimap
+using PnLCalib per-frame camera calibration with multi-layer temporal
+stabilisation.
+
+Architecture (two-pass offline):
+  Pass 1 — Calibrate: Run PnLCalib on every frame, collect raw camera
+    parameters (R, K, t) with metadata (reprojection error, source).
+  Smoothing — Bidirectional SO(3) Lie algebra ESKF-Lite:
+    Forward pass:  velocity-predictive EMA with adaptive α.
+    Backward pass: same algorithm in reverse.
+    Merge: geodesic midpoint interpolation on SO(3).
+  Pass 2 — Render: Re-read images, project using smoothed H_inv.
+
+Key stabilisation features:
+  1. Velocity prediction: angular velocity ω is EMA-tracked and used to
+     predict R_pred = R_smooth · exp(ω).  Outlier gate compares against
+     R_pred (not R_smooth), so fast paneos are accepted correctly.
+  2. Adaptive α: EMA weight modulated by measurement confidence
+     (reprojection error, residual magnitude, calibration source).
+  3. Bidirectional: forward+backward pass eliminates causal lag.
+  4. Dual-path calibration: falls back to ground-plane homography
+     (heuristic_voting_ground) when full 3D calibration fails.
+
+Mathematical reference:
+  Sola et al., 'A micro Lie theory for state estimation in robotics'
+  (arXiv:1812.01537).  BroadTrack (WACV 2025) for broadcast camera
+  tracking principles.
+"""
+
 import cv2
 import numpy as np
+from scipy.spatial.transform import Rotation
 import json
 import os
 import glob
@@ -20,17 +53,20 @@ from vendor.pnlcalib.utils.utils_heatmap import (
     coords_to_dict,
     complete_keypoints
 )
-from vendor.pnlcalib.utils.utils_calib import FramebyFrameCalib
+from vendor.pnlcalib.utils.utils_calib import (
+    FramebyFrameCalib,
+    rotation_matrix_to_pan_tilt_roll
+)
 
 
 # ---------------------------------------------------------------------------
-# Projection helpers (match original PnLCalib inference.py exactly)
+# Projection helpers
 # ---------------------------------------------------------------------------
 
 def build_P_from_cam_params(cam_params):
     """
     Build the 3x4 projection matrix P from a PnLCalib cam_params dict.
-    This is identical to `projection_from_cam_params` in the original repo.
+    Identical to `projection_from_cam_params` in the original repo.
     """
     x_focal_length = cam_params['x_focal_length']
     y_focal_length = cam_params['y_focal_length']
@@ -50,8 +86,7 @@ def build_P_from_cam_params(cam_params):
 def ground_homography_from_P(P):
     """
     Extract the 3x3 ground-plane (Z=0) homography from a 3x4 projection matrix.
-    For Z=0, the third column of P is irrelevant, so H = [P[:,0] | P[:,1] | P[:,3]].
-    Returns H_inv (image -> world).
+    H = [P[:,0] | P[:,1] | P[:,3]].  Returns H_inv (image -> world).
     """
     H = P[:, [0, 1, 3]]
     H_inv = np.linalg.inv(H)
@@ -59,25 +94,443 @@ def ground_homography_from_P(P):
 
 
 # ---------------------------------------------------------------------------
-# Homography smoother — smooth the final H_inv matrix directly with EMA.
-# This avoids any Euler angle interpolation issues.
+# BidirectionalLieSmoother — predict → correct → merge (forward+backward)
 # ---------------------------------------------------------------------------
 
-class HomographySmoother:
+class BidirectionalLieSmoother:
     """
-    Exponential Moving Average smoother for 3x3 homography matrices.
-    Smooths H_inv directly so projection is stable frame-to-frame.
-    """
-    def __init__(self, alpha=0.3):
-        self.alpha = alpha
-        self.H_inv = None
+    Offline bidirectional camera stabiliser using SO(3) Lie algebra with
+    velocity-predictive ESKF-Lite and forward-backward smoothing.
 
-    def update(self, H_inv_new):
-        if self.H_inv is None:
-            self.H_inv = H_inv_new.copy()
+    This smoother operates in three phases:
+      Phase 1 (Collection): collect_measurement() stores raw PnLCalib
+        outputs per frame with metadata (reprojection error, source).
+      Phase 2 (Smoothing): smooth_all() runs a forward pass with
+        velocity-predictive EMA, then a backward pass, and merges both
+        via geodesic midpoint interpolation on SO(3).  This eliminates
+        the causal lag inherent in forward-only filtering.
+      Phase 3 (Retrieval): get_H_inv(frame_idx) returns the smoothed
+        homography for any frame.
+
+    Key improvements over the previous CameraParamsSmoother:
+      1. PREDICTION: Angular velocity ω is EMA-tracked and used to predict
+         R_pred = R_smooth · exp(ω).  The outlier gate compares measurements
+         against R_pred (not R_smooth), so fast paneos are accepted correctly.
+      2. ADAPTIVE α: The EMA weight is modulated by measurement confidence
+         (reprojection error, residual magnitude, calibration source).
+      3. BIDIRECTIONAL: A backward pass produces a second smoothed sequence
+         that is merged with the forward pass via geodesic interpolation,
+         completely eliminating directional lag.
+
+    Mathematical reference:
+      Sola et al., 'A micro Lie theory for state estimation in robotics'
+      (arXiv:1812.01537).  BroadTrack (WACV 2025) for broadcast camera
+      tracking principles.
+    """
+
+    # ── Base EMA weights (per-parameter family) ──
+    ALPHA_ROTATION = 0.30    # SO(3) rotation — base before confidence scaling
+    ALPHA_FOCAL    = 0.05    # fx, fy — nearly constant in broadcast
+    ALPHA_POS      = 0.10    # camera position — nearly constant (tripod)
+    BETA_OMEGA     = 0.15    # angular velocity EMA — very smooth
+
+    # ── Adaptive α bounds ──
+    ALPHA_ROT_MIN  = 0.08    # minimum rotation α (very noisy measurement)
+    ALPHA_ROT_MAX  = 0.50    # maximum rotation α (high-confidence measurement)
+
+    # ── Outlier detection thresholds ──
+    MAX_ROTATION_CHANGE_DEG = 7.0    # gate vs prediction (wider than before)
+    MAX_FOCAL_RATIO         = 0.20   # 20% relative change
+    MAX_POS_CHANGE_M        = 20.0   # metres
+    MAX_REPROJ_ERR_PX       = 20.0   # pixels (PnLCalib's own metric)
+
+    # ── Recovery ──
+    MAX_CONSECUTIVE_REJECTS = 15
+    WARMUP_FRAMES           = 3
+
+    # ── Bidirectional merge weight ──
+    # 0.5 = equal forward/backward.  Slightly favour forward for causality.
+    BIDIR_FORWARD_WEIGHT    = 0.5
+
+    def __init__(self):
+        # Raw measurements collected during Phase 1
+        self._measurements = []    # list of dicts or None (per frame)
+
+        # Smoothed output (populated by smooth_all)
+        self._smoothed_H_inv = []  # list of np.ndarray or None
+        self._smoothed_params = [] # list of dict with R, fx, fy, cx, cy, pos
+
+        self.stats = {
+            'accepted_fwd': 0,
+            'rejected_outlier_fwd': 0,
+            'rejected_reproj_fwd': 0,
+            'force_accepted_fwd': 0,
+            'accepted_bwd': 0,
+            'rejected_bwd': 0,
+            'total_frames': 0,
+            'fallback': 0,
+        }
+
+    # ──────────────────────────────────────────────────────────────
+    #  Phase 1: Collect raw measurements
+    # ──────────────────────────────────────────────────────────────
+
+    def collect_measurement(self, cam_params, rep_err=0.0, source='voting'):
+        """
+        Store a raw PnLCalib measurement for later batch smoothing.
+        Call with cam_params=None if calibration failed for this frame.
+        """
+        if cam_params is not None:
+            R_mat = np.array(cam_params['rotation_matrix'])
+            pos = np.array(cam_params['position_meters'],
+                           dtype=np.float64).flatten()
+            self._measurements.append({
+                'R': Rotation.from_matrix(R_mat),
+                'fx': cam_params['x_focal_length'],
+                'fy': cam_params['y_focal_length'],
+                'cx': cam_params['principal_point'][0],
+                'cy': cam_params['principal_point'][1],
+                'pos': pos,
+                'rep_err': rep_err,
+                'source': source,
+            })
         else:
-            self.H_inv = self.alpha * H_inv_new + (1.0 - self.alpha) * self.H_inv
-        return self.H_inv
+            self._measurements.append(None)
+            self.stats['fallback'] += 1
+
+    # ──────────────────────────────────────────────────────────────
+    #  Phase 2: Bidirectional smoothing
+    # ──────────────────────────────────────────────────────────────
+
+    def smooth_all(self):
+        """
+        Run forward + backward smoothing passes and merge results.
+        Must be called after all measurements are collected.
+
+        Forward pass: velocity-predictive EMA (ESKF-Lite) — captures
+          camera motion inertia, reduces lag during paneos.
+        Backward pass: pure SO(3) EMA WITHOUT velocity prediction —
+          velocity prediction is physically invalid in reverse time and
+          causes oscillation when merged with the forward pass.
+        Merge: geodesic midpoint on SO(3) + linear average for Euclidean.
+        """
+        N = len(self._measurements)
+        self.stats['total_frames'] = N
+
+        # Forward pass — with velocity prediction
+        fwd_params = self._run_pass(
+            self._measurements, direction='forward', use_prediction=True)
+
+        # Backward pass — pure EMA, NO velocity prediction
+        bwd_params = self._run_pass(
+            list(reversed(self._measurements)),
+            direction='backward', use_prediction=False)
+        bwd_params = list(reversed(bwd_params))
+
+        # Merge forward + backward
+        w = self.BIDIR_FORWARD_WEIGHT
+        merged_params = []
+        for i in range(N):
+            f = fwd_params[i]
+            b = bwd_params[i]
+
+            if f is None and b is None:
+                merged_params.append(None)
+            elif f is None:
+                merged_params.append(b)
+            elif b is None:
+                merged_params.append(f)
+            else:
+                # Geodesic interpolation on SO(3) for rotation
+                R_fwd = f['R']
+                R_bwd = b['R']
+                R_delta = R_fwd.inv() * R_bwd
+                omega_delta = R_delta.as_rotvec()
+                # Weighted geodesic: move (1-w) of the way from fwd to bwd
+                R_merged = R_fwd * Rotation.from_rotvec((1 - w) * omega_delta)
+
+                # Linear interpolation for Euclidean parameters
+                merged = {
+                    'R':  R_merged,
+                    'fx': w * f['fx'] + (1 - w) * b['fx'],
+                    'fy': w * f['fy'] + (1 - w) * b['fy'],
+                    'cx': w * f['cx'] + (1 - w) * b['cx'],
+                    'cy': w * f['cy'] + (1 - w) * b['cy'],
+                    'pos': w * f['pos'] + (1 - w) * b['pos'],
+                }
+                merged_params.append(merged)
+
+        # Build H_inv for each frame
+        self._smoothed_params = merged_params
+        self._smoothed_H_inv = []
+        for p in merged_params:
+            if p is not None:
+                self._smoothed_H_inv.append(
+                    self._build_H_inv_static(
+                        p['R'], p['fx'], p['fy'], p['cx'], p['cy'], p['pos']))
+            else:
+                self._smoothed_H_inv.append(None)
+
+    def _compute_confidence(self, rep_err, source, residual_norm_deg):
+        """
+        Compute a [0, 1] confidence score for the measurement.
+
+        High confidence = low rep_err + 'voting' source + small residual.
+        This modulates α: confident measurements get higher α (trust more).
+        """
+        # Reprojection error contribution: decays from 1.0 at err=0 to ~0.2 at err=15
+        c_reproj = np.exp(-rep_err / 8.0)
+
+        # Source contribution: voting is more reliable than ground-plane
+        c_source = 1.0 if source == 'voting' else 0.7
+
+        # Residual contribution: small residual = consistent with prediction
+        c_residual = np.exp(-residual_norm_deg / 4.0)
+
+        return np.clip(c_reproj * c_source * c_residual, 0.15, 1.0)
+
+    def _run_pass(self, measurements, direction='forward',
+                  use_prediction=True):
+        """
+        Single-direction smoothing pass.
+
+        When use_prediction=True (forward pass):
+          1. PREDICT: R_pred = R_smooth · exp(ω_smooth)
+          2. GATE: compare measurement vs R_pred
+          3. CORRECT: EMA in so(3) tangent space with adaptive α
+          4. UPDATE VELOCITY: ω_smooth via EMA
+
+        When use_prediction=False (backward pass):
+          Pure EMA on SO(3) — like the original CameraParamsSmoother.
+          Gate compares against R_smooth directly. No velocity state.
+          This avoids the oscillation caused by conflicting velocity
+          predictions between forward and backward passes.
+        """
+        N = len(measurements)
+        result = [None] * N
+
+        # State
+        R_smooth = None
+        fx_s, fy_s, cx_s, cy_s = None, None, None, None
+        pos_s = None
+        omega_smooth = np.zeros(3)      # angular velocity in rad/frame
+        reject_count = 0
+        frame_count = 0
+
+        # Velocity decay rate during rejections
+        OMEGA_REJECT_DECAY = 0.80   # aggressive decay to prevent cascade drift
+
+        tag_accept = f'accepted_{direction[:3]}'
+        tag_reject_out = f'rejected_outlier_{direction[:3]}'
+        tag_reject_rep = f'rejected_reproj_{direction[:3]}'
+        tag_force = f'force_accepted_{direction[:3]}'
+
+        # Ensure stat keys exist for backward pass
+        for k in [tag_accept, tag_reject_out, tag_reject_rep, tag_force]:
+            if k not in self.stats:
+                self.stats[k] = 0
+
+        for i in range(N):
+            m = measurements[i]
+            frame_count += 1
+
+            if m is None:
+                # No measurement — hold state (optionally predict forward)
+                if R_smooth is not None:
+                    if use_prediction:
+                        R_smooth = R_smooth * Rotation.from_rotvec(omega_smooth)
+                        omega_smooth *= OMEGA_REJECT_DECAY
+                    result[i] = {
+                        'R': R_smooth, 'fx': fx_s, 'fy': fy_s,
+                        'cx': cx_s, 'cy': cy_s, 'pos': pos_s.copy(),
+                    }
+                continue
+
+            R_new = m['R']
+            fx, fy = m['fx'], m['fy']
+            cx, cy = m['cx'], m['cy']
+            pos = m['pos']
+            rep_err = m['rep_err']
+            source = m['source']
+
+            # ── Warm-up: accept directly ──
+            if frame_count <= self.WARMUP_FRAMES or R_smooth is None:
+                R_smooth = R_new
+                fx_s, fy_s = fx, fy
+                cx_s, cy_s = cx, cy
+                pos_s = pos.copy()
+                omega_smooth = np.zeros(3)
+                self.stats[tag_accept] += 1
+                result[i] = {
+                    'R': R_smooth, 'fx': fx_s, 'fy': fy_s,
+                    'cx': cx_s, 'cy': cy_s, 'pos': pos_s.copy(),
+                }
+                continue
+
+            # ── Determine reference for gating ──
+            if use_prediction:
+                R_ref = R_smooth * Rotation.from_rotvec(omega_smooth)
+            else:
+                R_ref = R_smooth  # pure EMA: compare against smooth state
+
+            # Reprojection error pre-check
+            if rep_err > self.MAX_REPROJ_ERR_PX:
+                reject_count += 1
+                self.stats[tag_reject_rep] += 1
+                if use_prediction:
+                    R_smooth = R_ref  # advance to prediction
+                    omega_smooth *= OMEGA_REJECT_DECAY
+                # else: hold R_smooth as-is
+                result[i] = {
+                    'R': R_smooth, 'fx': fx_s, 'fy': fy_s,
+                    'cx': cx_s, 'cy': cy_s, 'pos': pos_s.copy(),
+                }
+                continue
+
+            # ── GATE phase: compare against R_ref ──
+            R_delta_ref = R_ref.inv() * R_new
+            residual = R_delta_ref.as_rotvec()
+            residual_norm_deg = np.rad2deg(np.linalg.norm(residual))
+
+            # Focal and position checks (against smoothed state)
+            focal_ok = True
+            if fx_s > 0:
+                focal_ok = (abs(fx - fx_s) / fx_s <= self.MAX_FOCAL_RATIO)
+            pos_ok = (np.linalg.norm(pos - pos_s) <= self.MAX_POS_CHANGE_M)
+
+            # Use tighter gate for backward (no prediction to absorb motion)
+            max_rot = self.MAX_ROTATION_CHANGE_DEG
+            if not use_prediction:
+                max_rot = 5.0  # tighter gate for pure EMA backward
+
+            rotation_ok = (residual_norm_deg <= max_rot)
+
+            if rotation_ok and focal_ok and pos_ok:
+                # ── ACCEPTED ──
+                confidence = self._compute_confidence(
+                    rep_err, source, residual_norm_deg)
+                alpha_r = np.clip(
+                    self.ALPHA_ROTATION * confidence,
+                    self.ALPHA_ROT_MIN, self.ALPHA_ROT_MAX)
+                alpha_f = self.ALPHA_FOCAL
+                alpha_p = self.ALPHA_POS
+                reject_count = 0
+                self.stats[tag_accept] += 1
+
+            elif reject_count >= self.MAX_CONSECUTIVE_REJECTS:
+                # ── FORCE ACCEPT ──
+                alpha_r = 0.8
+                alpha_f = 0.5
+                alpha_p = 0.8
+                reject_count = 0
+                self.stats[tag_force] += 1
+                # Recompute residual against smooth (not pred) for force
+                R_delta_ref = R_smooth.inv() * R_new
+                residual = R_delta_ref.as_rotvec()
+
+            else:
+                # ── REJECTED — hold or predict ──
+                reject_count += 1
+                if not rotation_ok:
+                    self.stats[tag_reject_out] += 1
+                else:
+                    self.stats[tag_reject_rep] += 1
+                if use_prediction:
+                    R_smooth = R_ref  # advance to prediction
+                    omega_smooth *= OMEGA_REJECT_DECAY
+                # else: hold R_smooth as-is
+                result[i] = {
+                    'R': R_smooth, 'fx': fx_s, 'fy': fy_s,
+                    'cx': cx_s, 'cy': cy_s, 'pos': pos_s.copy(),
+                }
+                continue
+
+            # ── CORRECTION phase ──
+            R_prev = R_smooth
+
+            # EMA correction on SO(3) via so(3) tangent space
+            omega_corr = alpha_r * residual
+            R_smooth = R_ref * Rotation.from_rotvec(omega_corr)
+
+            # ── UPDATE VELOCITY (only for forward predictive pass) ──
+            if use_prediction:
+                omega_raw = (R_prev.inv() * R_smooth).as_rotvec()
+                omega_smooth = (self.BETA_OMEGA * omega_raw +
+                                (1 - self.BETA_OMEGA) * omega_smooth)
+
+            # ── Standard EMA for Euclidean parameters ──
+            fx_s = alpha_f * fx + (1 - alpha_f) * fx_s
+            fy_s = alpha_f * fy + (1 - alpha_f) * fy_s
+            cx_s = alpha_f * cx + (1 - alpha_f) * cx_s
+            cy_s = alpha_f * cy + (1 - alpha_f) * cy_s
+            pos_s = alpha_p * pos + (1 - alpha_p) * pos_s
+
+            result[i] = {
+                'R': R_smooth, 'fx': fx_s, 'fy': fy_s,
+                'cx': cx_s, 'cy': cy_s, 'pos': pos_s.copy(),
+            }
+
+        return result
+
+    # ──────────────────────────────────────────────────────────────
+    #  Phase 3: Retrieval
+    # ──────────────────────────────────────────────────────────────
+
+    def get_H_inv(self, frame_idx):
+        """Get the smoothed H_inv for a specific frame index."""
+        if frame_idx < len(self._smoothed_H_inv):
+            return self._smoothed_H_inv[frame_idx]
+        return None
+
+    def get_smoothed_rotation(self, frame_idx):
+        """Get the smoothed Rotation for a specific frame (for diagnostics)."""
+        if frame_idx < len(self._smoothed_params):
+            p = self._smoothed_params[frame_idx]
+            if p is not None:
+                return p['R']
+        return None
+
+    def get_smoothed_params(self, frame_idx):
+        """Get all smoothed params for a specific frame (for diagnostics)."""
+        if frame_idx < len(self._smoothed_params):
+            return self._smoothed_params[frame_idx]
+        return None
+
+    @staticmethod
+    def _build_H_inv_static(R_rot, fx, fy, cx, cy, pos):
+        """
+        Reconstruct H_inv from camera parameters.
+        Static version for use in batch processing.
+        """
+        rotation = R_rot.as_matrix()
+
+        Q = np.array([
+            [fx, 0,  cx],
+            [0,  fy, cy],
+            [0,  0,  1]
+        ])
+
+        It = np.eye(4)[:-1]
+        It[:, -1] = -pos
+
+        P = Q @ (rotation @ It)
+        H = P[:, [0, 1, 3]]   # ground plane (Z=0)
+        try:
+            H_inv = np.linalg.inv(H)
+            return H_inv
+        except np.linalg.LinAlgError:
+            return None
+
+    def summary(self):
+        s = self.stats
+        return (f"  Forward  — accepted: {s.get('accepted_fwd',0)}, "
+                f"rejected(outlier): {s.get('rejected_outlier_fwd',0)}, "
+                f"rejected(reproj): {s.get('rejected_reproj_fwd',0)}, "
+                f"force: {s.get('force_accepted_fwd',0)}\n"
+                f"  Backward — accepted: {s.get('accepted_bwd',0)}, "
+                f"rejected: {s.get('rejected_bwd',0)}\n"
+                f"  Fallback (no calib): {s.get('fallback',0)}\n"
+                f"  Total frames: {s.get('total_frames',0)}")
 
 
 # ---------------------------------------------------------------------------
@@ -124,19 +577,19 @@ def draw_pitch_cv2(scale=10, margin=50):
 
 
 # ---------------------------------------------------------------------------
-# Projection: image pixel  ->  minimap pixel   via  H_inv
+# Projection: image pixel  →  minimap pixel   via  H_inv
 # ---------------------------------------------------------------------------
 
 def project_point(x_img, y_img, H_inv, scale, margin, w_pitch, h_pitch):
     """
     Project an image-space point (x_img, y_img) onto the minimap using H_inv.
-    H_inv maps image coords -> PnLCalib world coords (centred on pitch centre).
+    H_inv maps image coords → PnLCalib world coords (centred on pitch centre).
     Returns (mx, my) minimap pixel coords, or (None, None) if out of bounds.
     """
     pt_world = H_inv @ np.array([x_img, y_img, 1.0])
     pt_world /= pt_world[2]
 
-    # PnLCalib world has origin at pitch centre -> shift to top-left origin
+    # PnLCalib world has origin at pitch centre → shift to top-left origin
     x_world = pt_world[0] + 52.5
     y_world = pt_world[1] + 34.0
 
@@ -161,6 +614,8 @@ def main():
     parser.add_argument("--sequence_dir", type=str, required=True)
     parser.add_argument("--detections", type=str, required=True)
     parser.add_argument("--trajectory", type=str, required=True)
+    parser.add_argument("--team_assignments", type=str, default=None,
+                        help="Path to team_assignments.json from Phase 8 (clustering)")
     parser.add_argument("--pnlcalib_kp_weights", type=str, default="models/SV_kp")
     parser.add_argument("--pnlcalib_line_weights", type=str, default="models/SV_lines")
     parser.add_argument("--pnlcalib_kp_cfg", type=str,
@@ -170,8 +625,8 @@ def main():
     parser.add_argument("--kp_threshold", type=float, default=0.3434)
     parser.add_argument("--line_threshold", type=float, default=0.7867)
     parser.add_argument("--disable_pnl_refine", action="store_true")
-    parser.add_argument("--smooth_alpha", type=float, default=0.3,
-                        help="EMA alpha for H_inv smoothing (0=frozen, 1=no smooth)")
+    parser.add_argument("--debug", action="store_true",
+                        help="Print per-frame calibration diagnostics")
     parser.add_argument("--output", type=str, required=True)
     args = parser.parse_args()
 
@@ -182,16 +637,16 @@ def main():
         cfgl = yaml.safe_load(fh)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Dispositivo: {device}")
+    print(f"Device: {device}")
 
-    # --- Load HRNet models (exactly as original PnLCalib inference.py) ---
-    print("Cargando modelo PnLCalib Keypoints HRNet...")
+    # --- Load HRNet models ---
+    print("Loading PnLCalib Keypoints HRNet...")
     model_kp = cls_hrnet.get_cls_net(cfg)
     model_kp.load_state_dict(
         torch.load(args.pnlcalib_kp_weights, map_location=device, weights_only=False))
     model_kp.to(device).eval()
 
-    print("Cargando modelo PnLCalib Lines HRNet...")
+    print("Loading PnLCalib Lines HRNet...")
     model_l = cls_hrnet_l.get_cls_net(cfgl)
     model_l.load_state_dict(
         torch.load(args.pnlcalib_line_weights, map_location=device, weights_only=False))
@@ -200,20 +655,181 @@ def main():
     transform_resize = T.Resize((540, 960))
 
     # --- Load tracking data ---
-    print("Cargando datos de tracking...")
+    print("Loading tracking data...")
     with open(args.detections, "r") as fh:
         detections = {d["frame_id"]: d for d in json.load(fh)}
     with open(args.trajectory, "r") as fh:
         trajectory = {t["frame_id"]: t for t in json.load(fh)}
 
+    # --- Load team clustering data (if available) ---
+    team_map = {}   # track_id -> {"team_id": int, "role": str}
+    if args.team_assignments and os.path.exists(args.team_assignments):
+        print(f"Loading team assignments from {args.team_assignments}...")
+        with open(args.team_assignments, "r") as fh:
+            for entry in json.load(fh):
+                tid = entry["track_id"]
+                team_map[tid] = {
+                    "team_id": entry.get("team_id", -1),
+                    "role": entry.get("role", "player")
+                }
+        print(f"  {len(team_map)} tracks with team assignment.")
+    else:
+        print("No clustering data — players rendered without team distinction.")
+
+    # Team color palette (BGR)
+    TEAM_COLORS = {
+        0:  (255, 100, 50),   # Team A – orange-blue
+        1:  (50, 255, 100),   # Team B – green
+        -1: (180, 180, 180),  # Outlier – grey
+        -2: (0, 255, 255),    # Referee – yellow
+    }
+
+    def get_player_color(track_id):
+        """Return (color_bgr, is_gk, is_ref) for a track_id."""
+        info = team_map.get(track_id)
+        if info is None:
+            return (255, 0, 0), False, False  # fallback blue
+        role = info["role"]
+        team_id = info["team_id"]
+        if role == "referee":
+            return (0, 255, 255), False, True
+        color = TEAM_COLORS.get(team_id, (180, 180, 180))
+        return color, (role == "goalkeeper"), False
+
     img_dir = os.path.join(args.sequence_dir, "img1")
     images = sorted(glob.glob(os.path.join(img_dir, "*.jpg")))
     if not images:
-        print("Error: No hay imágenes en la ruta de la secuencia.")
+        print("Error: No images found in sequence directory.")
         return
 
     frame_0 = cv2.imread(images[0])
     h_ori, w_ori = frame_0.shape[:2]
+
+    # --- Calibration objects ---
+    cam = FramebyFrameCalib(iwidth=w_ori, iheight=h_ori, denormalize=True)
+    smoother = BidirectionalLieSmoother()
+
+    pnl_refine = not args.disable_pnl_refine
+
+    calib_voting = 0
+    calib_ground = 0
+    calib_fail   = 0
+
+    # ═══════════════════════════════════════════════════════════════
+    #  PASS 1: PnLCalib inference → collect measurements
+    # ═══════════════════════════════════════════════════════════════
+    print(f"\n{'='*50}")
+    print(f"Pass 1/2: Calibrating {len(images)} frames "
+          f"(PnL refine={'ON' if pnl_refine else 'OFF'})...")
+    print(f"{'='*50}")
+
+    frame_ids = []   # ordered list of frame_ids matching measurement indices
+
+    for img_path in tqdm(images, desc="Calibrating"):
+        frame_id = int(os.path.splitext(os.path.basename(img_path))[0])
+        frame_ids.append(frame_id)
+        frame = cv2.imread(img_path)
+
+        # ── PnLCalib inference ──
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        pil = Image.fromarray(rgb)
+        tensor = TF.to_tensor(pil).float().unsqueeze(0)
+        if tensor.size()[-1] != 960:
+            tensor = transform_resize(tensor)
+        tensor = tensor.to(device)
+        _, _, h_t, w_t = tensor.size()
+
+        with torch.no_grad():
+            hm_kp = model_kp(tensor)
+            hm_l  = model_l(tensor)
+
+        # Exclude background channel (last channel)
+        kp_coords   = get_keypoints_from_heatmap_batch_maxpool(hm_kp[:, :-1, :, :])
+        line_coords  = get_keypoints_from_heatmap_batch_maxpool_l(hm_l[:, :-1, :, :])
+
+        kp_dict    = coords_to_dict(kp_coords,   threshold=args.kp_threshold)
+        lines_dict = coords_to_dict(line_coords,  threshold=args.line_threshold)
+
+        kp_dict, lines_dict = complete_keypoints(
+            kp_dict[0], lines_dict[0], w=w_t, h=h_t, normalize=True
+        )
+
+        cam.update(kp_dict, lines_dict)
+
+        # ── Dual-path calibration ──
+        cam_params_dict = None
+        rep_err = 999.0
+        source = 'hold'
+
+        # Path A: Full 3D calibration (heuristic_voting)
+        result = cam.heuristic_voting(refine_lines=pnl_refine)
+
+        if result is not None:
+            cam_params_dict = result['cam_params']
+            rep_err = result['rep_err']
+            calib_voting += 1
+            source = 'voting'
+        else:
+            # Path B: Ground-plane homography (heuristic_voting_ground)
+            try:
+                result_g = cam.heuristic_voting_ground(refine_lines=pnl_refine)
+                if (result_g is not None
+                        and cam.calibration is not None
+                        and cam.rotation is not None
+                        and cam.position is not None):
+                    pan_r, tilt_r, roll_r = rotation_matrix_to_pan_tilt_roll(
+                        cam.rotation)
+                    pos_flat = np.array(cam.position).flatten()
+                    cam_params_dict = {
+                        'pan_degrees':    float(np.rad2deg(pan_r)),
+                        'tilt_degrees':   float(np.rad2deg(tilt_r)),
+                        'roll_degrees':   float(np.rad2deg(roll_r)),
+                        'x_focal_length': float(cam.calibration[0, 0]),
+                        'y_focal_length': float(cam.calibration[1, 1]),
+                        'principal_point': [float(cam.calibration[0, 2]),
+                                           float(cam.calibration[1, 2])],
+                        'position_meters': [float(pos_flat[0]),
+                                            float(pos_flat[1]),
+                                            float(pos_flat[2])],
+                        'rotation_matrix': cam.rotation.tolist()
+                    }
+                    rep_err = result_g.get('rep_err', 10.0)
+                    calib_ground += 1
+                    source = 'ground'
+            except Exception:
+                cam_params_dict = None
+
+        if cam_params_dict is None:
+            calib_fail += 1
+
+        # ── Collect into smoother ──
+        smoother.collect_measurement(cam_params_dict, rep_err, source)
+
+    # ═══════════════════════════════════════════════════════════════
+    #  BIDIRECTIONAL SMOOTHING (forward + backward + merge)
+    # ═══════════════════════════════════════════════════════════════
+    print(f"\nRunning bidirectional SO(3) Lie algebra smoothing...")
+    smoother.smooth_all()
+
+    # ── Debug: print a sample of smoothed rotations ──
+    if args.debug:
+        print("\n  Sample smoothed rotations (every 25 frames):")
+        for idx, fid in enumerate(frame_ids):
+            if fid % 25 == 0:
+                R_s = smoother.get_smoothed_rotation(idx)
+                p = smoother.get_smoothed_params(idx)
+                if R_s is not None:
+                    euler = R_s.as_euler('ZXZ', degrees=True)
+                    print(f"  [{fid:>5d}] euler_ZXZ=[{euler[0]:7.1f},"
+                          f"{euler[1]:6.1f},{euler[2]:6.1f}]° "
+                          f"fx={p['fx']:7.0f}")
+
+    # ═══════════════════════════════════════════════════════════════
+    #  PASS 2: Render minimap with smoothed H_inv
+    # ═══════════════════════════════════════════════════════════════
+    print(f"\n{'='*50}")
+    print(f"Pass 2/2: Rendering {len(images)} frames with smoothed calibration...")
+    print(f"{'='*50}")
 
     # --- Video layout ---
     scale = 8
@@ -231,66 +847,18 @@ def main():
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out_video = cv2.VideoWriter(args.output, fourcc, 25.0, (out_w, out_h))
 
-    # --- Calibration objects ---
-    cam = FramebyFrameCalib(iwidth=w_ori, iheight=h_ori, denormalize=True)
-    smoother = HomographySmoother(alpha=args.smooth_alpha)
-
-    last_valid_H_inv = None
-    pnl_refine = not args.disable_pnl_refine
-
-    calib_ok = 0
-    calib_fail = 0
-
-    print(f"Procesando {len(images)} frames...")
-
-    for img_path in tqdm(images):
-        frame_id = int(os.path.splitext(os.path.basename(img_path))[0])
+    for idx, img_path in enumerate(tqdm(images, desc="Rendering")):
+        frame_id = frame_ids[idx]
         frame = cv2.imread(img_path)
 
-        # ---- PnLCalib inference (mirrors original inference.py exactly) ----
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil = Image.fromarray(rgb)
-        tensor = TF.to_tensor(pil).float().unsqueeze(0)
-        if tensor.size()[-1] != 960:
-            tensor = transform_resize(tensor)
-        tensor = tensor.to(device)
-        _, _, h_t, w_t = tensor.size()
+        # ── Get pre-computed smoothed H_inv ──
+        H_inv = smoother.get_H_inv(idx)
 
-        with torch.no_grad():
-            hm_kp = model_kp(tensor)
-            hm_l = model_l(tensor)
-
-        # Exclude background channel (last channel)
-        kp_coords = get_keypoints_from_heatmap_batch_maxpool(hm_kp[:, :-1, :, :])
-        line_coords = get_keypoints_from_heatmap_batch_maxpool_l(hm_l[:, :-1, :, :])
-
-        kp_dict = coords_to_dict(kp_coords, threshold=args.kp_threshold)
-        lines_dict = coords_to_dict(line_coords, threshold=args.line_threshold)
-
-        kp_dict, lines_dict = complete_keypoints(
-            kp_dict[0], lines_dict[0], w=w_t, h=h_t, normalize=True
-        )
-
-        cam.update(kp_dict, lines_dict)
-        result = cam.heuristic_voting(refine_lines=pnl_refine)
-
-        # ---- Build H_inv from raw PnLCalib cam_params (no angle reconstruction) ----
-        if result is not None:
-            cam_params = result['cam_params']
-            P = build_P_from_cam_params(cam_params)
-            H_inv_raw = ground_homography_from_P(P)
-            H_inv = smoother.update(H_inv_raw)
-            last_valid_H_inv = H_inv
-            calib_ok += 1
-        else:
-            H_inv = last_valid_H_inv
-            calib_fail += 1
-
-        # ---- Render minimap ----
+        # ── Render minimap ──
         pitch_frame = base_pitch.copy()
 
         if H_inv is not None:
-            # -- Players --
+            # -- Players (team-aware) --
             frame_data = detections.get(frame_id, {"players": []})
             for p in frame_data.get("players", []):
                 x_min = p["x_min"]
@@ -299,11 +867,26 @@ def main():
                 y_max = p["y_max"]
                 track_id = p.get("track_id", -1)
 
-                # Draw bbox on video frame
+                color, is_gk, is_ref = get_player_color(track_id)
+
+                # Draw bbox on video frame with team color
                 cv2.rectangle(frame,
                               (int(x_min), int(y_min)),
                               (int(x_max), int(y_max)),
-                              (255, 0, 0), 2)
+                              color, 2)
+
+                # Label on video frame
+                info_team = team_map.get(track_id)
+                if info_team:
+                    label = f"#{track_id}"
+                    if is_ref:
+                        label = f"REF #{track_id}"
+                    elif is_gk:
+                        label = f"GK #{track_id}"
+                    cv2.putText(frame, label,
+                                (int(x_min), int(y_min) - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1,
+                                cv2.LINE_AA)
 
                 # Project foot-point (bottom-centre of bbox)
                 x_foot = (x_min + x_max) / 2.0
@@ -313,7 +896,21 @@ def main():
                     x_foot, y_foot, H_inv, scale, margin, w_pitch, h_pitch
                 )
                 if mx is not None:
-                    cv2.circle(pitch_frame, (mx, my), 6, (255, 0, 0), -1)
+                    # Minimap: team color dot, special markers for GK/REF
+                    if is_ref:
+                        # Referees: diamond shape
+                        pts = np.array([
+                            [mx, my - 7], [mx + 5, my],
+                            [mx, my + 7], [mx - 5, my]
+                        ], dtype=np.int32)
+                        cv2.fillPoly(pitch_frame, [pts], color)
+                    elif is_gk:
+                        # Goalkeepers: larger circle + ring
+                        cv2.circle(pitch_frame, (mx, my), 8, color, -1)
+                        cv2.circle(pitch_frame, (mx, my), 8, (255, 255, 255), 2)
+                    else:
+                        cv2.circle(pitch_frame, (mx, my), 6, color, -1)
+
                     cv2.putText(pitch_frame, str(track_id), (mx + 8, my),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4,
                                 (255, 255, 255), 1)
@@ -323,8 +920,8 @@ def main():
             if ball is not None:
                 bx, by = ball["x"], ball["y"]
                 is_dummy = ball.get("is_dummy", False)
-                color = (0, 0, 255) if is_dummy else (0, 255, 255)
-                cv2.circle(frame, (int(bx), int(by)), 5, color, -1)
+                bcolor = (0, 0, 255) if is_dummy else (0, 255, 255)
+                cv2.circle(frame, (int(bx), int(by)), 5, bcolor, -1)
 
                 mx, my = project_point(
                     bx, by, H_inv, scale, margin, w_pitch, h_pitch
@@ -332,7 +929,7 @@ def main():
                 if mx is not None:
                     cv2.circle(pitch_frame, (mx, my), 5, (0, 165, 255), -1)
 
-        # ---- Compose side-by-side ----
+        # ── Compose side-by-side ──
         frame_resized = cv2.resize(frame, (new_w_ori, target_video_h))
         pad_top = (target_video_h - h_pitch) // 2
         pad_bot = target_video_h - h_pitch - pad_top
@@ -343,10 +940,18 @@ def main():
         out_video.write(np.hstack((frame_resized, pitch_padded)))
 
     out_video.release()
-    print(f"\nCalibración exitosa: {calib_ok}/{len(images)} frames")
-    print(f"Calibración fallida: {calib_fail}/{len(images)} frames")
-    print(f"Video guardado en: {args.output}")
+
+    # ── Final report ──
+    print(f"\n{'='*50}")
+    print(f"Calibration sources:")
+    print(f"  Voting (3D):   {calib_voting}/{len(images)}")
+    print(f"  Ground (2D):   {calib_ground}/{len(images)}")
+    print(f"  Failed (hold): {calib_fail}/{len(images)}")
+    print(f"\nBidirectional Smoother statistics:")
+    print(smoother.summary())
+    print(f"\nVideo saved to: {args.output}")
 
 
 if __name__ == '__main__':
     main()
+

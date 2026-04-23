@@ -243,6 +243,36 @@ class TeamClassifier:
             "n_outliers": n_outliers,
         }
 
+    def cluster_quality(self, crops: List[np.ndarray]) -> Dict[str, float]:
+        """
+        Evalúa la calidad interna del clustering usando Métricas de Silhouette y Davies-Bouldin.
+        Requiere scikit-learn.
+        """
+        from sklearn.metrics import silhouette_score, davies_bouldin_score
+        
+        embeddings = []
+        labels = []
+        
+        for crop in crops:
+            emb = self._get_embedding(crop)
+            if emb is not None:
+                # Predict assignment
+                if self._cluster_centers is not None:
+                    dists = np.linalg.norm(self._cluster_centers - emb, axis=1)
+                    team_id = int(np.argmin(dists))
+                    if team_id != -1:
+                        embeddings.append(emb)
+                        labels.append(team_id)
+                        
+        if len(set(labels)) < 2:
+            return {"silhouette": 0.0, "davies_bouldin": 0.0}
+            
+        X = np.vstack(embeddings)
+        return {
+            "silhouette": float(silhouette_score(X, labels)),
+            "davies_bouldin": float(davies_bouldin_score(X, labels))
+        }
+
     def fit_from_descriptors(
         self,
         descriptors: List[np.ndarray],

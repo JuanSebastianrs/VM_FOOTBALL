@@ -13,7 +13,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="TacticalVision AI: End-to-End Offline Tracking Pipeline")
     parser.add_argument("--sequence_dir", type=str, required=True, help="Path to sequence directory 'img1'")
     parser.add_argument("--yolo_weights", type=str, required=True, help="Path to YOLO ball detection weights")
-    parser.add_argument("--rtdetr_weights", type=str, required=True, help="Path to RT-DETR weights for player detection")
+    parser.add_argument("--rfdetr_weights", type=str, default="models/models_rfdetr_player_gk_ref_rfdetr_base_448_3class_checkpoint_best_total.pth", help="Path to RF-DETR weights for player detection")
     parser.add_argument("--sam2_weights", type=str, required=True, help="Path to SAM2 weights")
     parser.add_argument("--output_dir", type=str, default="tactical_results", help="Directory for output files")
     parser.add_argument("--output_plot", type=str, default="", help="Optional: Path to save Tracking Metrics Graphic (.png)")
@@ -39,8 +39,8 @@ def main():
 
     # Phase 1: Feature Extraction
     run_command(
-        f"python {os.path.join(base_dir, 'core', 'detection', 'tactical_vision_extractor.py')} --sequence_dir {args.sequence_dir} --yolo_weights {args.yolo_weights} --rtdetr_weights {args.rtdetr_weights} --output_json {det_json}",
-        "Phase 1: Feature Extraction (YOLOv26 + RT-DETR)"
+        f"python {os.path.join(base_dir, 'core', 'detection', 'tactical_vision_extractor.py')} --sequence_dir {args.sequence_dir} --yolo_weights {args.yolo_weights} --rfdetr_weights {args.rfdetr_weights} --output_json {det_json}",
+        "Phase 1: Feature Extraction (YOLOv26 + RF-DETR)"
     )
     
     # Phase 2: CMC
@@ -67,11 +67,19 @@ def main():
         "Phase 7: Metrics Evaluation & Plot Generation"
     )
     
-    # Phase 8: 2D Field Mapping
+    # Phase 8: Team Clustering (must run BEFORE 2D mapping so teams are available)
+    team_json = os.path.join(args.output_dir, f"{seq_name}_team_assignments.json")
+    team_video = os.path.join(args.output_dir, f"{seq_name}_team_clustering.mp4")
+    run_command(
+        f"python {os.path.join(base_dir, 'core', 'clustering', 'team_clustering_phase.py')} --sequence_dir {args.sequence_dir} --rfdetr_weights {args.rfdetr_weights} --detections_json {det_json} --output_json {team_json} --output_video {team_video}",
+        "Phase 8: Team Clustering (JSON-driven, shared track_ids)"
+    )
+    
+    # Phase 9: 2D Field Mapping (consumes team clustering for team-colored minimap)
     mapper_output = os.path.join(args.output_dir, f"{seq_name}_2d_map.mp4")
     run_command(
-        f"python {os.path.join(base_dir, 'core', 'mapping', 'tactical_vision_2d_mapper.py')} --sequence_dir {args.sequence_dir} --detections {det_json} --trajectory {traj_json} --pnlcalib_kp_weights {args.pnlcalib_kp_weights} --pnlcalib_line_weights {args.pnlcalib_line_weights} --output {mapper_output}",
-        "Phase 8: 2D Field Mapping with PnLCalib"
+        f"python {os.path.join(base_dir, 'core', 'mapping', 'tactical_vision_2d_mapper.py')} --sequence_dir {args.sequence_dir} --detections {det_json} --trajectory {traj_json} --team_assignments {team_json} --pnlcalib_kp_weights {args.pnlcalib_kp_weights} --pnlcalib_line_weights {args.pnlcalib_line_weights} --output {mapper_output}",
+        "Phase 9: 2D Field Mapping with PnLCalib + Team Colors"
     )
     
     print("\n TacticalVision AI Pipeline Completed Successfully!")
