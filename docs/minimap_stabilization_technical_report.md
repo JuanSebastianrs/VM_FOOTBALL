@@ -6,9 +6,9 @@
 2. [Modelo de Cámara: Fundamentos Matemáticos](#2-modelo-de-cámara-fundamentos-matemáticos)
 3. [Análisis de Causa Raíz](#3-análisis-de-causa-raíz)
 4. [Enfoques Considerados](#4-enfoques-considerados)
-5. [Solución Implementada: Decompose → Smooth → Reconstruct](#5-solución-implementada-decompose--smooth--reconstruct)
+5. [Solución Implementada: Decompose → Smooth → Reconstruct (SO(3) Lie Algebra)](#5-solución-implementada-decompose--smooth--reconstruct-so3-lie-algebra)
 6. [Referencia de Funciones](#6-referencia-de-funciones)
-7. [Justificación de Decisiones de Diseño](#7-justificación-de-decisiones-de-diseño)
+7. [Justificación de Decisiones de Diseño: ¿Por qué Lie Algebra?](#7-justificación-de-decisiones-de-diseño-por-qué-lie-algebra)
 
 ---
 
@@ -186,14 +186,14 @@ La interpolación lineal $\frac{1}{2}(\mathbf{H}_1 + \mathbf{H}_2)$ **no es igua
 
 Para cambios muy pequeños entre cuadros ($\Delta\phi < 0.5°$), la interpolación lineal es una **aproximación de primer orden** razonable por la linealidad local de $PGL(3)$. Pero es exactamente durante **paneos rápidos** ($\Delta\phi > 2°$/cuadro) cuando la aproximación falla — y es exactamente cuando se necesita.
 
-### 3.3 Causa Raíz #3: Sin rechazo de calibraciones anómalas
-
-Cuando PnLCalib no detecta suficientes keypoints (imagen borrosa durante paneo rápido, o la cámara apunta a una zona del campo con pocas líneas), puede retornar:
-
-1. `None` → el código usa `last_valid_H_inv` → **correcto pero insuficiente**
-2. Un resultado con params incorrectos pero $e_{\text{reproj}}$ bajo (pocos puntos → pocos residuos → bajo error) → **se acepta sin filtrar** → salto
-
 No existía ningún mecanismo para validar que la calibración del cuadro $N+1$ sea **geométricamente consistente** con la del cuadro $N$.
+
+### 3.4 Causa Raíz #4: Limitaciones del Suavizado Euler (Refactorizado)
+
+Aunque el suavizado de ángulos de Euler es superior al de matrices completas, presenta tres problemas matemáticos:
+1.  **Singularidades (Gimbal Lock):** Cerca de $\theta = 0$ o $\pi$ (tilt vertical), el pan y el roll se vuelven ambiguos. Pequeños ruidos en la imagen pueden causar saltos de $180^\circ$ en pan y roll simultáneamente que dejan la matriz $\mathbf{R}$ casi idéntica, pero la EMA sobre los ángulos colapsa.
+2.  **Métrica de Distancia Incorrecta:** La distancia euclidiana entre dos vectores de ángulos $(\phi_1, \theta_1, \psi_1)$ y $(\phi_2, \theta_2, \psi_2)$ no representa la magnitud real de la rotación entre ellos.
+3.  **Interpolación fuera de la Geodésica:** Promediar ángulos de Euler no garantiza que la cámara se mueva por el "camino más corto" (geodésica) en el espacio de rotaciones $SO(3)$.
 
 ---
 
@@ -220,16 +220,15 @@ No existía ningún mecanismo para validar que la calibración del cuadro $N+1$ 
 
 **Razón de no-priorización**: CMC estima la transformación **relativa** 2D entre cuadros consecutivos, pero no proporciona calibración **absoluta**. Solo podría servir como consistencia check secundario, pero PnLCalib ya provee calibración absoluta que es lo que necesitamos. Añadir CMC incrementaría la complejidad sin resolver el problema fundamental (el ruido de PnLCalib). Se puede integrar en el futuro como verificación cruzada.
 
-### 4.4 Enfoque D ✅: Decompose → Smooth → Reconstruct (seleccionado)
+### 4.4 Enfoque D ✅: Decompose → Smooth → Reconstruct (Lie Algebra)
 
-**Idea**: Descomponer cada resultado de PnLCalib en sus parámetros naturales, suavizar cada uno independientemente en su espacio correcto, y reconstruir la proyección.
+**Idea**: Descomponer la calibración, tratar la rotación como un elemento del grupo de Lie $SO(3)$ y realizar el suavizado en su álgebra de Lie $\mathfrak{so}(3)$ (espacio tangente).
 
 **Razón de selección**:
-- Los parámetros de cámara ($\phi, \theta, \psi, f_x, f_y, \mathbf{t}$) **sí** habitan espacios donde la interpolación es válida
-- Los ángulos se suavizan con EMA circular (maneja wraparound)
-- Las distancias focales y posición son escalares/vectores euclidianos → EMA estándar es correcto
-- Cada parámetro puede tener su propio $\alpha$ reflejando su dinámica real
-- Es el enfoque estándar en sistemas de tracking de cámara broadcast (Vizrt, ChyronHego, Hawk-Eye)
+- Elimina singularidades (no hay gimbal lock).
+- Garantiza que el suavizado siga la **geodésica** (camino más corto).
+- Permite usar una **métrica de distancia geodésica** única para el gate de outliers.
+- Es el estándar de "oro" en la industria de rastreo de cámara (tracking) y robótica.
 
 ### 4.5 Sub-decisión: Fallback a `heuristic_voting_ground()` (incluido)
 
@@ -237,102 +236,57 @@ No existía ningún mecanismo para validar que la calibración del cuadro $N+1$ 
 
 **Razón de inclusión**: `heuristic_voting_ground()` es más robusto que `heuristic_voting()` en ciertos escenarios porque:
 - Solo necesita correspondencias en el plano $Z=0$ (más numerosas)
-- Usa `cv2.findHomography()` en vez de `cv2.calibrateCamera()` (menos parámetros → mejor condicionado)
-- Itera 6 valores de RANSAC (vs 18 combinaciones del full)
-
-El costo es una calibración intrínseca menos precisa (no usa el modelo PnP completo), pero como los parámetros se suavizan temporalmente, las imprecisiones instantáneas se filtran.
-
----
-
-## 5. Solución Implementada: Decompose → Smooth → Reconstruct
+- Usa `cv2.findHomography()` en vez de `cv2.calibrateCamera()` (menos parámetros → mejor condic## 5. Solución Implementada: Decompose → Smooth → Reconstruct (SO(3) Lie Algebra)
 
 ### 5.1 Arquitectura General
 
-```
-Cuadro N
-   │
-   ├──► HRNet (keypoints) ──┐
-   │                         ├──► FramebyFrameCalib ──► heuristic_voting()
-   ├──► HRNet (lines) ──────┘          │
-   │                                   ▼
-   │                          ¿Resultado válido?
-   │                           │            │
-   │                          SÍ           NO
-   │                           │            │
-   │                           │    heuristic_voting_ground()
-   │                           │            │
-   │                           ▼            ▼
-   │                    cam_params     cam_params (from cam.R, cam.t, cam.K)
-   │                           │            │
-   │                           └──────┬─────┘
-   │                                  ▼
-   │                    ┌─── CameraParamsSmoother ───┐
-   │                    │                             │
-   │                    │  1. Descomponer:            │
-   │                    │     φ,θ,ψ,fx,fy,cx,cy,t    │
-   │                    │                             │
-   │                    │  2. Validar consistencia:   │
-   │                    │     rate-of-change check    │
-   │                    │     + reproj error check    │
-   │                    │                             │
-   │                    │  3. Si OK → EMA smooth      │
-   │                    │     Si NO → hold state      │
-   │                    │                             │
-   │                    │  4. Reconstruir H_inv       │
-   │                    │     desde params suavizados │
-   │                    └─────────────────────────────┘
-   │                                  │
-   │                                  ▼
-   │                          H_inv (suavizado)
-   │                                  │
-   ▼                                  ▼
- Detections ───────────► project_point(u,v, H_inv) ──► Minimap 2D
+```mermaid
+graph TD
+    A[Cuadro N] --> B[Extracción de Features]
+    B --> C[PnLCalib heuristic_voting]
+    C --> D{¿Válido?}
+    
+    D -- NO --> E[PnLCalib ground_plane]
+    D -- SÍ --> F[Extraer f, t, R]
+    E --> F
+    
+    F --> G[CameraParamsSmoother]
+    
+    subgraph SO3_Smoothing
+        G --> H[Check Consistencia Geodésica]
+        H --> I[Log Map: mapping a algebra so3]
+        I --> J[EMA: scaling en espacio tangente]
+        J --> K[Exp Map: regreso al grupo SO3]
+    end
+    
+    K --> L[Reconstruir P y H_inv]
+    L --> M[Proyección 2D Minimap]
 ```
 
-### 5.2 Paso 1: Descomposición de Parámetros
+### 5.2 Paso 1: Representación de Estado Manifold
 
-Dado el diccionario `cam_params` de PnLCalib:
+A diferencia del enfoque anterior basado en Euler, ahora el estado se almacena como:
+1.  **Escalares Euclidiano:** $f_x, f_y, c_x, c_y$ (Focales y Punto Principal).
+2.  **Vector Euclidiano:** $\mathbf{t} \in \mathbb{R}^3$ (Posición).
+3.  **Elemento de Manifold:** $\mathbf{R}_{smooth} \in SO(3)$ (Rotación como matriz ortonormal).
 
-```python
-pan  = deg2rad(cam_params['pan_degrees'])     # φ ∈ (-π, π]
-tilt = deg2rad(cam_params['tilt_degrees'])     # θ ∈ [0, π]
-roll = deg2rad(cam_params['roll_degrees'])     # ψ ∈ (-π, π]
-fx   = cam_params['x_focal_length']            # px
-fy   = cam_params['y_focal_length']            # px
-cx   = cam_params['principal_point'][0]        # px
-cy   = cam_params['principal_point'][1]        # px
-pos  = cam_params['position_meters']           # (x, y, z) metros
-```
+### 5.3 Paso 2: Validación de Consistencia Geodésica
 
-Para el path de fallback (`heuristic_voting_ground()`), los parámetros se extraen de los **side-effects** del objeto `FramebyFrameCalib`:
+En lugar de verificar $\Delta\phi, \Delta\theta, \Delta\psi$ por separado, calculamos la **distancia geodésica** única entre la cámara suavizada actual y la nueva medición:
 
-```python
-# Después de cam.heuristic_voting_ground(), internamente from_homography()
-# establece cam.rotation, cam.position, cam.calibration
+$$\Delta \mathbf{R} = {\mathbf{R}_{smooth}^{(t-1)}}^{-1} \cdot \mathbf{R}_{new}$$
 
-pan, tilt, roll = rotation_matrix_to_pan_tilt_roll(cam.rotation)
-fx = cam.calibration[0, 0]
-fy = cam.calibration[1, 1]
-pos = cam.position
-```
+$$\text{distancia} = \| \underbrace{\log(\Delta \mathbf{R})}_{\text{rotvec en } \mathfrak{so}(3)} \|$$
 
-### 5.3 Paso 2: Validación de Consistencia (Outlier Gate)
+#### 5.3.1 Outlier Gate
 
-Antes de incorporar nuevos parámetros al estado suavizado, se aplica un doble filtro:
+| Parámetro | Umbral | Acción si se excede |
+|-----------|--------|---------------------|
+| Distancia Geodésica | $5^\circ$ | Rechazar frame (Outlier) |
+| Error de Reproyección | 20 px | Rechazar frame (Invalid) |
 
-#### 5.3.1 Filtro de Error de Reproyección
-
-$$\text{RECHAZAR si } e_{\text{reproj}} > \tau_{\text{reproj}}$$
-
-Con $\tau_{\text{reproj}} = 20$ píxeles. Si PnLCalib reporta un error de reproyección alto, la calibración es inherentemente poco confiable independientemente de la tasa de cambio.
-
-#### 5.3.2 Filtro de Tasa de Cambio (Rate-of-Change)
-
-Para cada parámetro, se verifica que el cambio entre el valor nuevo y el valor suavizado actual no exceda un umbral físicamente plausible:
-
-| Parámetro | Umbral máximo/cuadro | Justificación física |
-|-----------|----------------------|-----------------------|
-| Pan ($\Delta\phi$) | 5° | A 25 fps, 5°/cuadro = 125°/s = paneo muy rápido |
+Esto es mucho más robusto ya que detecta cualquier anomalía en la rotación, independientemente de cómo se distribuya entre pan, tilt y roll.
+°/cuadro = 125°/s = paneo muy rápido |
 | Tilt ($\Delta\theta$) | 3° | Tilt cambia más lentamente que pan |
 | Roll ($\Delta\psi$) | 2° | Roll casi nunca cambia en broadcast |
 | Focal ($\Delta f / f$) | 20% | Zoom súbito del 20% es extremadamente raro |
@@ -361,77 +315,48 @@ Estado del gate:
 
 Los primeros $W = 3$ cuadros se aceptan incondicionalmente con $\alpha = 1.0$ (sin suavizado) para establecer el estado inicial rápidamente. Sin warm-up, los primeros cuadros serían rechazados por el gate (no hay estado previo contra el cual comparar).
 
-### 5.4 Paso 3: Suavizado EMA por Parámetro
+### 5.4 Paso 3: Suavizado en el Álgebra de Lie $\mathfrak{so}(3)$
 
-#### 5.4.1 EMA Estándar (para escalares euclidianos)
+Para las rotaciones, no realizamos promedios numéricos sobre ángulos. Usamos la estructura geométrica de $SO(3)$. El proceso EMA se redefine como:
 
-Para $f_x, f_y, c_x, c_y$ y cada componente de $\mathbf{t}$:
+1.  **Inverse Composite:** Encontrar la rotación relativa entre el estado actual y el nuevo: $\Delta \mathbf{R} = {\mathbf{R}_{smooth}^{(t-1)}}^{-1} \cdot \mathbf{R}_{new}$.
+2.  **Logarithmic Map:** Proyectar la rotación relativa al espacio tangente (álgebra de Lie): $\omega = \log(\Delta \mathbf{R})$. Aquí $\omega \in \mathbb{R}^3$ es el vector de rotación.
+3.  **Tangent EMA:** Escalar el vector de rotación por el factor de suavizado $\alpha$: $\omega_{smooth} = \alpha \cdot \omega$.
+4.  **Exponential Map:** Convertir de regreso al espacio de matrices: $\Delta \mathbf{R}_{smooth} = \exp(\omega_{smooth})$.
+5.  **Composition:** Actualizar el estado: $\mathbf{R}_{smooth}^{(t)} = \mathbf{R}_{smooth}^{(t-1)} \cdot \Delta \mathbf{R}_{smooth}$.
 
-$$\hat{p}_{t} = \alpha \cdot p_t + (1 - \alpha) \cdot \hat{p}_{t-1}$$
+#### 5.4.1 Justificación Matemática
 
-donde:
-- $p_t$: valor observado (ruidoso) en el cuadro $t$
-- $\hat{p}_{t-1}$: valor suavizado hasta el cuadro $t-1$
-- $\hat{p}_t$: nuevo valor suavizado
-- $\alpha$: peso de la nueva observación ($0 < \alpha \leq 1$)
+Este método garantiza que la rotación suavizada siempre esté en el manifold de rotaciones (es ortonormal por construcción) y que la interpolación ocurra a lo largo de la **geodésica plana** del espacio curvo de rotaciones.
 
-#### 5.4.2 EMA Circular (para ángulos)
-
-Para pan ($\phi$), tilt ($\theta$), roll ($\psi$), la EMA estándar puede producir resultados incorrectos cerca de los puntos de wraparound (e.g., $+179°$ y $-179°$ están a $2°$ de distancia, no a $358°$).
-
-La **EMA circular** resuelve esto:
-
-$$\hat{\phi}_t = \hat{\phi}_{t-1} + \alpha \cdot \text{wrap}(\phi_t - \hat{\phi}_{t-1})$$
-
-Expandiendo:
-
-$$\hat{\phi}_t = \hat{\phi}_{t-1} + \alpha \cdot \left[ \left((\phi_t - \hat{\phi}_{t-1} + \pi) \bmod 2\pi\right) - \pi \right]$$
-
-Esto garantiza que la actualización siempre toma el **camino más corto** alrededor del círculo.
-
-#### 5.4.3 Valores de $\alpha$ por Familia de Parámetros
+#### 5.4.2 Valores de $\alpha$ por Familia de Parámetros
 
 | Familia | $\alpha$ | Razón |
 |---------|----------|-------|
-| Ángulos (pan, tilt, roll) | 0.25 | Deben ser responsivos al paneo real de la cámara pero rechazar saltos |
-| Focales ($f_x, f_y, c_x, c_y$) | 0.05 | Casi constantes → $\alpha$ muy bajo para máxima estabilidad |
-| Posición ($t_x, t_y, t_z$) | 0.10 | Constante (trípode fijo) pero PnLCalib es ruidoso en posición |
+| Rotación ($\mathbf{R}$) | 0.25 | Responsivo al paneo pero filtra jitter |
+| Focales ($f_x, f_y, c_x, c_y$) | 0.05 | Casi constantes → $\alpha$ muy bajo |
+| Posición ($t_x, t_y, t_z$) | 0.10 | Trípode fijo pero sensor ruidoso |
 
 La elección de $\alpha = 0.25$ para ángulos representa un compromiso: la ventana efectiva de promediado es $\sim 1/\alpha = 4$ cuadros. A 25 fps, esto son 160 ms — suficiente para filtrar ruido cuadro-a-cuadro pero no tanto como para crear lag visible en el minimap.
 
-### 5.5 Paso 4: Reconstrucción de $\mathbf{H}^{-1}$ desde Parámetros Suavizados
+#### 5.5.1 Rotación SO(3) → Matriz
 
-Una vez suavizados todos los parámetros, se reconstruye la cadena completa:
-
-#### 5.5.1 Orientación → Rotación
+Ya no necesitamos convertir ángulos de Euler a orientación. Extraemos la matriz directamente:
 
 ```python
-orientation = pan_tilt_roll_to_orientation(φ_smooth, θ_smooth, ψ_smooth)
-R = orientation^T
+R_matrix = self.R_smooth.as_matrix()
 ```
 
-Matemáticamente:
+#### 5.5.2 Construcción de $\mathbf{P}$ y Homografía
 
-$$\mathbf{O} = \mathbf{R}_{\text{pan}}(\hat\phi) \cdot \mathbf{R}_{\text{tilt}}(\hat\theta) \cdot \mathbf{R}_{\text{roll}}(\hat\psi)$$
-
-$$\mathbf{R} = \mathbf{O}^T$$
-
-#### 5.5.2 Construcción de $\mathbf{P}$
-
-$$\mathbf{K} = \begin{pmatrix} \hat{f}_x & 0 & \hat{c}_x \\ 0 & \hat{f}_y & \hat{c}_y \\ 0 & 0 & 1 \end{pmatrix}$$
-
-$$\mathbf{I}_t = \begin{pmatrix} 1 & 0 & 0 & -\hat{t}_x \\ 0 & 1 & 0 & -\hat{t}_y \\ 0 & 0 & 1 & -\hat{t}_z \end{pmatrix}$$
+$$\mathbf{K} = \begin{pmatrix} \hat{f}_x & 0 & \hat{c}_x \\ 0 & \hat{f}_y & \hat{c}_y \\ 0 & 0 & 1 \end{pmatrix}, \quad \mathbf{I}_t = \begin{pmatrix} 1 & 0 & 0 & -\hat{t}_x \\ 0 & 1 & 0 & -\hat{t}_y \\ 0 & 0 & 1 & -\hat{t}_z \end{pmatrix}$$
 
 $$\mathbf{P} = \mathbf{K} \cdot \mathbf{R} \cdot \mathbf{I}_t$$
 
-#### 5.5.3 Extracción de $\mathbf{H}^{-1}$
-
-$$\mathbf{H} = (\mathbf{P}_{:,0} \mid \mathbf{P}_{:,1} \mid \mathbf{P}_{:,3})$$
-
-$$\mathbf{H}^{-1} = \mathbf{H}^{-1}$$
+$$\mathbf{H}^{-1} = \text{inv}\left(\begin{pmatrix} P_{:,0} & P_{:,1} & P_{:,3} \end{pmatrix}\right)$$
 
 > [!IMPORTANT]
-> Aquí $\mathbf{H}^{-1}$ está **garantizado** ser una homografía válida, porque fue construido a partir de una cámara con parámetros físicamente plausibles (ángulos suaves, focal estable, posición coherente). Esto es cualitativamente diferente de interpolar dos $\mathbf{H}^{-1}$ arbitrarios.
+> Al realizar el suavizado en $SO(3)$, garantizamos que la cámara reconstruida nunca tenga distorsiones de perspectiva imposibles o efectos de "muelle" (spring) causados por promedios de Euler incorrectos.
 
 ### 5.6 Proyección Final: Imagen → Minimap
 
@@ -515,17 +440,17 @@ POR CADA cuadro:
 
 ---
 
-## 7. Justificación de Decisiones de Diseño
+## 7. Justificación de Decisiones de Diseño: ¿Por qué Lie Algebra?
 
-### 7.1 ¿Por qué descomponer en params en vez de suavizar $\mathbf{H}^{-1}$?
+### 7.1 Diferencia entre Euler EMA vs Lie Algebra EMA
 
-| Criterio | EMA sobre $\mathbf{H}^{-1}$ | EMA sobre parámetros descompuestos |
-|----------|----------------------------|------------------------------------|
-| Validez matemática | ❌ No (interpolación en $PGL(3)$) | ✅ Sí (cada param en su espacio natural) |
-| Granularidad de $\alpha$ | Un solo $\alpha$ global | Un $\alpha$ por familia de params |
-| Outlier detection | Solo verificar `None` vs no-`None` | Rate-of-change por parámetro |
-| Resultado garantizado válido | ❌ (puede producir $\mathbf{H}$ singular) | ✅ (siempre producido desde camera model) |
-| Complejidad | Trivial | Moderada |
+| Criterio | Euler EMA (Enfoque anterior) | Lie Algebra EMA (Implementado) |
+|----------|----------------------------|---------------------------------|
+| **Espacio de Suavizado** | Espacio vectorial $\mathbb{R}^3$ (ángulos) | Manifold curvo $SO(3)$ |
+| **Camino de Interpolación** | Arbitrario (depende de la convención de ángulos) | **Geodésica** (mínima rotación) |
+| **Singularidades** | Propenso a Gimbal Lock en el polo vertical | **Libre de singularidades** |
+| **Métrica de Gate** | 3 umbrales escalares ($\phi, \theta, \psi$) | 1 umbral de distancia geodésica |
+| **Integridad de Matriz** | Debe reconstruirse desde ángulos | Propiedades ortonormales intrínsecas |
 
 ### 7.2 ¿Por qué EMA y no Kalman?
 

@@ -1,10 +1,9 @@
 """
-Generate Batch Evaluation Dashboard
+TacticalVision AI: Batch Evaluation Dashboard (Premium Dark Theme)
 Reads the CSV from batch_evaluator.py and produces:
 1. A 4x2 panel dashboard PNG
 2. A top5_winners.txt file
 3. An enriched CSV with Composite_Score
-4. Summary statistics printed to console
 """
 
 import os
@@ -14,7 +13,18 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns
+import matplotlib.patheffects as pe
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.dashboard_style import (
+    setup_premium_style, stat_box, style_axis, mean_line, suptitle,
+    gradient_bar_colors,
+    BG, CARD, BORDER, TEXT, TEXT_SEC, GRID,
+    BLUE, BLUE_DIM, GREEN, GREEN_DIM, PURPLE, PURPLE_DIM,
+    ORANGE, ORANGE_DIM, RED, CYAN, YELLOW, PINK,
+    PALETTE_BLUE, PALETTE_GREEN, PALETTE_PURPLE, PALETTE_ORANGE
+)
 
 
 def get_args():
@@ -24,6 +34,28 @@ def get_args():
     parser.add_argument("--out_dir", type=str,
                         default="results_final/evaluation")
     return parser.parse_args()
+
+
+def premium_hist(ax, data, color, dim_color, title, xlabel, mean_color=CYAN):
+    """Styled histogram with KDE and mean line."""
+    ax.hist(data, bins=15, color=color, alpha=0.55, edgecolor=color,
+            linewidth=0.6, zorder=2)
+    # KDE overlay
+    try:
+        from scipy.stats import gaussian_kde
+        kde = gaussian_kde(data.dropna())
+        x_range = np.linspace(data.min(), data.max(), 200)
+        kde_vals = kde(x_range)
+        # Scale KDE to match histogram counts
+        bin_width = (data.max() - data.min()) / 15
+        ax.plot(x_range, kde_vals * len(data) * bin_width,
+                color=color, linewidth=2.5, alpha=0.9, zorder=3,
+                path_effects=[pe.withStroke(linewidth=4, foreground=dim_color + '60')])
+    except Exception:
+        pass
+    mean_line(ax, data.mean(), color=mean_color)
+    style_axis(ax, title=title, xlabel=xlabel, ylabel="Count")
+    ax.legend(loc='upper left', framealpha=0.8)
 
 
 def main():
@@ -37,10 +69,8 @@ def main():
     df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
 
     # ── Composite Score ──────────────────────────────────────────────────
-    # Normalize RMSE (lower is better) to [0, 1]
     rmse_max = df['Ball_RMSE'].max()
     inv_rmse = (1.0 - df['Ball_RMSE'] / rmse_max) if rmse_max > 0 else 0.0
-
     df['Composite_Score'] = (
         0.30 * df['Ball_F1'] +
         0.25 * df['MOTA'] +
@@ -48,13 +78,11 @@ def main():
         0.15 * inv_rmse +
         0.10 * df['IDF1']
     )
-
     df = df.sort_values(by='Composite_Score', ascending=False).reset_index(drop=True)
 
     # Save enriched CSV
     enriched_csv = os.path.join(args.out_dir, "batch_evaluation_enriched.csv")
     df.to_csv(enriched_csv, index=False)
-    print(f"Enriched CSV saved to {enriched_csv}")
 
     # ── Summary Statistics ───────────────────────────────────────────────
     print("\n" + "=" * 60)
@@ -94,75 +122,110 @@ def main():
     print(f"Winners saved to {winners_file}")
 
     # ── 4x2 Dashboard ────────────────────────────────────────────────────
-    sns.set_theme(style="whitegrid")
-    fig, axes = plt.subplots(4, 2, figsize=(18, 24))
-    fig.suptitle("TacticalVision AI: Batch Evaluation Dashboard",
-                 fontsize=22, weight='bold', y=0.98)
+    setup_premium_style()
+    fig, axes = plt.subplots(4, 2, figsize=(20, 28))
+    suptitle(fig, "TacticalVision AI · Batch Evaluation Dashboard", y=0.98)
 
-    # 1. Ball F1 Distribution
-    sns.histplot(df['Ball_F1'], bins=15, kde=True, ax=axes[0, 0], color='#2196F3')
-    axes[0, 0].axvline(df['Ball_F1'].mean(), color='red', ls='--', label=f"Mean: {df['Ball_F1'].mean():.3f}")
-    axes[0, 0].set_title("Ball Tracking F1-Score Distribution")
-    axes[0, 0].set_xlabel("F1-Score")
-    axes[0, 0].legend()
+    # ── 1. Ball F1 Distribution ──────────────────────────────────────────
+    premium_hist(axes[0, 0], df['Ball_F1'], BLUE, BLUE_DIM,
+                 "Ball Tracking F1-Score Distribution", "F1-Score")
+    stat_box(axes[0, 0],
+             f"μ = {df['Ball_F1'].mean():.3f}\nσ = {df['Ball_F1'].std():.3f}")
 
-    # 2. MOTA Distribution
-    sns.histplot(df['MOTA'], bins=15, kde=True, ax=axes[0, 1], color='#4CAF50')
-    axes[0, 1].axvline(df['MOTA'].mean(), color='red', ls='--', label=f"Mean: {df['MOTA'].mean():.3f}")
-    axes[0, 1].set_title("Player Tracking MOTA Distribution")
-    axes[0, 1].set_xlabel("MOTA")
-    axes[0, 1].legend()
+    # ── 2. MOTA Distribution ────────────────────────────────────────────
+    premium_hist(axes[0, 1], df['MOTA'], GREEN, GREEN_DIM,
+                 "Player Tracking MOTA Distribution", "MOTA")
+    stat_box(axes[0, 1],
+             f"μ = {df['MOTA'].mean():.3f}\nσ = {df['MOTA'].std():.3f}")
 
-    # 3. Top 10 by Ball F1
+    # ── 3. Top 10 by Ball F1 ────────────────────────────────────────────
     top_f1 = df.nlargest(10, 'Ball_F1')
-    sns.barplot(data=top_f1, x='Ball_F1', y='Sequence', hue='Sequence',
-                ax=axes[1, 0], palette='Blues_r', legend=False)
-    axes[1, 0].set_title("Top 10 Sequences: Ball F1")
-    axes[1, 0].set_xlim(0, 1.0)
+    colors_f1 = gradient_bar_colors(10, PALETTE_BLUE)
+    bars = axes[1, 0].barh(range(10), top_f1['Ball_F1'].values, height=0.65,
+                           color=colors_f1, edgecolor='white', linewidth=0.3,
+                           alpha=0.9, zorder=3)
+    # Glow
+    for i, (val, c) in enumerate(zip(top_f1['Ball_F1'].values, colors_f1)):
+        axes[1, 0].barh(i, val, height=0.85, color=c, alpha=0.1, zorder=1)
+        axes[1, 0].text(val + 0.01, i, f"{val:.3f}", va='center',
+                        fontsize=10, color=BLUE, fontweight='bold')
+    axes[1, 0].set_yticks(range(10))
+    axes[1, 0].set_yticklabels(top_f1['Sequence'].values, fontsize=10)
+    axes[1, 0].set_xlim(0, 1.08)
+    axes[1, 0].invert_yaxis()
+    style_axis(axes[1, 0], title="Top 10 Sequences: Ball F1", xlabel="Ball F1")
 
-    # 4. Top 10 by MOTA
+    # ── 4. Top 10 by MOTA ───────────────────────────────────────────────
     top_mota = df.nlargest(10, 'MOTA')
-    sns.barplot(data=top_mota, x='MOTA', y='Sequence', hue='Sequence',
-                ax=axes[1, 1], palette='Greens_r', legend=False)
-    axes[1, 1].set_title("Top 10 Sequences: Player MOTA")
-    axes[1, 1].set_xlim(0, 1.0)
+    colors_mota = gradient_bar_colors(10, PALETTE_GREEN)
+    axes[1, 1].barh(range(10), top_mota['MOTA'].values, height=0.65,
+                    color=colors_mota, edgecolor='white', linewidth=0.3,
+                    alpha=0.9, zorder=3)
+    for i, (val, c) in enumerate(zip(top_mota['MOTA'].values, colors_mota)):
+        axes[1, 1].barh(i, val, height=0.85, color=c, alpha=0.1, zorder=1)
+        axes[1, 1].text(val + 0.01, i, f"{val:.3f}", va='center',
+                        fontsize=10, color=GREEN, fontweight='bold')
+    axes[1, 1].set_yticks(range(10))
+    axes[1, 1].set_yticklabels(top_mota['Sequence'].values, fontsize=10)
+    axes[1, 1].set_xlim(0, 1.08)
+    axes[1, 1].invert_yaxis()
+    style_axis(axes[1, 1], title="Top 10 Sequences: Player MOTA", xlabel="MOTA")
 
-    # 5. Ball RMSE Distribution
-    sns.histplot(df['Ball_RMSE'], bins=15, kde=True, ax=axes[2, 0], color='#FF9800')
-    axes[2, 0].axvline(df['Ball_RMSE'].mean(), color='red', ls='--', label=f"Mean: {df['Ball_RMSE'].mean():.1f}px")
-    axes[2, 0].set_title("Ball Tracking RMSE Distribution (px)")
-    axes[2, 0].set_xlabel("RMSE (pixels)")
-    axes[2, 0].legend()
+    # ── 5. Ball RMSE Distribution ────────────────────────────────────────
+    premium_hist(axes[2, 0], df['Ball_RMSE'], ORANGE, ORANGE_DIM,
+                 "Ball Tracking RMSE Distribution (px)", "RMSE (pixels)",
+                 mean_color=YELLOW)
+    stat_box(axes[2, 0],
+             f"μ = {df['Ball_RMSE'].mean():.1f}px\n"
+             f"med = {df['Ball_RMSE'].median():.1f}px\n"
+             f"σ = {df['Ball_RMSE'].std():.1f}px")
 
-    # 6. Team Clustering Accuracy Distribution
-    sns.histplot(df['Team_Clustering_Acc'], bins=15, kde=True, ax=axes[2, 1], color='#9C27B0')
-    axes[2, 1].axvline(df['Team_Clustering_Acc'].mean(), color='red', ls='--',
-                       label=f"Mean: {df['Team_Clustering_Acc'].mean():.3f}")
-    axes[2, 1].set_title("Team Clustering Accuracy Distribution")
-    axes[2, 1].set_xlabel("Accuracy")
-    axes[2, 1].legend()
+    # ── 6. Team Clustering Accuracy ──────────────────────────────────────
+    premium_hist(axes[2, 1], df['Team_Clustering_Acc'], PURPLE, PURPLE_DIM,
+                 "Team Clustering Accuracy Distribution", "Accuracy")
+    stat_box(axes[2, 1],
+             f"μ = {df['Team_Clustering_Acc'].mean():.3f}\n"
+             f"min = {df['Team_Clustering_Acc'].min():.3f}")
 
-    # 7. F1 vs MOTA Scatter (correlation)
-    scatter = axes[3, 0].scatter(df['Ball_F1'], df['MOTA'],
-                                  c=df['Team_Clustering_Acc'], cmap='viridis',
-                                  s=80, edgecolors='white', linewidth=0.5)
-    axes[3, 0].set_title("Ball F1 vs Player MOTA (color = Team Acc)")
-    axes[3, 0].set_xlabel("Ball F1-Score")
-    axes[3, 0].set_ylabel("MOTA")
-    plt.colorbar(scatter, ax=axes[3, 0], label="Team Clustering Acc")
+    # ── 7. F1 vs MOTA Scatter ────────────────────────────────────────────
+    ax7 = axes[3, 0]
+    scatter_colors = df['Team_Clustering_Acc'].values
+    # Glow layer
+    ax7.scatter(df['Ball_F1'], df['MOTA'], c=scatter_colors, cmap='cool',
+                s=180, alpha=0.15, edgecolors='none', zorder=2)
+    # Core layer
+    sc = ax7.scatter(df['Ball_F1'], df['MOTA'], c=scatter_colors, cmap='cool',
+                     s=70, alpha=0.9, edgecolors='white', linewidth=0.4, zorder=3)
+    cbar = plt.colorbar(sc, ax=ax7, pad=0.02)
+    cbar.set_label("Team Clustering Acc", fontsize=10, color=TEXT_SEC)
+    cbar.ax.tick_params(colors=TEXT_SEC)
+    cbar.outline.set_edgecolor(BORDER)
+    style_axis(ax7, title="Ball F1 vs Player MOTA (color = Team Acc)",
+               xlabel="Ball F1-Score", ylabel="MOTA")
 
-    # 8. Composite Score Rank (Top 15)
-    top_overall = df.head(min(15, len(df)))
-    sns.barplot(data=top_overall, x='Composite_Score', y='Sequence', hue='Sequence',
-                ax=axes[3, 1], palette='flare', legend=False)
-    axes[3, 1].set_title("Top 15 Overall Winners (Composite Score)")
-    axes[3, 1].set_xlim(0, 1.0)
+    # ── 8. Composite Score Rank ──────────────────────────────────────────
+    n_top = min(15, len(df))
+    top_overall = df.head(n_top)
+    colors_comp = gradient_bar_colors(n_top, PALETTE_PURPLE)
+    axes[3, 1].barh(range(n_top), top_overall['Composite_Score'].values,
+                    height=0.65, color=colors_comp, edgecolor='white',
+                    linewidth=0.3, alpha=0.9, zorder=3)
+    for i, (val, c) in enumerate(zip(top_overall['Composite_Score'].values,
+                                     colors_comp)):
+        axes[3, 1].barh(i, val, height=0.85, color=c, alpha=0.1, zorder=1)
+        axes[3, 1].text(val + 0.01, i, f"{val:.3f}", va='center',
+                        fontsize=9, color=PURPLE, fontweight='bold')
+    axes[3, 1].set_yticks(range(n_top))
+    axes[3, 1].set_yticklabels(top_overall['Sequence'].values, fontsize=9)
+    axes[3, 1].set_xlim(0, 1.08)
+    axes[3, 1].invert_yaxis()
+    style_axis(axes[3, 1], title="Top 15 Overall Winners (Composite Score)",
+               xlabel="Composite Score")
 
-    plt.tight_layout(rect=[0, 0.02, 1, 0.96])
+    plt.tight_layout(rect=[0, 0.01, 1, 0.96])
     plot_path = os.path.join(args.out_dir, "batch_evaluation_dashboard.png")
-    plt.savefig(plot_path, dpi=200)
+    plt.savefig(plot_path, dpi=200, bbox_inches='tight')
     plt.close()
-
     print(f"Dashboard saved to {plot_path}")
 
 

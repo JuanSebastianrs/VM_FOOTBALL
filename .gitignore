@@ -35,6 +35,7 @@ models/
 *.onnx
 *.engine
 *.trt
+*.json
 tactical_results/batch_eval/
 # === Videos y Media ===
 *.mp4
@@ -47,6 +48,7 @@ tactical_results/batch_eval/
 outputs/
 runs/detect/
 runs/segment/
+results_final/evaluation/trackeval_workspace/
 
 # === IDE ===
 .vscode/
