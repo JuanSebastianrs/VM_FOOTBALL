@@ -1,0 +1,39 @@
+# Jersey Number - Preprocessed v2 (persistent experiments)
+
+seed: 42
+
+dataset:
+  tar_path: "gs://vm-football-data/sn_jersey_2023_preprocessed_full_keepall_v2.tar.gz"
+  processed_tar_path: "gs://vm-football-data/sn_jersey_2023_preprocessed_processed_keepall_v2.tar.gz"
+  local_root: "/workspace/dataset/sn_jersey_2023"
+  jersey_root: "/workspace/dataset/sn_jersey_2023/preprocessed_full_keepall"
+  processed_root: "/workspace/dataset/sn_jersey_2023/preprocessed_processed_keepall"
+
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/jersey_number/jersey_preprocessed_v2"
+
+jersey:
+  experiments:
+    jersey_full_preprocessed_v2:
+      mode: "full"
+      epochs: 25
+      batch_size: 64
+      lr: 1.0e-4
+      weight_decay: 1.0e-3
+      img_size: 96
+      model: "resnet18"
+      skip_no_number: true
+      use_test_as_val: false
+      val_split: 0.1
+    jersey_processed_preprocessed_v2:
+      mode: "processed"
+      epochs: 25
+      batch_size: 64
+      lr: 1.0e-4
+      weight_decay: 1.0e-3
+      img_size: 96
+      model: "resnet18"
+      skip_no_number: true
+      use_test_as_val: false
+      val_split: 0.1

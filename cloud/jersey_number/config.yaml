@@ -1,0 +1,43 @@
+# ============================================================
+# Jersey Number Recognition - Training Configuration
+# ============================================================
+# Optimized for Vertex AI Custom Jobs with T4/L4 GPUs.
+# Dataset downloaded from GCS tar to local SSD for fast I/O.
+
+seed: 42
+
+dataset:
+  tar_path: "gs://vm-football-data/sn_jersey_2023.tar.gz"
+  processed_tar_path: "gs://vm-football-data/sn_jersey_2023_processed.tar.gz"
+  local_root: "/workspace/dataset/sn_jersey_2023"
+  jersey_root: "/workspace/dataset/sn_jersey_2023/jersey-2023"
+  processed_root: "/workspace/dataset/sn_jersey_2023/processed"
+
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/jersey_number"
+
+jersey:
+  experiments:
+    jersey_processed:
+      mode: "processed"
+      epochs: 25
+      batch_size: 64
+      lr: 1.0e-4
+      weight_decay: 1.0e-3
+      img_size: 96
+      model: "resnet18"
+      skip_no_number: true
+      use_test_as_val: false
+      val_split: 0.1
+    jersey_full:
+      mode: "full"
+      epochs: 25
+      batch_size: 64
+      lr: 1.0e-4
+      weight_decay: 1.0e-3
+      img_size: 96
+      model: "resnet18"
+      skip_no_number: true
+      use_test_as_val: false
+      val_split: 0.1

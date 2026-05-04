@@ -19,6 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+clips/
 
 # === Entorno Virtual ===
 .venv/
@@ -36,6 +37,7 @@ models/
 *.engine
 *.trt
 *.json
+!reports/metrics/*.json
 tactical_results/batch_eval/
 # === Videos y Media ===
 *.mp4
@@ -46,6 +48,9 @@ tactical_results/batch_eval/
 
 # === Outputs Temporales ===
 outputs/
+reports/**
+!reports/metrics/
+!reports/metrics/**
 runs/detect/
 runs/segment/
 results_final/evaluation/trackeval_workspace/
