@@ -1,0 +1,31 @@
+# ============================================================
+# Jersey Number Recognition - Smoke Test Configuration
+# ============================================================
+# 2-epoch smoke test using small settings to validate pipeline.
+# Usage: .\cloud\submit_jersey_job.ps1 -SmokeTest
+
+seed: 42
+
+dataset:
+  tar_path: "gs://vm-football-data/sn_jersey_2023.tar.gz"
+  processed_tar_path: "gs://vm-football-data/sn_jersey_2023_processed.tar.gz"
+  local_root: "/workspace/dataset/sn_jersey_2023"
+  jersey_root: "/workspace/dataset/sn_jersey_2023/jersey-2023"
+  processed_root: "/workspace/dataset/sn_jersey_2023/processed"
+
+output:
+  base_dir: "/workspace/runs"
+  gcs_path: "gs://vm-football-data/models/jersey_number"
+
+jersey:
+  experiments:
+    jersey_smoketest:
+      mode: "processed"
+      epochs: 2
+      batch_size: 32
+      lr: 1.0e-4
+      weight_decay: 1.0e-3
+      img_size: 96
+      model: "resnet18"
+      skip_no_number: true
+      use_test_as_val: true

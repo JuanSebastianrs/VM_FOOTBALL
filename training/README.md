@@ -72,5 +72,39 @@ training/
 ├── segmentation/
 │   └── finetune_sam2.py
 └── identification/
-    └── train_resnet_jersey.py
+        ├── train_resnet_jersey.py
+        └── preprocess_sn_jersey.py
+    └── train_sn_jersey.py
+
+## Jersey Number - Preprocessing
+
+Preprocess sn-jersey tracklets and select top frames per tracklet:
+
+```bash
+python training/identification/preprocess_sn_jersey.py \
+    --input-root datasets/sn_jersey_2023/jersey-2023 \
+    --output-root datasets/sn_jersey_2023/processed \
+    --keep-ratio 0.2 --min-keep 4 --max-keep 12
+```
+
+## Jersey Number - Training
+
+Baseline using selected frames (processed mode):
+
+```bash
+python training/identification/train_sn_jersey.py \
+    --mode processed \
+    --dataset-root datasets/sn_jersey_2023/jersey-2023 \
+    --processed-root datasets/sn_jersey_2023/processed \
+    --run-name processed_baseline
+```
+
+Baseline using all frames (full mode):
+
+```bash
+python training/identification/train_sn_jersey.py \
+    --mode full \
+    --dataset-root datasets/sn_jersey_2023/jersey-2023 \
+    --run-name full_baseline
+```
 ```

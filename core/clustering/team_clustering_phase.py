@@ -303,7 +303,10 @@ def run(
 
         if use_json_detections:
             # --- Modo pipeline: bboxes + track_ids de Phase 1 ---
-            frame_id = int(os.path.splitext(os.path.basename(path))[0])
+            try:
+                frame_id = int(os.path.splitext(os.path.basename(path))[0])
+            except ValueError:
+                frame_id = i
             players = phase1_by_frame.get(frame_id, [])
             for p in players:
                 tid = int(p["track_id"])
