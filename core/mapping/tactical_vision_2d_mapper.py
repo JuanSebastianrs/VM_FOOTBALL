@@ -37,6 +37,7 @@ import json
 import os
 import glob
 import argparse
+import csv
 import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
@@ -580,22 +581,40 @@ def draw_pitch_cv2(scale=10, margin=50):
 # Projection: image pixel  →  minimap pixel   via  H_inv
 # ---------------------------------------------------------------------------
 
+def project_point_to_world(x_img, y_img, H_inv):
+    """
+    Project image point to world coordinates (metres, top-left origin).
+    Returns (x_world, y_world) or (None, None) if out of bounds / invalid.
+    """
+    pt_world = H_inv @ np.array([x_img, y_img, 1.0])
+    if abs(pt_world[2]) < 1e-9:
+        return None, None
+    pt_world /= pt_world[2]
+
+    x_world = pt_world[0] + 52.5
+    y_world = pt_world[1] + 34.0
+
+    if x_world < -5 or x_world > 110 or y_world < -5 or y_world > 73:
+        return None, None
+    return x_world, y_world
+
+
 def project_point(x_img, y_img, H_inv, scale, margin, w_pitch, h_pitch):
     """
     Project an image-space point (x_img, y_img) onto the minimap using H_inv.
     H_inv maps image coords → PnLCalib world coords (centred on pitch centre).
     Returns (mx, my) minimap pixel coords, or (None, None) if out of bounds.
     """
-    pt_world = H_inv @ np.array([x_img, y_img, 1.0])
-    pt_world /= pt_world[2]
-
-    # PnLCalib world has origin at pitch centre → shift to top-left origin
-    x_world = pt_world[0] + 52.5
-    y_world = pt_world[1] + 34.0
-
-    # Loose sanity bounds
-    if x_world < -5 or x_world > 110 or y_world < -5 or y_world > 73:
+    x_world, y_world = project_point_to_world(x_img, y_img, H_inv)
+    if x_world is None:
         return None, None
+
+    mx = int(x_world * scale) + margin
+    my = int(y_world * scale) + margin
+
+    if 0 <= mx < w_pitch and 0 <= my < h_pitch:
+        return mx, my
+    return None, None
 
     mx = int(x_world * scale) + margin
     my = int(y_world * scale) + margin
@@ -627,8 +646,20 @@ def main():
     parser.add_argument("--disable_pnl_refine", action="store_true")
     parser.add_argument("--debug", action="store_true",
                         help="Print per-frame calibration diagnostics")
-    parser.add_argument("--output", type=str, required=True)
+    parser.add_argument("--output", type=str, default="",
+                        help="Path to output video (.mp4)")
+    parser.add_argument("--output_csv", type=str, default="",
+                        help="Optional: path to export tracking 2D metric CSV")
+    parser.add_argument("--no_video", action="store_true",
+                        help="Skip video rendering (useful when only CSV is needed)")
+    parser.add_argument("--fps", type=float, default=25.0,
+                        help="Frames per second of the sequence")
     args = parser.parse_args()
+
+    if not args.no_video and not args.output:
+        parser.error("--output is required unless --no_video is set")
+    if args.no_video and not args.output_csv:
+        parser.error("--output_csv is required when --no_video is set")
 
     # --- Load HRNet configs ---
     with open(args.pnlcalib_kp_cfg, 'r') as fh:
@@ -825,10 +856,13 @@ def main():
                           f"fx={p['fx']:7.0f}")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PASS 2: Render minimap with smoothed H_inv
+    #  PASS 2: Render minimap with smoothed H_inv + CSV export
     # ═══════════════════════════════════════════════════════════════
     print(f"\n{'='*50}")
-    print(f"Pass 2/2: Rendering {len(images)} frames with smoothed calibration...")
+    if args.no_video:
+        print(f"Pass 2/2: Processing {len(images)} frames (no video)...")
+    else:
+        print(f"Pass 2/2: Rendering {len(images)} frames with smoothed calibration...")
     print(f"{'='*50}")
 
     # --- Video layout ---
@@ -844,18 +878,36 @@ def main():
     out_w = new_w_ori + w_pitch
     out_h = target_video_h
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out_video = cv2.VideoWriter(args.output, fourcc, 25.0, (out_w, out_h))
+    if not args.no_video:
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out_video = cv2.VideoWriter(args.output, fourcc, args.fps, (out_w, out_h))
 
-    for idx, img_path in enumerate(tqdm(images, desc="Rendering")):
+    # --- CSV export setup ---
+    csv_file = None
+    csv_writer = None
+    if args.output_csv:
+        csv_file = open(args.output_csv, 'w', newline='', encoding='utf-8')
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow([
+            'frame_id', 'time_s', 'entity_type', 'track_id', 'team_id', 'role',
+            'x_m', 'y_m', 'visible', 'source', 'confidence'
+        ])
+
+    dt = 1.0 / args.fps
+
+    for idx, img_path in enumerate(tqdm(images, desc="Processing")):
         frame_id = frame_ids[idx]
-        frame = cv2.imread(img_path)
+        if not args.no_video:
+            frame = cv2.imread(img_path)
+        else:
+            frame = None
 
         # ── Get pre-computed smoothed H_inv ──
         H_inv = smoother.get_H_inv(idx)
 
         # ── Render minimap ──
-        pitch_frame = base_pitch.copy()
+        if not args.no_video:
+            pitch_frame = base_pitch.copy()
 
         if H_inv is not None:
             # -- Players (team-aware) --
@@ -869,48 +921,60 @@ def main():
 
                 color, is_gk, is_ref = get_player_color(track_id)
 
-                # Draw bbox on video frame with team color
-                cv2.rectangle(frame,
-                              (int(x_min), int(y_min)),
-                              (int(x_max), int(y_max)),
-                              color, 2)
+                if not args.no_video:
+                    # Draw bbox on video frame with team color
+                    cv2.rectangle(frame,
+                                  (int(x_min), int(y_min)),
+                                  (int(x_max), int(y_max)),
+                                  color, 2)
 
-                # Label on video frame
-                info_team = team_map.get(track_id)
-                if info_team:
-                    label = f"#{track_id}"
-                    if is_ref:
-                        label = f"REF #{track_id}"
-                    elif is_gk:
-                        label = f"GK #{track_id}"
-                    cv2.putText(frame, label,
-                                (int(x_min), int(y_min) - 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1,
-                                cv2.LINE_AA)
+                    # Label on video frame
+                    info_team = team_map.get(track_id)
+                    if info_team:
+                        label = f"#{track_id}"
+                        if is_ref:
+                            label = f"REF #{track_id}"
+                        elif is_gk:
+                            label = f"GK #{track_id}"
+                        cv2.putText(frame, label,
+                                    (int(x_min), int(y_min) - 5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1,
+                                    cv2.LINE_AA)
 
-                # Project foot-point (bottom-centre of bbox)
+                # Metric projection (foot-point)
                 x_foot = (x_min + x_max) / 2.0
                 y_foot = y_max
+                x_world, y_world = project_point_to_world(x_foot, y_foot, H_inv)
+                visible = x_world is not None
 
-                mx, my = project_point(
-                    x_foot, y_foot, H_inv, scale, margin, w_pitch, h_pitch
-                )
-                if mx is not None:
-                    # Minimap: team color dot, special markers for GK/REF
+                if csv_writer:
+                    info_team = team_map.get(track_id, {})
+                    role_str = info_team.get("role", "unknown")
+                    team_id = info_team.get("team_id", -1)
+                    csv_writer.writerow([
+                        frame_id, round((frame_id - 1) * dt, 3),
+                        'player', track_id, team_id, role_str,
+                        round(x_world, 3) if visible else '',
+                        round(y_world, 3) if visible else '',
+                        1 if visible else 0,
+                        'detection',
+                        ''
+                    ])
+
+                if not args.no_video and visible:
+                    mx = int(x_world * scale) + margin
+                    my = int(y_world * scale) + margin
                     if is_ref:
-                        # Referees: diamond shape
                         pts = np.array([
                             [mx, my - 7], [mx + 5, my],
                             [mx, my + 7], [mx - 5, my]
                         ], dtype=np.int32)
                         cv2.fillPoly(pitch_frame, [pts], color)
                     elif is_gk:
-                        # Goalkeepers: larger circle + ring
                         cv2.circle(pitch_frame, (mx, my), 8, color, -1)
                         cv2.circle(pitch_frame, (mx, my), 8, (255, 255, 255), 2)
                     else:
                         cv2.circle(pitch_frame, (mx, my), 6, color, -1)
-
                     cv2.putText(pitch_frame, str(track_id), (mx + 8, my),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.4,
                                 (255, 255, 255), 1)
@@ -919,27 +983,46 @@ def main():
             ball = trajectory.get(frame_id)
             if ball is not None:
                 bx, by = ball["x"], ball["y"]
-                is_dummy = ball.get("is_dummy", False)
-                bcolor = (0, 0, 255) if is_dummy else (0, 255, 255)
-                cv2.circle(frame, (int(bx), int(by)), 5, bcolor, -1)
+                if not args.no_video:
+                    is_dummy = ball.get("is_dummy", False)
+                    bcolor = (0, 0, 255) if is_dummy else (0, 255, 255)
+                    cv2.circle(frame, (int(bx), int(by)), 5, bcolor, -1)
 
-                mx, my = project_point(
-                    bx, by, H_inv, scale, margin, w_pitch, h_pitch
-                )
-                if mx is not None:
+                x_world, y_world = project_point_to_world(bx, by, H_inv)
+                visible = x_world is not None and not ball.get("is_dummy", False)
+
+                if csv_writer:
+                    csv_writer.writerow([
+                        frame_id, round((frame_id - 1) * dt, 3),
+                        'ball', -1, -1, 'ball',
+                        round(x_world, 3) if visible else '',
+                        round(y_world, 3) if visible else '',
+                        1 if visible else 0,
+                        'viterbi',
+                        round(ball.get("score", 0.0), 3)
+                    ])
+
+                if not args.no_video and visible:
+                    mx = int(x_world * scale) + margin
+                    my = int(y_world * scale) + margin
                     cv2.circle(pitch_frame, (mx, my), 5, (0, 165, 255), -1)
 
-        # ── Compose side-by-side ──
-        frame_resized = cv2.resize(frame, (new_w_ori, target_video_h))
-        pad_top = (target_video_h - h_pitch) // 2
-        pad_bot = target_video_h - h_pitch - pad_top
-        pitch_padded = cv2.copyMakeBorder(
-            pitch_frame, pad_top, pad_bot, 0, 0,
-            cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        if not args.no_video:
+            # ── Compose side-by-side ──
+            frame_resized = cv2.resize(frame, (new_w_ori, target_video_h))
+            pad_top = (target_video_h - h_pitch) // 2
+            pad_bot = target_video_h - h_pitch - pad_top
+            pitch_padded = cv2.copyMakeBorder(
+                pitch_frame, pad_top, pad_bot, 0, 0,
+                cv2.BORDER_CONSTANT, value=[0, 0, 0])
+            out_video.write(np.hstack((frame_resized, pitch_padded)))
 
-        out_video.write(np.hstack((frame_resized, pitch_padded)))
+    if not args.no_video:
+        out_video.release()
 
-    out_video.release()
+    if csv_file:
+        csv_file.close()
+        print(f"\nTracking 2D CSV saved to: {args.output_csv}")
 
     # ── Final report ──
     print(f"\n{'='*50}")
@@ -949,7 +1032,8 @@ def main():
     print(f"  Failed (hold): {calib_fail}/{len(images)}")
     print(f"\nBidirectional Smoother statistics:")
     print(smoother.summary())
-    print(f"\nVideo saved to: {args.output}")
+    if not args.no_video:
+        print(f"\nVideo saved to: {args.output}")
 
 
 if __name__ == '__main__':
