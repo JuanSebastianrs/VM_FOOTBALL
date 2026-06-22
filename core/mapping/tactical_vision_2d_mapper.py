@@ -654,6 +654,9 @@ def main():
                         help="Skip video rendering (useful when only CSV is needed)")
     parser.add_argument("--fps", type=float, default=25.0,
                         help="Frames per second of the sequence")
+    parser.add_argument("--jersey_json", type=str, default=None,
+                        help="Optional jersey identity JSON (Phase 10 output): "
+                             "locked/tentative numbers replace track_id labels")
     args = parser.parse_args()
 
     if not args.no_video and not args.output:
@@ -706,6 +709,29 @@ def main():
         print(f"  {len(team_map)} tracks with team assignment.")
     else:
         print("No clustering data — players rendered without team distinction.")
+
+    # --- Load jersey identities (if available) ---
+    jersey_map = {}  # track_id -> {"number": int, "state": str}
+    if args.jersey_json and os.path.exists(args.jersey_json):
+        print(f"Loading jersey identities from {args.jersey_json}...")
+        with open(args.jersey_json, "r") as fh:
+            jersey_data = json.load(fh)
+        for t in jersey_data.get("tracklets", []):
+            num = t.get("predicted_number")
+            state = t.get("state", "unknown")
+            if num is not None and state in ("locked", "tentative"):
+                jersey_map[t["track_id"]] = {"number": int(num), "state": state}
+        n_locked = sum(1 for v in jersey_map.values() if v["state"] == "locked")
+        print(f"  {len(jersey_map)} tracks with jersey number "
+              f"({n_locked} locked, {len(jersey_map) - n_locked} tentative).")
+
+    def get_display_label(track_id):
+        """Jersey number if known (tentative marked with '?'), else track_id."""
+        jinfo = jersey_map.get(track_id)
+        if jinfo is None:
+            return f"#{track_id}", False
+        suffix = "" if jinfo["state"] == "locked" else "?"
+        return f"{jinfo['number']}{suffix}", True
 
     # Team color palette (BGR)
     TEAM_COLORS = {
@@ -928,17 +954,19 @@ def main():
                                   (int(x_max), int(y_max)),
                                   color, 2)
 
-                    # Label on video frame
+                    # Label on video frame (jersey number when identified)
                     info_team = team_map.get(track_id)
                     if info_team:
-                        label = f"#{track_id}"
+                        label, has_jersey = get_display_label(track_id)
                         if is_ref:
-                            label = f"REF #{track_id}"
+                            label = f"REF {label}"
                         elif is_gk:
-                            label = f"GK #{track_id}"
+                            label = f"GK {label}"
+                        font_scale = 0.55 if has_jersey else 0.4
                         cv2.putText(frame, label,
                                     (int(x_min), int(y_min) - 5),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1,
+                                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
+                                    2 if has_jersey else 1,
                                     cv2.LINE_AA)
 
                 # Metric projection (foot-point)
@@ -975,9 +1003,11 @@ def main():
                         cv2.circle(pitch_frame, (mx, my), 8, (255, 255, 255), 2)
                     else:
                         cv2.circle(pitch_frame, (mx, my), 6, color, -1)
-                    cv2.putText(pitch_frame, str(track_id), (mx + 8, my),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.4,
-                                (255, 255, 255), 1)
+                    map_label, map_has_jersey = get_display_label(track_id)
+                    cv2.putText(pitch_frame, map_label.lstrip("#"), (mx + 8, my),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.45 if map_has_jersey else 0.4,
+                                (255, 255, 255), 2 if map_has_jersey else 1)
 
             # -- Ball (Viterbi trajectory) --
             ball = trajectory.get(frame_id)
