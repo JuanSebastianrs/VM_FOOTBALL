@@ -447,5 +447,173 @@ class TestReadiness(unittest.TestCase):
         self.assertIn("V_rcp_0000", r["annotation"]["v2_event_ids_missing_in_annotations"])
 
 
+class TestModelZoo(unittest.TestCase):
+    """Las arquitecturas nuevas de la fabrica entrenan y predicen probas."""
+
+    def _fit_and_check(self, mtype, extra=None):
+        from core.scanning_v2.supervised.models import build_model
+        feats, labs = _synth(60, 30, seed=3)
+        cols = training_feature_columns(feats)
+        cfg = {"type": mtype, "random_state": 42}
+        cfg.update(extra or {})
+        model, params = build_model(cfg)
+        model.fit(feats[cols], labs["scan_label_gt"])
+        proba = model.predict_proba(feats[cols])[:, 1]
+        self.assertEqual(len(proba), 60)
+        self.assertTrue(np.all((proba >= 0) & (proba <= 1)))
+        self.assertEqual(params["type"], mtype)
+        # dataset separable -> debe superar por mucho el azar
+        pred = (proba >= 0.5).astype(int)
+        acc = float((pred == labs["scan_label_gt"].values).mean())
+        self.assertGreater(acc, 0.8, f"{mtype} accuracy={acc}")
+
+    def test_hist_gradient_boosting(self):
+        self._fit_and_check("hist_gradient_boosting")
+
+    def test_mlp(self):
+        self._fit_and_check("mlp")
+
+    def test_unsupported_type_raises(self):
+        from core.scanning_v2.supervised.models import build_model
+        with self.assertRaises(ValueError):
+            build_model({"type": "transformer_xxl"})
+
+
+class TestSequenceModel(unittest.TestCase):
+    """GRU temporal: aprende un patron secuencial trivial y es clonable."""
+
+    @staticmethod
+    def _seq_dataset(n=80, T=16, seed=0):
+        rng = np.random.default_rng(seed)
+        rows, y = [], []
+        for i in range(n):
+            pos = i < n // 2
+            # positivos: yaw oscila (scanning); negativos: yaw constante
+            if pos:
+                ang = np.cumsum(rng.choice([-0.6, 0.6], size=T))
+            else:
+                ang = np.full(T, rng.normal(0, 0.05)) + rng.normal(0, 0.02, T)
+            row = {"event_id": f"e{i}", "video_id": "V", "aux_feature": float(pos)
+                   * 0.0}
+            for k in range(T):
+                row[f"seq_cos_{k:02d}"] = float(np.cos(ang[k]))
+                row[f"seq_sin_{k:02d}"] = float(np.sin(ang[k]))
+                row[f"seq_valid_{k:02d}"] = 1
+            rows.append(row)
+            y.append(int(pos))
+        return pd.DataFrame(rows), np.array(y)
+
+    def test_gru_learns_oscillation(self):
+        from core.scanning_v2.supervised.models import build_model
+        X, y = self._seq_dataset()
+        cols = training_feature_columns(X)
+        model, params = build_model({"type": "gru_sequence", "random_state": 42,
+                                     "max_epochs": 60, "patience": 15,
+                                     "device": "cpu"})
+        model.fit(X[cols], y)
+        proba = model.predict_proba(X[cols])[:, 1]
+        acc = float(((proba >= 0.5).astype(int) == y).mean())
+        self.assertGreater(acc, 0.85, f"gru accuracy={acc}")
+
+    def test_gru_is_joblib_picklable(self):
+        import joblib
+        from core.scanning_v2.supervised.models import build_model
+        X, y = self._seq_dataset(n=30, T=8, seed=1)
+        cols = training_feature_columns(X)
+        model, _ = build_model({"type": "gru_sequence", "random_state": 42,
+                                "max_epochs": 5, "patience": 3, "device": "cpu"})
+        model.fit(X[cols], y)
+        p = Path(tempfile.mkdtemp()) / "gru.pkl"
+        joblib.dump(model, p)
+        loaded = joblib.load(p)
+        np.testing.assert_allclose(loaded.predict_proba(X[cols]),
+                                   model.predict_proba(X[cols]), rtol=1e-5)
+
+    def test_gru_requires_sequence_columns(self):
+        from core.scanning_v2.supervised.models import build_model
+        feats, labs = _synth(30, 12)
+        cols = training_feature_columns(feats)
+        model, _ = build_model({"type": "gru_sequence", "device": "cpu",
+                                "max_epochs": 2})
+        with self.assertRaises(ValueError):
+            model.fit(feats[cols], labs["scan_label_gt"])
+
+    def test_sequence_features_in_extractor(self):
+        events = pd.DataFrame([
+            dict(event_id="V_rcp_0000", video_id="V", receiver_track_id=1,
+                 receiver_role="player", source="heuristic", event_confidence=0.5)])
+        hp = _head_pose(["V_rcp_0000"], frames=10)
+        fe = FeatureExtractor({"include_sequence_features": True,
+                               "sequence_length": 8, "sequence_seconds": 3.0})
+        feats = fe.extract(events, hp)
+        for k in range(8):
+            self.assertIn(f"seq_cos_{k:02d}", feats.columns)
+            self.assertIn(f"seq_valid_{k:02d}", feats.columns)
+        # los primeros pasos (lejos de la recepcion) no tienen pose -> invalidos
+        self.assertEqual(int(feats["seq_valid_00"].iloc[0]), 0)
+        # el ultimo paso (t=0) si tiene pose valida
+        self.assertEqual(int(feats["seq_valid_07"].iloc[0]), 1)
+
+
+class TestWeakLabeler(unittest.TestCase):
+    @staticmethod
+    def _row(**kw):
+        base = dict(event_id="V_rcp_0000", video_id="V", receiver_track_id=1,
+                    valid_pose_ratio=0.9, yaw_valid_count=40, n_frames=75,
+                    sustained_turn_count_20deg=0, sustained_turn_count_30deg=0,
+                    sustained_turn_count_40deg=0, yaw_range_deg=10.0,
+                    yaw_mean_abs_delta_deg=1.0, yaw_num_direction_changes=0)
+        base.update(kw)
+        return pd.Series(base)
+
+    def test_positive_rule(self):
+        from core.scanning_v2.supervised.weak_labeler import weak_label_row
+        lab, conf, why = weak_label_row(self._row(
+            sustained_turn_count_30deg=3, yaw_range_deg=120.0))
+        self.assertEqual(lab, 1)
+        self.assertGreaterEqual(conf, 0.6)
+
+    def test_negative_rule(self):
+        from core.scanning_v2.supervised.weak_labeler import weak_label_row
+        lab, _, _ = weak_label_row(self._row())
+        self.assertEqual(lab, 0)
+
+    def test_gray_zone_unlabeled(self):
+        from core.scanning_v2.supervised.weak_labeler import weak_label_row
+        lab, _, why = weak_label_row(self._row(
+            sustained_turn_count_20deg=1, yaw_range_deg=40.0))
+        self.assertIsNone(lab)
+        self.assertEqual(why, "gray_zone")
+
+    def test_low_quality_unlabeled(self):
+        from core.scanning_v2.supervised.weak_labeler import weak_label_row
+        lab, _, why = weak_label_row(self._row(valid_pose_ratio=0.2))
+        self.assertIsNone(lab)
+        self.assertEqual(why, "low_quality_window")
+
+    def test_human_labels_excluded(self):
+        from core.scanning_v2.supervised.weak_labeler import generate_weak_labels
+        feats = pd.DataFrame([self._row().to_dict(),
+                              self._row(event_id="V_rcp_0001").to_dict()])
+        human = pd.DataFrame({"event_id": ["V_rcp_0000"], "video_id": ["V"],
+                              "scan_label_gt": [1]})
+        out = generate_weak_labels(feats, human)
+        self.assertNotIn("V_rcp_0000", out["event_id"].tolist())
+        self.assertIn("V_rcp_0001", out["event_id"].tolist())
+        self.assertTrue((out["label_source"] == "weak_rules_v1").all())
+
+    def test_refuses_overwriting_non_weak_file(self):
+        from core.scanning_v2.supervised.weak_labeler import (generate_weak_labels,
+                                                              write_weak_labels)
+        d = Path(tempfile.mkdtemp())
+        p = d / "weak.csv"
+        pd.DataFrame({"event_id": ["x"], "label_source": ["human"]}).to_csv(
+            p, index=False)
+        feats = pd.DataFrame([self._row().to_dict()])
+        out = generate_weak_labels(feats, None)
+        with self.assertRaises(ValueError):
+            write_weak_labels(out, str(p))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

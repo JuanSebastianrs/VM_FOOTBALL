@@ -61,9 +61,14 @@ class DatasetBuilder:
         self._dup_keys: list = []
         self._stale_keys: list = []
         self._missing_keys: list = []
-        self.fe = FeatureExtractor({"feature_version": self.feature_version,
-                                    "include_vision_map": self.include_vision_map,
-                                    "fps": c.get("video", {}).get("fps", 25.0)})
+        self.fe = FeatureExtractor({
+            "feature_version": self.feature_version,
+            "include_vision_map": self.include_vision_map,
+            "fps": c.get("video", {}).get("fps", 25.0),
+            "include_sequence_features": ds.get("include_sequence_features", False),
+            "sequence_length": ds.get("sequence_length", 32),
+            "sequence_seconds": ds.get("sequence_seconds", 3.0),
+        })
 
     # ------------------------------------------------------------------
     def build(self, video_ids: List[str], outputs_root: str,

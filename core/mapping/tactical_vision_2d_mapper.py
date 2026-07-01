@@ -650,6 +650,9 @@ def main():
                         help="Path to output video (.mp4)")
     parser.add_argument("--output_csv", type=str, default="",
                         help="Optional: path to export tracking 2D metric CSV")
+    parser.add_argument("--output_calibration", type=str, default="",
+                        help="Optional: path to export per-frame smoothed H_inv "
+                             "(calibration_hinv.json, image -> centred pitch metres)")
     parser.add_argument("--no_video", action="store_true",
                         help="Skip video rendering (useful when only CSV is needed)")
     parser.add_argument("--fps", type=float, default=25.0,
@@ -880,6 +883,20 @@ def main():
                     print(f"  [{fid:>5d}] euler_ZXZ=[{euler[0]:7.1f},"
                           f"{euler[1]:6.1f},{euler[2]:6.1f}]° "
                           f"fx={p['fx']:7.0f}")
+
+    # ── Optional: export smoothed per-frame calibration ──
+    if args.output_calibration:
+        calib_out = {}
+        for idx, fid in enumerate(frame_ids):
+            H_inv = smoother.get_H_inv(idx)
+            if H_inv is None:
+                continue
+            calib_out[str(fid)] = {"H_inv": np.asarray(H_inv).tolist(),
+                                   "time_s": round((fid - 1) / args.fps, 4)}
+        with open(args.output_calibration, "w", encoding="utf-8") as fh:
+            json.dump(calib_out, fh)
+        print(f"Calibration exported: {args.output_calibration} "
+              f"({len(calib_out)}/{len(frame_ids)} frames)")
 
     # ═══════════════════════════════════════════════════════════════
     #  PASS 2: Render minimap with smoothed H_inv + CSV export

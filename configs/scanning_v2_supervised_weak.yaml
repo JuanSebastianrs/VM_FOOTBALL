@@ -1,0 +1,49 @@
+# configs/scanning_v2_supervised_weak.yaml
+# ---------------------------------------------------------------------------
+# Scanning V2 — Supervised Phase con WEAK SUPERVISION multi-video.
+# Entrena los clasificadores con pseudo-etiquetas de reglas explicitas
+# (data/annotations/scanning_windows_weak_v1.csv, label_source=weak_rules_v1).
+#
+# ADVERTENCIA METODOLOGICA: las metricas contra pseudo-etiquetas miden
+# CONSISTENCIA con las reglas debiles, no validez contra percepcion humana.
+# Cuando exista GT humano, usar configs/scanning_v2_supervised.yaml.
+# NO es gaze real: orientacion visual APROXIMADA de cabeza/cuerpo.
+# ---------------------------------------------------------------------------
+
+video:
+  fps: 25
+
+inputs:
+  outputs_root: "outputs/scanning_v2"
+  annotations_path: "data/annotations/scanning_windows_weak_v1.csv"
+  video_ids: []          # vacio => los scripts pasan la lista explicita
+
+dataset:
+  feature_version: "scanning_v2_features_v2_seq"
+  include_vision_map: true
+  include_heuristic_pred_as_feature: false   # NO usar la heuristica como feature
+  include_sequence_features: true            # serie de yaw para gru_sequence
+  sequence_length: 32
+  sequence_seconds: 3.0
+  min_valid_pose_ratio_for_training: 0.4
+  drop_low_visibility: false
+
+model:
+  type: "hist_gradient_boosting"   # default; train_model_zoo compara todas
+  random_state: 42
+  class_weight: "balanced"
+  min_labeled_samples: 20
+  min_positive_samples: 3
+  test_size: 0.2
+  val_size: 0.2
+  group_split_by_video: true
+  use_heuristic_pred_as_feature: false
+  label_source: "weak_rules_v1"    # queda registrado en model_metadata.json
+
+outputs:
+  root: "outputs/scanning_v2_supervised_weak"
+
+reporting:
+  compare_with_heuristic: true
+  write_markdown: true
+  write_json: true

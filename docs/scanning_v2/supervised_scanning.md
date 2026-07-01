@@ -80,12 +80,51 @@ Versionadas con `feature_version`.
 etiquetas/eval → **nunca** features. La predicción heurística V2 entra como feature
 **solo** si `use_heuristic_pred_as_feature: true`.
 
-## 7. Modelo
+## 7. Modelos (fábrica de arquitecturas)
 
-`logistic_regression` (default, pocos datos) / `random_forest` /
-`gradient_boosting`. Nada de deep learning con pocas etiquetas. `class_weight:
-balanced`. Splits reproducibles (`random_state`), opcionalmente agrupados por
-video (`group_split_by_video`).
+`core/scanning_v2/supervised/models.py` expone seis arquitecturas, de más simple
+a más expresiva:
+
+| tipo | naturaleza | cuándo usarla |
+|---|---|---|
+| `logistic_regression` | lineal, interpretable | baseline; GT pequeño |
+| `random_forest` | ensamble de árboles | tabular no lineal |
+| `gradient_boosting` | boosting clásico | tabular; sin class_weight |
+| `hist_gradient_boosting` | boosting con NaN nativo + class_weight | default con cientos de labels |
+| `mlp` | perceptrón multicapa (sklearn) | tabular denso |
+| `gru_sequence` | **GRU temporal** (torch) sobre la serie de yaw re-muestreada + rama tabular | requiere `dataset.include_sequence_features: true` |
+
+`gru_sequence` (ver `sequence_model.py`) consume las columnas
+`seq_cos_XX/seq_sin_XX/seq_valid_XX` que el FeatureExtractor genera al activar
+`include_sequence_features`: la serie de yaw se re-muestrea a `sequence_length`
+pasos sobre los últimos `sequence_seconds` antes de la recepción, representada
+como (cos, sin) por ser variable circular, con máscara de validez (no se
+interpola pose inexistente). Es sklearn-compatible y picklable (joblib), así que
+`train/predict/evaluate` funcionan igual para todas las arquitecturas.
+
+Con GT pequeño los modelos simples siguen siendo el default defendible.
+`class_weight: balanced`. Splits reproducibles (`random_state`), opcionalmente
+agrupados por video (`group_split_by_video`).
+
+`scripts/scanning_v2/train_model_zoo.py` entrena TODAS las arquitecturas con el
+mismo split, las evalúa en test held-out, compara con la heurística V2 y copia
+la mejor a `models/best/` con un reporte comparativo.
+
+## 7b. Weak supervision (multi-video, sin GT humano a escala)
+
+Cuando aún no hay GT humano suficiente, `generate_weak_labels.py` produce
+pseudo-etiquetas con reglas EXPLÍCITAS y más estrictas que la heurística de
+runtime (`core/scanning_v2/supervised/weak_labeler.py`): solo eventos
+inequívocos (positivo = giros sostenidos repetidos y amplios; negativo = cabeza
+esencialmente quieta; zona gris = sin etiqueta), con gates de calidad de pose.
+Se escriben en un archivo SEPARADO (`scanning_windows_weak_v1.csv`,
+`label_source=weak_rules_v1`) — nunca en el GT humano, que siempre tiene
+prioridad. Config: `configs/scanning_v2_supervised_weak.yaml`.
+
+**Advertencia metodológica:** un modelo entrenado con etiquetas débiles es una
+destilación suavizada de las reglas; sus métricas contra esas etiquetas miden
+*consistencia*, no validez frente a percepción humana. Sirve para tener un
+modelo operativo y una arquitectura validada mientras se anota GT humano.
 
 ## 8. Qué pasa si hay pocos labels
 

@@ -36,6 +36,10 @@ class FeatureExtractor:
         self.ball_cone = math.radians(float(c.get("ball_cone_deg", 35.0)))
         self.feature_version = str(c.get("feature_version", FEATURE_VERSION))
         self.include_vision_map = bool(c.get("include_vision_map", True))
+        # serie temporal re-muestreada (para arquitecturas secuenciales, p.ej. GRU)
+        self.include_sequence = bool(c.get("include_sequence_features", False))
+        self.seq_len = int(c.get("sequence_length", 32))
+        self.seq_seconds = float(c.get("sequence_seconds", 3.0))
 
     # ------------------------------------------------------------------
     def extract(self, events: pd.DataFrame, head_pose: pd.DataFrame,
@@ -128,6 +132,10 @@ class FeatureExtractor:
         # ---- vision map (opcional) ----
         f.update(self._vision_features(vis_idx, eid))
 
+        # ---- serie de yaw re-muestreada (opcional; para modelos secuenciales) ----
+        if self.include_sequence:
+            f.update(self._sequence_features(hp, yaw_deg))
+
         # ---- heuristica V2 (NO feature por defecto; etiqueta de comparacion) ----
         f[HEURISTIC_PRED_COLUMN] = self._scan_or(scan_idx, eid, "scan_label_pred", 0)
         return f
@@ -195,6 +203,38 @@ class FeatureExtractor:
             visible_ball=int(bool(r.get("visible_ball"))),
             observed_space_score=_float(r.get("observed_space_score")) or 0.0)
         return d
+
+    def _sequence_features(self, hp, yaw_deg) -> dict:
+        """Re-muestrea (cos,sin,valid) del yaw sobre una rejilla temporal fija de
+        `seq_len` pasos que cubre [-seq_seconds, 0] respecto a la recepcion.
+        Pasos sin estimacion valida cercana quedan NaN/NaN/0 (no se interpola
+        informacion inexistente; el modelo decide como tratarlos)."""
+        T = self.seq_len
+        out = {}
+        t2r = (pd.to_numeric(hp["time_to_reception"], errors="coerce").tolist()
+               if len(hp) else [])
+        pairs = [(t, y) for t, y in zip(t2r, yaw_deg)
+                 if y is not None and t is not None and not pd.isna(t)]
+        step = self.seq_seconds / max(1, T - 1)
+        tol = 0.75 * step
+        for k in range(T):
+            tau = self.seq_seconds * (T - 1 - k) / max(1, T - 1)   # 3.0s -> 0.0s
+            best = None
+            for t, y in pairs:
+                d = abs(t - tau)
+                if d <= tol and (best is None or d < best[0]):
+                    best = (d, y)
+            sfx = f"{k:02d}"
+            if best is None:
+                out[f"seq_cos_{sfx}"] = np.nan
+                out[f"seq_sin_{sfx}"] = np.nan
+                out[f"seq_valid_{sfx}"] = 0
+            else:
+                rad = math.radians(best[1])
+                out[f"seq_cos_{sfx}"] = float(math.cos(rad))
+                out[f"seq_sin_{sfx}"] = float(math.sin(rad))
+                out[f"seq_valid_{sfx}"] = 1
+        return out
 
     @staticmethod
     def _scan_or(scan_idx, eid, col, default):

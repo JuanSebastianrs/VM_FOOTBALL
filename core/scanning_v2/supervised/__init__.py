@@ -21,10 +21,13 @@ from .predictor import ScanningPredictor
 from .evaluator import ScanningEvaluator
 from .annotation_validator import validate_annotations
 from .readiness import compute_readiness
+from .weak_labeler import (WEAK_LABEL_SOURCE, generate_weak_labels,
+                           write_weak_labels)
 
 __all__ = [
     "FEATURE_VERSION", "LABEL_COLUMNS", "training_feature_columns",
     "FeatureExtractor", "DatasetBuilder", "build_model", "SUPPORTED_MODELS",
     "ScanningTrainer", "ScanningPredictor", "ScanningEvaluator",
     "validate_annotations", "compute_readiness",
+    "WEAK_LABEL_SOURCE", "generate_weak_labels", "write_weak_labels",
 ]
