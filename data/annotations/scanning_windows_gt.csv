@@ -1,0 +1,6 @@
+sample_id,event_id,video_id,frame_start,frame_reception,frame_end,receiver_track_id,receiver_role,team_id,event_source,clip_path,scan_label_gt,head_turn_count_gt,turn_direction_gt,visibility,confidence,notes
+0,SNMOT-148_rcp_0000,SNMOT-148,1,18,18,1,player,0.0,heuristic,clips/SNMOT-148_rcp_0000_video.mp4,,,,,,
+1,SNMOT-148_rcp_0001,SNMOT-148,155,167,167,43,player,0.0,heuristic,clips/SNMOT-148_rcp_0001_video.mp4,,,,,,
+2,SNMOT-148_rcp_0002,SNMOT-148,164,239,239,41,player,0.0,heuristic,clips/SNMOT-148_rcp_0002_video.mp4,,,,,,
+3,SNMOT-148_rcp_0003,SNMOT-148,294,369,369,9,player,0.0,heuristic,clips/SNMOT-148_rcp_0003_video.mp4,,,,,,
+4,SNMOT-148_rcp_0004,SNMOT-148,462,537,537,18,player,0.0,heuristic,clips/SNMOT-148_rcp_0004_video.mp4,,,,,,

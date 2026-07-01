@@ -1,0 +1,96 @@
+# configs/scanning.yaml
+# ---------------------------------------------------------------------------
+# Configuracion del modulo de "visual scanning".
+#
+# Estima orientacion visual APROXIMADA de jugadores (cabeza/torso/carrera) y
+# detecta eventos de scanning antes de recibir el balon. NO es eye-tracking.
+# ---------------------------------------------------------------------------
+
+scanning:
+  # --- Recorte de jugadores ---
+  crop_expand_ratio: 0.25          # expansion de la bbox (0.15 - 0.30)
+  crop_size: [384, 768]            # [w, h] al que se redimensiona el crop
+  min_crop_height: 64              # alto minimo (px) para considerar el crop valido
+  low_quality_crop_height: 110     # por debajo => low_quality (jugador lejano)
+
+  # --- Keypoints ---
+  keypoint_backend: "yolo_pose"    # "yolo_pose" | "mediapipe" | "hybrid"
+  pose_model: "models/yolo11n-pose.pt"  # backend yolo_pose (ultralytics auto-descarga)
+  pose_device: "cuda:0"
+  mediapipe_model_complexity: "full"    # backend mediapipe: "full" | "heavy" | "lite"
+  mediapipe_model_path: null            # opcional: ruta a un .task propio
+  mediapipe_min_crop_height: 110        # backend hybrid: usar MediaPipe si bbox_h >= umbral
+  min_pose_confidence: 0.30        # confianza minima por keypoint
+  min_head_visibility: 0.40
+  min_torso_visibility: 0.40
+
+  # --- Orientacion ---
+  # Pesos de confianza por fuente (jerarquia de robustez)
+  source_confidence:
+    head: 1.0
+    torso: 0.7
+    movement: 0.4
+    previous: 0.2
+  movement_min_speed_px: 1.5       # px/frame minimos para confiar en run_angle
+
+  # --- Suavizado temporal (EMA circular) ---
+  smoothing_alpha: 0.35            # alpha base
+  smoothing_alpha_min: 0.10        # alpha cuando la confianza es baja
+  smoothing_decay: 0.85            # decay del estado en frames invalidos
+
+  # --- Recepciones ---
+  fps: 25.0
+  max_ball_distance_m: 2.0
+  min_possession_frames: 3
+  use_attached_player_id: true     # usar trajectory.attached_player_id si existe
+
+  # --- Deteccion de scanning ---
+  scan_window_seconds_before: 3.0
+  scan_window_seconds_after: 0.2
+  scan_turn_threshold_deg: 45.0    # cambio angular acumulado para un scan
+  min_scan_duration_frames: 4
+  min_scan_confidence: 0.40
+  ball_cone_deg: 35.0              # tolerancia para "mirar hacia el balon"
+
+  # --- Vision map ---
+  fov_deg: 120.0
+  central_weight: 1.0
+  peripheral_decay: 2.0
+  distance_decay: 0.04             # 1/m
+  max_view_distance_m: 40.0
+  occlusion_enabled: true
+  vision_grid_resolution_m: 1.0
+
+  # --- Geometria de cancha (PnLCalib world, origen en el centro) ---
+  pitch_length: 105.0
+  pitch_width: 68.0
+
+  # --- Salidas ---
+  export_debug_crops: false
+  export_visualization: true
+
+training:
+  sequence_length: 16
+  batch_size: 32
+  epochs: 50
+  learning_rate: 0.0003
+  weight_decay: 0.0001
+  val_split: 0.2
+  num_orientation_bins: 8
+  hidden_dim: 64
+  num_tcn_blocks: 4
+  dropout: 0.2
+  model: "tcn"                     # "tcn" | "bilstm"
+  checkpoint_dir: "outputs/scanning/checkpoints"
+  num_workers: 0
+  seed: 42
+  # augmentacion (solo train)
+  augment:
+    keypoint_jitter_px: 4.0
+    landmark_dropout_p: 0.10
+    bbox_noise_frac: 0.05
+
+data:
+  annotation_csv: "data/annotations/orientation_labels.csv"
+  crop_dir: "outputs/scanning/crops"
+  output_dir: "outputs/scanning"

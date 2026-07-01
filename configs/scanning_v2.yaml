@@ -1,0 +1,83 @@
+# configs/scanning_v2.yaml
+# ---------------------------------------------------------------------------
+# Visual Scanning V2.
+# Estimacion de orientacion visual APROXIMADA y deteccion HEURISTICA de
+# head-turn/scanning antes de la recepcion. NO es deteccion exacta de mirada.
+# Separa estrictamente: game state -> evento/receptor -> head-turn.
+# ---------------------------------------------------------------------------
+
+video:
+  fps: 25
+
+game_state:
+  require_homography: false
+  candidate_roles: ["player", "goalkeeper"]
+  reject_roles: ["referee"]
+
+events:
+  use_ground_truth_if_available: true
+  reject_referee: true
+  require_candidate_receiver_role: true
+  use_attached_player_id: true
+  max_ball_receiver_distance_m: 2.0
+  attached_max_distance_m: 2.0          # distancia max para confiar en attached_player_id
+  ambiguous_margin_m: 0.6
+  min_ball_near_frames: 3
+  min_possession_frames: 4
+  min_event_confidence: 0.45
+  team_coherence_required: false        # si true, descarta pase con equipos incoherentes
+  team_mismatch_penalty: 0.5            # si false, solo baja la confianza
+  max_pass_gap_frames: 75               # gap maximo pasador->receptor (3 s @25fps)
+
+windows:
+  seconds_before_reception: 3.0
+  seconds_after_reception: 0.2
+  save_windows: true                    # guarda frames/player_crops/head_crops por evento
+  save_full_frames: false               # frames/ completos (pesados); por defecto off
+
+head_crop:
+  top_bbox_ratio: 0.35
+  expand_ratio: 0.25
+  min_head_height_px: 32
+  save_debug_crops: true
+
+keypoints:
+  keypoint_backend: "yolo_pose"
+  pose_model: "models/yolo11n-pose.pt"
+  pose_device: "cpu"                    # "cpu" | "cuda:0" | "cuda:1" ... (NO hardcodeado)
+
+head_pose:
+  backend_order: ["sixdrepnet", "mediapipe", "yolo_pose_body"]
+  min_confidence: 0.35
+  allow_body_fallback: true             # permite derivar un yaw del cuerpo si no hay cabeza
+  pose_device: "cpu"                    # device para 6DRepNet (deriva gpu_id)
+  sixdrepnet_gpu_id: -1                 # -1 = CPU; >=0 = indice de GPU
+  face_model_path: "models/face_landmarker.task"
+  allow_model_download: false           # NO descargar modelos en runtime por defecto
+
+smoothing:
+  alpha: 0.35
+  min_confidence: 0.35
+  max_gap_frames: 5
+
+head_turn:
+  yaw_turn_threshold_deg: 40
+  min_turn_duration_frames: 4
+  min_valid_pose_ratio: 0.4
+  min_mean_confidence: 0.35
+  merge_gap_frames: 3
+  ball_cone_deg: 35
+  allow_body_fallback_for_scan: false   # un giro de cuerpo NO cuenta como head-turn
+
+vision_map:
+  enabled: true
+  fov_deg: 120
+  max_distance_m: 35
+  grid_resolution_m: 1.0
+  angular_decay: 0.7
+  distance_decay: 0.05
+  occlusion_enabled: false
+  export_per_event: true                # exporta vision_map_metrics.csv (recepcion)
+
+outputs:
+  root: "outputs/scanning_v2"

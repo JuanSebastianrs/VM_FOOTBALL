@@ -27,9 +27,12 @@ ENV/
 env/
 
 # === Datos y Modelos (NO SUBIR) ===
-data/
+data/*
+!data/annotations/
 datasets/
 models/
+# codigo de arquitecturas de modelos SI se versiona (pesos .pt/.pth siguen ignorados)
+!core/**/models/
 *.pt
 *.pth
 *.onnx
