@@ -35,15 +35,21 @@ MIN_VALID_POSE_RATIO = 0.5
 MIN_YAW_VALID_COUNT = 15
 MIN_WINDOW_FRAMES = 30
 
-# positivo inequivoco: movimiento de cabeza repetido y amplio
-POS_MIN_TURNS_30 = 2
-POS_ALT_MIN_TURNS_40 = 1
+# positivo inequivoco: movimiento de cabeza repetido y amplio.
+# Calibrado con la revision visual de SNMOT-148 (rcp_0002, scanning claro:
+# turns30=1, yaw_range=42.6, dir_changes=12): un solo giro sostenido de 30
+# grados CON reorientaciones repetidas ya es scanning observable.
+POS_MIN_TURNS_30 = 1
+POS_MIN_DIR_CHANGES = 6
+POS_MIN_YAW_RANGE = 40.0
+POS_STRONG_TURNS_30 = 2          # alternativa: giros repetidos amplios
+POS_STRONG_YAW_RANGE = 60.0
+POS_ALT_MIN_TURNS_40 = 1         # alternativa: un giro muy amplio + alternancia
 POS_ALT_MIN_DIR_CHANGES = 2
-POS_MIN_YAW_RANGE = 60.0
 
 # negativo inequivoco: cabeza esencialmente quieta
 NEG_MAX_TURNS_20 = 0
-NEG_MAX_YAW_RANGE = 25.0
+NEG_MAX_YAW_RANGE = 35.0
 NEG_MAX_MEAN_DELTA = 3.0
 
 
@@ -63,13 +69,17 @@ def weak_label_row(r: pd.Series) -> Tuple[Optional[int], float, str]:
     mean_delta = float(r.get("yaw_mean_abs_delta_deg") or 0.0)
     dir_changes = float(r.get("yaw_num_direction_changes") or 0.0)
 
-    pos_main = t30 >= POS_MIN_TURNS_30 and yaw_range >= POS_MIN_YAW_RANGE
+    pos_main = (t30 >= POS_MIN_TURNS_30 and yaw_range >= POS_MIN_YAW_RANGE
+                and dir_changes >= POS_MIN_DIR_CHANGES)
+    pos_strong = t30 >= POS_STRONG_TURNS_30 and yaw_range >= POS_STRONG_YAW_RANGE
     pos_alt = (t40 >= POS_ALT_MIN_TURNS_40 and dir_changes >= POS_ALT_MIN_DIR_CHANGES
-               and yaw_range >= POS_MIN_YAW_RANGE)
-    if pos_main or pos_alt:
+               and yaw_range >= POS_STRONG_YAW_RANGE)
+    if pos_main or pos_strong or pos_alt:
         conf = float(np.clip(0.6 + 0.1 * t30 + 0.002 * (yaw_range - POS_MIN_YAW_RANGE),
                              0.6, 0.95))
-        return 1, conf, ("pos_sustained_30x2" if pos_main else "pos_40_plus_altern")
+        reason = ("pos_sustained_plus_altern" if pos_main
+                  else ("pos_sustained_30x2" if pos_strong else "pos_40_plus_altern"))
+        return 1, conf, reason
 
     if t20 <= NEG_MAX_TURNS_20 and yaw_range <= NEG_MAX_YAW_RANGE \
             and mean_delta <= NEG_MAX_MEAN_DELTA:
@@ -118,7 +128,10 @@ def generate_weak_labels(features: pd.DataFrame,
             "notes": f"{WEAK_LABEL_SOURCE}: {reason}",
             "label_source": WEAK_LABEL_SOURCE,
         })
-    out = pd.DataFrame(rows)
+    cols = ["sample_id", "event_id", "video_id", "receiver_track_id",
+            "scan_label_gt", "head_turn_count_gt", "turn_direction_gt",
+            "visibility", "confidence", "notes", "label_source"]
+    out = pd.DataFrame(rows, columns=cols)
     out.attrs["stats"] = stats
     return out
 

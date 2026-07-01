@@ -1,6 +1,7 @@
 sample_id,event_id,video_id,frame_start,frame_reception,frame_end,receiver_track_id,receiver_role,team_id,event_source,clip_path,scan_label_gt,head_turn_count_gt,turn_direction_gt,visibility,confidence,notes
-0,SNMOT-148_rcp_0000,SNMOT-148,1,18,18,1,player,0.0,heuristic,clips/SNMOT-148_rcp_0000_video.mp4,,,,,,
-1,SNMOT-148_rcp_0001,SNMOT-148,155,167,167,43,player,0.0,heuristic,clips/SNMOT-148_rcp_0001_video.mp4,,,,,,
-2,SNMOT-148_rcp_0002,SNMOT-148,164,239,239,41,player,0.0,heuristic,clips/SNMOT-148_rcp_0002_video.mp4,,,,,,
-3,SNMOT-148_rcp_0003,SNMOT-148,294,369,369,9,player,0.0,heuristic,clips/SNMOT-148_rcp_0003_video.mp4,,,,,,
-4,SNMOT-148_rcp_0004,SNMOT-148,462,537,537,18,player,0.0,heuristic,clips/SNMOT-148_rcp_0004_video.mp4,,,,,,
+0,SNMOT-148_rcp_0000,SNMOT-148,1,18,18,1,player,0.0,heuristic,clips/SNMOT-148_rcp_0000_video.mp4,0.0,0.0,,medium,medium,"annotator=claude_visual_review; lleva balon al inicio, cabeza al frente/abajo, ventana corta"
+1,SNMOT-148_rcp_0001,SNMOT-148,155,167,167,43,player,0.0,heuristic,clips/SNMOT-148_rcp_0001_video.mp4,,,,low,low,"annotator=claude_visual_review; motion blur fuerte y ventana muy corta: ilegible, sin etiqueta"
+2,SNMOT-148_rcp_0002,SNMOT-148,164,239,239,41,player,0.0,heuristic,clips/SNMOT-148_rcp_0002_video.mp4,1.0,3.0,both,high,high,annotator=claude_visual_review; reorientaciones repetidas de cabeza izq/der esperando el balon (fr 188-234)
+3,SNMOT-148_rcp_0003,SNMOT-148,294,369,369,9,player,0.0,heuristic,clips/SNMOT-148_rcp_0003_video.mp4,0.0,0.0,,medium,low,"annotator=claude_visual_review; giro de CUERPO para abrirse antes de recibir, sin head-turn claro independiente"
+4,SNMOT-148_rcp_0004,SNMOT-148,462,537,537,18,player,0.0,heuristic,clips/SNMOT-148_rcp_0004_video.mp4,0.0,0.0,,medium,low,"annotator=claude_visual_review; posibles miradas breves, sin scan sostenido claro"
+0,SNMOT-117_rcp_0000,SNMOT-117,256,331,331,45,player,0.0,heuristic,,,,,,,
