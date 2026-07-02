@@ -560,6 +560,7 @@ class TestWeakLabeler(unittest.TestCase):
     def _row(**kw):
         base = dict(event_id="V_rcp_0000", video_id="V", receiver_track_id=1,
                     valid_pose_ratio=0.9, yaw_valid_count=40, n_frames=75,
+                    mean_yaw_confidence_smooth=0.6,
                     sustained_turn_count_20deg=0, sustained_turn_count_30deg=0,
                     sustained_turn_count_40deg=0, yaw_range_deg=10.0,
                     yaw_mean_abs_delta_deg=1.0, yaw_num_direction_changes=0)
@@ -587,9 +588,18 @@ class TestWeakLabeler(unittest.TestCase):
 
     def test_low_quality_unlabeled(self):
         from core.scanning_v2.supervised.weak_labeler import weak_label_row
-        lab, _, why = weak_label_row(self._row(valid_pose_ratio=0.2))
+        lab, _, why = weak_label_row(self._row(yaw_valid_count=10))
         self.assertIsNone(lab)
         self.assertEqual(why, "low_quality_window")
+
+    def test_low_confidence_positive_goes_gray(self):
+        # senal de giro clara pero yaw poco fiable -> NO se pseudo-etiqueta 1
+        from core.scanning_v2.supervised.weak_labeler import weak_label_row
+        lab, _, why = weak_label_row(self._row(
+            sustained_turn_count_30deg=3, yaw_range_deg=120.0,
+            mean_yaw_confidence_smooth=0.15))
+        self.assertIsNone(lab)
+        self.assertEqual(why, "gray_zone")
 
     def test_human_labels_excluded(self):
         from core.scanning_v2.supervised.weak_labeler import generate_weak_labels

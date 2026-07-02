@@ -34,6 +34,54 @@ from core.scanning_v2.supervised.schema import (                           # noq
     HEURISTIC_PRED_COLUMN, LABEL_COLUMN)
 
 
+def cv_evaluate(result: dict, model_cfg: dict, n_splits: int = 4) -> dict:
+    """Metricas out-of-fold con CV estratificada AGRUPADA por video.
+
+    Con datasets pequenos un unico split de test puede quedar sin positivos;
+    la CV agrupada usa TODAS las muestras etiquetadas manteniendo videos
+    completos fuera del fold de entrenamiento."""
+    from sklearn.base import clone
+    from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
+
+    from core.scanning_v2.supervised.models import build_model
+
+    labeled = result["labeled"]
+    cols = result["feature_columns"]
+    X = labeled[cols]
+    y = labeled[LABEL_COLUMN].astype(int).to_numpy()
+    groups = (labeled["video_id"].to_numpy() if "video_id" in labeled else None)
+    n_splits = int(min(n_splits, max(2, int((y == 1).sum()))))
+    if groups is not None and len(set(groups)) >= n_splits:
+        splitter = StratifiedGroupKFold(n_splits=n_splits)
+        folds = splitter.split(X, y, groups)
+        method = f"stratified_group_kfold(k={n_splits})"
+    else:
+        splitter = StratifiedKFold(n_splits=n_splits, shuffle=True,
+                                   random_state=42)
+        folds = splitter.split(X, y)
+        method = f"stratified_kfold(k={n_splits})"
+
+    proba = np.full(len(y), np.nan)
+    for tr, te in folds:
+        m, _ = build_model(model_cfg)
+        m.fit(X.iloc[tr], y[tr])
+        p = (m.predict_proba(X.iloc[te])[:, 1] if hasattr(m, "predict_proba")
+             else m.predict(X.iloc[te]).astype(float))
+        proba[te] = p
+    ok = ~np.isnan(proba)
+    met = _metrics(y[ok], (proba[ok] >= 0.5).astype(int), proba[ok])
+    met["cv_method"] = method
+    # umbral alternativo: mejor F1 sobre las probas out-of-fold (diagnostico)
+    best_thr, best_f1 = 0.5, met["f1"]
+    for thr in np.unique(np.round(proba[ok], 3)):
+        mm = _metrics(y[ok], (proba[ok] >= thr).astype(int))
+        if mm["f1"] > best_f1:
+            best_thr, best_f1 = float(thr), mm["f1"]
+    met["best_f1_threshold"] = best_thr
+    met["best_f1_at_threshold"] = best_f1
+    return met
+
+
 def evaluate_on_split(result: dict, split: str) -> dict:
     labeled = result["labeled"]
     idx = result["splits"][split]
@@ -46,6 +94,16 @@ def evaluate_on_split(result: dict, split: str) -> dict:
              else None)
     pred = model.predict(X)
     return _metrics(y, pred, proba)
+
+
+def heuristic_on_all(result: dict) -> dict:
+    labeled = result["labeled"]
+    if HEURISTIC_PRED_COLUMN not in labeled.columns:
+        return {"n": 0}
+    y = labeled[LABEL_COLUMN].astype(int)
+    pred = pd.to_numeric(labeled[HEURISTIC_PRED_COLUMN],
+                         errors="coerce").fillna(0).astype(int)
+    return _metrics(y, pred)
 
 
 def heuristic_on_split(result: dict, split: str) -> dict:
@@ -68,6 +126,11 @@ def main():
     ap.add_argument("--models", nargs="+", default=None,
                     help="subconjunto de arquitecturas (default: todas)")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--cv", type=int, default=None,
+                    help="folds de CV agrupada; default: automatico si n<40")
+    ap.add_argument("--refit_all", action="store_true",
+                    help="re-entrena el modelo final con TODOS los labeled "
+                         "(recomendado junto con --cv)")
     args = ap.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -91,10 +154,25 @@ def main():
             print(f"[zoo] {mtype}: NO entrenado -> {result['reason']}")
             rows.append({"model": mtype, "status": result["reason"]})
             continue
-        te = evaluate_on_split(result, "test")
-        va = evaluate_on_split(result, "val")
+
+        n_labeled = len(result["labeled"])
+        use_cv = args.cv if args.cv is not None else (4 if n_labeled < 40 else 0)
+        if use_cv:
+            te = cv_evaluate(result, cfg, n_splits=use_cv)
+            eval_scope = te["cv_method"]
+        else:
+            te = evaluate_on_split(result, "test")
+            eval_scope = f"holdout ({result['metadata']['split_method']})"
         if heur_test is None:
-            heur_test = heuristic_on_split(result, "test")
+            heur_test = (heuristic_on_all(result) if use_cv
+                         else heuristic_on_split(result, "test"))
+        if args.refit_all or use_cv:
+            # artefacto final entrenado con TODOS los labeled (metricas = CV)
+            X_all = result["labeled"][result["feature_columns"]]
+            y_all = result["labeled"][LABEL_COLUMN].astype(int)
+            result["model"].fit(X_all, y_all)
+            result["metadata"]["final_fit"] = "all_labeled"
+        result["metadata"]["evaluation"] = {"scope": eval_scope, **te}
         out_dir = os.path.join(args.output_dir, mtype)
         saved[mtype] = ScanningTrainer.write(result, out_dir,
                                              overwrite=args.overwrite)
@@ -102,11 +180,12 @@ def main():
                      "test_f1": te.get("f1"), "test_precision": te.get("precision"),
                      "test_recall": te.get("recall"), "test_accuracy": te.get("accuracy"),
                      "test_pr_auc": te.get("pr_auc"), "test_roc_auc": te.get("roc_auc"),
-                     "val_f1": va.get("f1"), "n_test": te.get("n"),
-                     "split_method": result["metadata"]["split_method"]})
-        print(f"[zoo] {mtype}: test F1={te.get('f1'):.3f} "
+                     "best_f1_threshold": te.get("best_f1_threshold"),
+                     "best_f1_at_threshold": te.get("best_f1_at_threshold"),
+                     "n_test": te.get("n"), "split_method": eval_scope})
+        print(f"[zoo] {mtype}: {eval_scope} F1={te.get('f1'):.3f} "
               f"P={te.get('precision'):.3f} R={te.get('recall'):.3f} "
-              f"(n={te.get('n')})")
+              f"PR-AUC={te.get('pr_auc')} (n={te.get('n')})")
 
     trained = [r for r in rows if r.get("status") == "trained"]
     if not trained:
@@ -135,14 +214,19 @@ def main():
     md = ["# Comparativa de arquitecturas — scanning V2 supervisado", "",
           f"- etiquetas: **{report['label_source']}**",
           f"- mejor modelo: **{best['model']}** (copiado a `best/`)", "",
-          "| modelo | test F1 | precision | recall | accuracy | PR-AUC | ROC-AUC | n |",
-          "|---|---|---|---|---|---|---|---|"]
+          f"- evaluacion: **{trained[0]['split_method']}**", "",
+          "| modelo | F1@0.5 | precision | recall | accuracy | PR-AUC | ROC-AUC "
+          "| F1@thr* | thr* | n |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
     for r in trained:
+        fmt = lambda v: "-" if v is None else round(v, 3)
         md.append(f"| {r['model']} | {r['test_f1']:.3f} | {r['test_precision']:.3f} "
                   f"| {r['test_recall']:.3f} | {r['test_accuracy']:.3f} "
-                  f"| {r['test_pr_auc'] if r['test_pr_auc'] is None else round(r['test_pr_auc'], 3)} "
-                  f"| {r['test_roc_auc'] if r['test_roc_auc'] is None else round(r['test_roc_auc'], 3)} "
-                  f"| {r['n_test']} |")
+                  f"| {fmt(r['test_pr_auc'])} | {fmt(r['test_roc_auc'])} "
+                  f"| {fmt(r.get('best_f1_at_threshold'))} "
+                  f"| {fmt(r.get('best_f1_threshold'))} | {r['n_test']} |")
+    md += ["", "\\* mejor umbral F1 sobre probas out-of-fold (diagnostico, "
+           "no seleccionado en datos de test independientes)."]
     skipped = [r for r in rows if r.get("status") != "trained"]
     if skipped:
         md += ["", "No entrenados: " + ", ".join(

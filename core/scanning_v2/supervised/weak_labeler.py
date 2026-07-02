@@ -30,10 +30,17 @@ import pandas as pd
 
 WEAK_LABEL_SOURCE = "weak_rules_v1"
 
-# gates de calidad: sin señal de pose suficiente NO se pseudo-etiqueta
-MIN_VALID_POSE_RATIO = 0.5
-MIN_YAW_VALID_COUNT = 15
+# gates de calidad: sin señal de pose suficiente NO se pseudo-etiqueta.
+# Se usa la cobertura de yaw SUAVIZADO (yaw_valid_count/n_frames), que refleja
+# la senal realmente disponible tras el smoothing con relleno de gaps; la
+# valid_pose_ratio del HeadTurnDetector (conf>=0.35 por frame) es demasiado
+# estricta en broadcast (mediana 0.13 en 115 eventos) y dejaria casi todo fuera.
+MIN_YAW_VALID_RATIO = 0.5
+MIN_YAW_VALID_COUNT = 20
 MIN_WINDOW_FRAMES = 30
+# guarda extra SOLO para positivos: sin confianza media razonable, un yaw
+# ruidoso (p.ej. fallback corporal, conf~0.12) inventa rangos enormes.
+POS_MIN_MEAN_YAW_CONF = 0.30
 
 # positivo inequivoco: movimiento de cabeza repetido y amplio.
 # Calibrado con la revision visual de SNMOT-148 (rcp_0002, scanning claro:
@@ -55,12 +62,13 @@ NEG_MAX_MEAN_DELTA = 3.0
 
 def weak_label_row(r: pd.Series) -> Tuple[Optional[int], float, str]:
     """(label 0/1/None, confidence 0..1, reason)."""
-    vpr = float(r.get("valid_pose_ratio") or 0.0)
     nvalid = float(r.get("yaw_valid_count") or 0.0)
     nframes = float(r.get("n_frames") or 0.0)
-    if vpr < MIN_VALID_POSE_RATIO or nvalid < MIN_YAW_VALID_COUNT \
+    yaw_valid_ratio = nvalid / nframes if nframes else 0.0
+    if yaw_valid_ratio < MIN_YAW_VALID_RATIO or nvalid < MIN_YAW_VALID_COUNT \
             or nframes < MIN_WINDOW_FRAMES:
         return None, 0.0, "low_quality_window"
+    mean_conf = float(r.get("mean_yaw_confidence_smooth") or 0.0)
 
     t20 = float(r.get("sustained_turn_count_20deg") or 0.0)
     t30 = float(r.get("sustained_turn_count_30deg") or 0.0)
@@ -75,6 +83,9 @@ def weak_label_row(r: pd.Series) -> Tuple[Optional[int], float, str]:
     pos_alt = (t40 >= POS_ALT_MIN_TURNS_40 and dir_changes >= POS_ALT_MIN_DIR_CHANGES
                and yaw_range >= POS_STRONG_YAW_RANGE)
     if pos_main or pos_strong or pos_alt:
+        if mean_conf < POS_MIN_MEAN_YAW_CONF:
+            # senal de giro pero yaw poco fiable -> NO es positivo inequivoco
+            return None, 0.0, "gray_zone"
         conf = float(np.clip(0.6 + 0.1 * t30 + 0.002 * (yaw_range - POS_MIN_YAW_RANGE),
                              0.6, 0.95))
         reason = ("pos_sustained_plus_altern" if pos_main
@@ -139,7 +150,10 @@ def generate_weak_labels(features: pd.DataFrame,
 def write_weak_labels(df: pd.DataFrame, path: str) -> dict:
     p = Path(path)
     if p.exists():
-        existing = pd.read_csv(p)
+        try:
+            existing = pd.read_csv(p)
+        except pd.errors.EmptyDataError:
+            existing = pd.DataFrame()
         if "label_source" in existing.columns and \
                 (existing["label_source"] != WEAK_LABEL_SOURCE).any():
             raise ValueError(

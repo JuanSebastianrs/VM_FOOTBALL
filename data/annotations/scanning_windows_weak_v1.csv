@@ -1,1 +1,17 @@
-
+sample_id,event_id,video_id,receiver_track_id,scan_label_gt,head_turn_count_gt,turn_direction_gt,visibility,confidence,notes,label_source
+0,SNMOT-116_rcp_0000,SNMOT-116,326,0,0,,medium,0.639,weak_rules_v1: neg_static_head,weak_rules_v1
+1,SNMOT-119_rcp_0001,SNMOT-119,4,0,0,,medium,0.615,weak_rules_v1: neg_static_head,weak_rules_v1
+2,SNMOT-121_rcp_0003,SNMOT-121,56,1,1,,high,0.767,weak_rules_v1: pos_sustained_plus_altern,weak_rules_v1
+3,SNMOT-126_rcp_0000,SNMOT-126,2,0,0,,high,0.66,weak_rules_v1: neg_static_head,weak_rules_v1
+4,SNMOT-128_rcp_0000,SNMOT-128,12,0,0,,high,0.768,weak_rules_v1: neg_static_head,weak_rules_v1
+5,SNMOT-128_rcp_0002,SNMOT-128,113,1,1,,high,0.708,weak_rules_v1: pos_sustained_plus_altern,weak_rules_v1
+6,SNMOT-128_rcp_0003,SNMOT-128,6,0,0,,medium,0.628,weak_rules_v1: neg_static_head,weak_rules_v1
+7,SNMOT-132_rcp_0002,SNMOT-132,4,0,0,,medium,0.73,weak_rules_v1: neg_static_head,weak_rules_v1
+8,SNMOT-134_rcp_0000,SNMOT-134,10,1,1,,medium,0.795,weak_rules_v1: pos_sustained_plus_altern,weak_rules_v1
+9,SNMOT-139_rcp_0001,SNMOT-139,33,0,0,,medium,0.665,weak_rules_v1: neg_static_head,weak_rules_v1
+10,SNMOT-140_rcp_0001,SNMOT-140,17,0,0,,medium,0.836,weak_rules_v1: neg_static_head,weak_rules_v1
+11,SNMOT-140_rcp_0004,SNMOT-140,300,1,1,,high,0.742,weak_rules_v1: pos_40_plus_altern,weak_rules_v1
+12,SNMOT-149_rcp_0001,SNMOT-149,2,0,0,,medium,0.649,weak_rules_v1: neg_static_head,weak_rules_v1
+13,SNMOT-149_rcp_0002,SNMOT-149,8,0,0,,medium,0.771,weak_rules_v1: neg_static_head,weak_rules_v1
+14,SNMOT-195_rcp_0000,SNMOT-195,7,0,0,,medium,0.738,weak_rules_v1: neg_static_head,weak_rules_v1
+15,SNMOT-197_rcp_0002,SNMOT-197,7,0,0,,medium,0.671,weak_rules_v1: neg_static_head,weak_rules_v1

@@ -25,14 +25,20 @@ dataset:
   include_sequence_features: true            # serie de yaw para gru_sequence
   sequence_length: 32
   sequence_seconds: 3.0
-  min_valid_pose_ratio_for_training: 0.4
+  # 0.0: el weak_labeler ya aplica su propio gate de calidad sobre la cobertura
+  # de yaw suavizado; la valid_pose_ratio del HeadTurnDetector es mas estricta
+  # y doble-gatearia el dataset de forma inconsistente.
+  min_valid_pose_ratio_for_training: 0.0
   drop_low_visibility: false
 
 model:
   type: "hist_gradient_boosting"   # default; train_model_zoo compara todas
   random_state: 42
   class_weight: "balanced"
-  min_labeled_samples: 20
+  # primera iteracion weak: 42 videos SoccerNet test producen 115 eventos, de
+  # los que 16 son pseudo-etiquetables de forma inequivoca (4 pos / 12 neg).
+  # Gate reducido y documentado; subirlo cuando haya mas datos o GT humano.
+  min_labeled_samples: 14
   min_positive_samples: 3
   test_size: 0.2
   val_size: 0.2
