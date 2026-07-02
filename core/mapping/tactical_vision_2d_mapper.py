@@ -657,6 +657,9 @@ def main():
                         help="Skip video rendering (useful when only CSV is needed)")
     parser.add_argument("--fps", type=float, default=25.0,
                         help="Frames per second of the sequence")
+    parser.add_argument("--show_track_ids", action="store_true",
+                        help="debug: etiqueta '#<track_id>' en jugadores sin dorsal "
+                             "(por defecto NO se muestra para no confundir con dorsales)")
     parser.add_argument("--jersey_json", type=str, default=None,
                         help="Optional jersey identity JSON (Phase 10 output): "
                              "locked/tentative numbers replace track_id labels")
@@ -729,10 +732,14 @@ def main():
               f"({n_locked} locked, {len(jersey_map) - n_locked} tentative).")
 
     def get_display_label(track_id):
-        """Jersey number if known (tentative marked with '?'), else track_id."""
+        """Jersey number if known (tentative marked with '?').
+
+        Sin dorsal identificado NO se muestra numero (evita leer el track_id
+        como si fuera un dorsal imposible, p.ej. '#432'); con
+        --show_track_ids se recupera la etiqueta de debug '#<id>'."""
         jinfo = jersey_map.get(track_id)
         if jinfo is None:
-            return f"#{track_id}", False
+            return (f"#{track_id}", False) if args.show_track_ids else ("", False)
         suffix = "" if jinfo["state"] == "locked" else "?"
         return f"{jinfo['number']}{suffix}", True
 
@@ -976,15 +983,16 @@ def main():
                     if info_team:
                         label, has_jersey = get_display_label(track_id)
                         if is_ref:
-                            label = f"REF {label}"
+                            label = f"REF {label}".rstrip()
                         elif is_gk:
-                            label = f"GK {label}"
-                        font_scale = 0.55 if has_jersey else 0.4
-                        cv2.putText(frame, label,
-                                    (int(x_min), int(y_min) - 5),
-                                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
-                                    2 if has_jersey else 1,
-                                    cv2.LINE_AA)
+                            label = f"GK {label}".rstrip()
+                        if label:
+                            font_scale = 0.55 if has_jersey else 0.4
+                            cv2.putText(frame, label,
+                                        (int(x_min), int(y_min) - 5),
+                                        cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
+                                        2 if has_jersey else 1,
+                                        cv2.LINE_AA)
 
                 # Metric projection (foot-point)
                 x_foot = (x_min + x_max) / 2.0
@@ -1021,10 +1029,11 @@ def main():
                     else:
                         cv2.circle(pitch_frame, (mx, my), 6, color, -1)
                     map_label, map_has_jersey = get_display_label(track_id)
-                    cv2.putText(pitch_frame, map_label.lstrip("#"), (mx + 8, my),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.45 if map_has_jersey else 0.4,
-                                (255, 255, 255), 2 if map_has_jersey else 1)
+                    if map_label:
+                        cv2.putText(pitch_frame, map_label.lstrip("#"), (mx + 8, my),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.45 if map_has_jersey else 0.4,
+                                    (255, 255, 255), 2 if map_has_jersey else 1)
 
             # -- Ball (Viterbi trajectory) --
             ball = trajectory.get(frame_id)

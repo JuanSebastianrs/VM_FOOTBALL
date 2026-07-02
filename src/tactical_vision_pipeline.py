@@ -282,6 +282,15 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
         skip_reason="--no_scanning"))
 
     phases.append(Phase(
+        "final_video", "VIDEO FINAL (todos los modelos) -> outputs/final/",
+        [py, mod("scripts", "compose_final_video.py"), "--video_id", seq,
+         "--outputs_root", os.path.dirname(out_dir) or "outputs"],
+        [os.path.join(os.path.dirname(out_dir) or "outputs", "final",
+                      f"{seq}_FINAL.mp4")],
+        enabled=bool(args.render),
+        skip_reason="usa --render (necesita el video del mapper)"))
+
+    phases.append(Phase(
         "scan_pred", "Prediccion del clasificador de scanning",
         [py, mod("scripts", "scanning_v2", "predict_scanning_for_video.py"),
          "--config", args.scanning_train_config, "--video_id", seq,
