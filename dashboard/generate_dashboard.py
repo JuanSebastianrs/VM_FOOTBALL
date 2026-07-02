@@ -19,6 +19,9 @@ import numpy as np
 
 def load_csv(path):
     rows = []
+    if not os.path.exists(path):
+        # opcional (p.ej. GT solo existe en SoccerNet); el dashboard degrada
+        return rows
     with open(path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for r in reader:

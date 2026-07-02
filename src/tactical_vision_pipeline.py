@@ -251,6 +251,13 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
         skip_reason="usa --with_gt"))
 
     phases.append(Phase(
+        "dashboard", "Dashboard HTML interactivo",
+        [py, mod("dashboard", "generate_dashboard.py"),
+         "--sequence_name", seq,
+         "--output_html", out("dashboard", "index.html")],
+        [out("dashboard", "index.html")]))
+
+    phases.append(Phase(
         "sam2", "Segmentacion SAM2 + render",
         [py, mod("core", "segmentation", "tactical_vision_sam2.py"),
          "--sequence_dir", sequence_dir, "--detections_json", det,
