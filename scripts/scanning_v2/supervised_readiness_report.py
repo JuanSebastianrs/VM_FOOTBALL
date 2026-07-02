@@ -5,8 +5,8 @@ entrenar, cuanto falta, si los clips/anotaciones estan listos y el estado del mo
 
 Ejemplo:
   python scripts/scanning_v2/supervised_readiness_report.py \
-    --video_id SNMOT-148 --v2_outputs outputs/scanning_v2/SNMOT-148 \
-    --supervised_outputs outputs/scanning_v2_supervised/SNMOT-148 \
+    --video_id SNMOT-148 --v2_outputs outputs/SNMOT-148/scanning \
+    --supervised_outputs outputs/scanning_training_gt \
     --annotations data/annotations/scanning_windows_gt.csv
 """
 

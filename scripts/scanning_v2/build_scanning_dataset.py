@@ -5,9 +5,9 @@ Construye el dataset supervisado (features + labels) desde los outputs V2.
 Ejemplo:
   python scripts/scanning_v2/build_scanning_dataset.py \
     --config configs/scanning_v2_supervised.yaml --video_ids SNMOT-148 \
-    --outputs_root outputs/scanning_v2 \
+    --outputs_root outputs \
     --annotations data/annotations/scanning_windows_gt.csv \
-    --output_dir outputs/scanning_v2_supervised/SNMOT-148/dataset
+    --output_dir outputs/scanning_training_gt/dataset
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ def main():
         config = yaml.safe_load(f)
     inp = config.get("inputs", {})
     video_ids = a.video_ids or inp.get("video_ids", [])
-    outputs_root = a.outputs_root or inp.get("outputs_root", "outputs/scanning_v2")
+    outputs_root = a.outputs_root or inp.get("outputs_root", "outputs")
     annotations = a.annotations or inp.get("annotations_path")
 
     builder = DatasetBuilder(config)

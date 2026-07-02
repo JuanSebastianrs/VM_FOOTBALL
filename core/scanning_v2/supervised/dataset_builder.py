@@ -19,6 +19,7 @@ from typing import List, Optional
 
 import pandas as pd
 
+from ..paths import resolve_scanning_dir
 from .feature_extractor import FeatureExtractor
 from .schema import FEATURE_VERSION, LABEL_COLUMNS, LABEL_COLUMN
 
@@ -83,7 +84,7 @@ class DatasetBuilder:
         labels: List[pd.DataFrame] = []
         per_video = {}
         for vid in video_ids:
-            vdir = root / vid
+            vdir = resolve_scanning_dir(root, vid)
             events = _read(vdir / "pass_reception_events.parquet")
             if events is None or not len(events):
                 per_video[vid] = {"events": 0, "note": "sin pass_reception_events"}

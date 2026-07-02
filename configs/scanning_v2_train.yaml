@@ -80,4 +80,4 @@ vision_map:
   export_per_event: true                # exporta vision_map_metrics.csv (recepcion)
 
 outputs:
-  root: "outputs/scanning_v2"
+  root: "outputs"   # scanning se escribe en outputs/<video_id>/scanning/

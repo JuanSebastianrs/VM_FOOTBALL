@@ -7,7 +7,7 @@ core/scanning_v2/supervised/weak_labeler.py para reglas y advertencias.
 
 Ejemplo:
   python scripts/scanning_v2/generate_weak_labels.py \
-    --features outputs/scanning_v2_supervised_weak/dataset/features.parquet \
+    --features outputs/scanning_training/dataset/features.parquet \
     --human_gt data/annotations/scanning_windows_gt.csv \
     --output data/annotations/scanning_windows_weak_v1.csv
 """

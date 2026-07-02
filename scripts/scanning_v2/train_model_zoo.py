@@ -9,9 +9,9 @@ comparativo. El mejor modelo (por F1 en test; desempate PR-AUC) se copia a
 Ejemplo:
   python scripts/scanning_v2/train_model_zoo.py \
     --config configs/scanning_v2_supervised_weak.yaml \
-    --features outputs/scanning_v2_supervised_weak/dataset/features.parquet \
-    --labels   outputs/scanning_v2_supervised_weak/dataset/labels.parquet \
-    --output_dir outputs/scanning_v2_supervised_weak/models
+    --features outputs/scanning_training/dataset/features.parquet \
+    --labels   outputs/scanning_training/dataset/labels.parquet \
+    --output_dir outputs/scanning_training/models
 """
 
 from __future__ import annotations

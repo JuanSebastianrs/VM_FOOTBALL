@@ -14,7 +14,7 @@ video:
   fps: 25
 
 inputs:
-  outputs_root: "outputs/scanning_v2"
+  outputs_root: "outputs"   # lee outputs/<video_id>/scanning/
   annotations_path: "data/annotations/scanning_windows_weak_v1.csv"
   video_ids: []          # vacio => los scripts pasan la lista explicita
 
@@ -47,7 +47,7 @@ model:
   label_source: "weak_rules_v1"    # queda registrado en model_metadata.json
 
 outputs:
-  root: "outputs/scanning_v2_supervised_weak"
+  root: "outputs/scanning_training"
 
 reporting:
   compare_with_heuristic: true

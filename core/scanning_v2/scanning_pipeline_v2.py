@@ -69,7 +69,10 @@ class ScanningPipelineV2:
     # ------------------------------------------------------------------
     def run(self, video_id: str, detections, trajectory=None, team_assignments=None,
             calibration=None, sequence_dir=None, event_ground_truth=None,
-            out_dir: str = "outputs/scanning_v2", save_windows: bool = True) -> dict:
+            out_dir: Optional[str] = None, save_windows: bool = True) -> dict:
+        if out_dir is None:
+            from .paths import scanning_dir
+            out_dir = str(scanning_dir("outputs", video_id))
         out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
         save_windows = bool(save_windows and self.save_windows_cfg)
 

@@ -7,9 +7,9 @@ Si no existe el modelo, falla con error claro (no silenciosamente).
 Ejemplo:
   python scripts/scanning_v2/predict_scanning_model.py \
     --config configs/scanning_v2_supervised.yaml \
-    --features outputs/scanning_v2_supervised/SNMOT-148/dataset/features.parquet \
-    --model   outputs/scanning_v2_supervised/SNMOT-148/models/scanning_classifier.pkl \
-    --output_dir outputs/scanning_v2_supervised/SNMOT-148/predictions
+    --features outputs/scanning_training_gt/dataset/features.parquet \
+    --model   outputs/scanning_training_gt/models/scanning_classifier.pkl \
+    --output_dir outputs/scanning_training_gt/predictions
 """
 
 from __future__ import annotations

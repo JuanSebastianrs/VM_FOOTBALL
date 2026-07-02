@@ -8,10 +8,10 @@ Sin GT -> no inventa metricas. Intenta enriquecer subgrupos con features.parquet
 Ejemplo:
   python scripts/scanning_v2/evaluate_scanning_model.py \
     --config configs/scanning_v2_supervised.yaml \
-    --predictions outputs/scanning_v2_supervised/SNMOT-148/predictions/scanning_model_predictions.parquet \
-    --labels      outputs/scanning_v2_supervised/SNMOT-148/dataset/labels.parquet \
-    --heuristic_scanning outputs/scanning_v2/SNMOT-148/scanning_events.parquet \
-    --output_dir  outputs/scanning_v2_supervised/SNMOT-148/reports
+    --predictions outputs/scanning_training_gt/predictions/scanning_model_predictions.parquet \
+    --labels      outputs/scanning_training_gt/dataset/labels.parquet \
+    --heuristic_scanning outputs/SNMOT-148/scanning/scanning_events.parquet \
+    --output_dir  outputs/scanning_training_gt/reports
 """
 
 from __future__ import annotations

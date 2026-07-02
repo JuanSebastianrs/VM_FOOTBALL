@@ -45,26 +45,26 @@ head-turn a nivel de evento. Son cosas distintas.
 
 ```powershell
 python scripts/scanning_v2/build_scanning_dataset.py --config configs/scanning_v2_supervised.yaml `
-  --video_ids SNMOT-148 --outputs_root outputs/scanning_v2 `
+  --video_ids SNMOT-148 --outputs_root outputs `
   --annotations data/annotations/scanning_windows_gt.csv `
-  --output_dir outputs/scanning_v2_supervised/SNMOT-148/dataset
+  --output_dir outputs/scanning_training_gt/dataset
 
 python scripts/scanning_v2/train_scanning_model.py --config configs/scanning_v2_supervised.yaml `
-  --features outputs/scanning_v2_supervised/SNMOT-148/dataset/features.parquet `
-  --labels   outputs/scanning_v2_supervised/SNMOT-148/dataset/labels.parquet `
-  --output_dir outputs/scanning_v2_supervised/SNMOT-148/models `
+  --features outputs/scanning_training_gt/dataset/features.parquet `
+  --labels   outputs/scanning_training_gt/dataset/labels.parquet `
+  --output_dir outputs/scanning_training_gt/models `
   --model-type logistic_regression --overwrite
 
 python scripts/scanning_v2/predict_scanning_model.py --config configs/scanning_v2_supervised.yaml `
-  --features outputs/scanning_v2_supervised/SNMOT-148/dataset/features.parquet `
-  --model   outputs/scanning_v2_supervised/SNMOT-148/models/scanning_classifier.pkl `
-  --output_dir outputs/scanning_v2_supervised/SNMOT-148/predictions
+  --features outputs/scanning_training_gt/dataset/features.parquet `
+  --model   outputs/scanning_training_gt/models/scanning_classifier.pkl `
+  --output_dir outputs/scanning_training_gt/predictions
 
 python scripts/scanning_v2/evaluate_scanning_model.py --config configs/scanning_v2_supervised.yaml `
-  --predictions outputs/scanning_v2_supervised/SNMOT-148/predictions/scanning_model_predictions.parquet `
-  --labels      outputs/scanning_v2_supervised/SNMOT-148/dataset/labels.parquet `
-  --heuristic_scanning outputs/scanning_v2/SNMOT-148/scanning_events.parquet `
-  --output_dir  outputs/scanning_v2_supervised/SNMOT-148/reports
+  --predictions outputs/scanning_training_gt/predictions/scanning_model_predictions.parquet `
+  --labels      outputs/scanning_training_gt/dataset/labels.parquet `
+  --heuristic_scanning outputs/SNMOT-148/scanning/scanning_events.parquet `
+  --output_dir  outputs/scanning_training_gt/reports
 ```
 
 ## 6. Features (una fila por `event_id`)

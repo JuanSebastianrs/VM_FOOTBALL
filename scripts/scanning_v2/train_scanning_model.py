@@ -8,9 +8,9 @@ la heuristica V2 sigue como fallback.
 Ejemplo:
   python scripts/scanning_v2/train_scanning_model.py \
     --config configs/scanning_v2_supervised.yaml \
-    --features outputs/scanning_v2_supervised/SNMOT-148/dataset/features.parquet \
-    --labels   outputs/scanning_v2_supervised/SNMOT-148/dataset/labels.parquet \
-    --output_dir outputs/scanning_v2_supervised/SNMOT-148/models \
+    --features outputs/scanning_training_gt/dataset/features.parquet \
+    --labels   outputs/scanning_training_gt/dataset/labels.parquet \
+    --output_dir outputs/scanning_training_gt/models \
     --model-type logistic_regression --overwrite
 """
 

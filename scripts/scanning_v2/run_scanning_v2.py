@@ -14,8 +14,10 @@ Ejemplo real (SNMOT-148, rutas del proyecto):
     --team_assignments outputs/SNMOT-148/SNMOT-148_team_assignments.json \
     --calibration  outputs/SNMOT-148/calibration_hinv.json \
     --sequence_dir data/tracking/SoccerNet/tracking/test/test/SNMOT-148 \
-    --output_dir   outputs/scanning_v2/SNMOT-148 \
+    --output_dir   outputs/SNMOT-148/scanning \
     --head-pose-backend sixdrepnet --render --build-annotation-pack
+
+Sin --output_dir escribe en `outputs/<video_id>/scanning/` (layout canonico).
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from core.scanning_v2 import ScanningPipelineV2          # noqa: E402
+from core.scanning_v2.paths import scanning_dir           # noqa: E402
 
 
 def get_args():
@@ -66,8 +69,8 @@ def main():
         config.setdefault("head_pose", {})["backend_order"] = order
         print(f"[v2] head_pose backend_order={order}")
 
-    out_dir = args.output_dir or os.path.join(
-        config.get("outputs", {}).get("root", "outputs/scanning_v2"), args.video_id)
+    out_dir = args.output_dir or str(scanning_dir(
+        config.get("outputs", {}).get("root", "outputs"), args.video_id))
     detections = args.detections or args.tracks
 
     pipe = ScanningPipelineV2(config)

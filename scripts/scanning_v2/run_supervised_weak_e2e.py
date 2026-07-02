@@ -32,19 +32,7 @@ sys.path.insert(0, ROOT)
 
 from core.scanning_v2.supervised import (DatasetBuilder, ScanningEvaluator,  # noqa: E402
                                          ScanningPredictor)
-
-
-def discover_videos(outputs_root: str) -> list:
-    vids = []
-    for d in sorted(os.listdir(outputs_root)):
-        p = os.path.join(outputs_root, d, "pass_reception_events.parquet")
-        if os.path.isfile(p):
-            try:
-                if len(pd.read_parquet(p)):
-                    vids.append(d)
-            except Exception:
-                pass
-    return vids
+from core.scanning_v2.paths import discover_scanning_videos as discover_videos  # noqa: E402
 
 
 def run(cmd):
@@ -57,13 +45,18 @@ def main():
     ap.add_argument("--config", default="configs/scanning_v2_supervised_weak.yaml")
     ap.add_argument("--human_gt", default="data/annotations/scanning_windows_gt.csv")
     ap.add_argument("--weak_csv", default="data/annotations/scanning_windows_weak_v1.csv")
-    ap.add_argument("--work_dir", default="outputs/scanning_v2_supervised_weak")
+    ap.add_argument("--work_dir", default=None,
+                    help="default: outputs.root del config "
+                         "(outputs/scanning_training)")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-    outputs_root = config.get("inputs", {}).get("outputs_root", "outputs/scanning_v2")
+    outputs_root = config.get("inputs", {}).get("outputs_root", "outputs")
+    if args.work_dir is None:
+        args.work_dir = config.get("outputs", {}).get(
+            "root", "outputs/scanning_training")
 
     vids = discover_videos(outputs_root)
     print(f"[e2e] videos con eventos V2: {len(vids)} -> {vids}")

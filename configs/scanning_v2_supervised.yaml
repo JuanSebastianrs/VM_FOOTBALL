@@ -11,7 +11,7 @@ video:
   fps: 25
 
 inputs:
-  outputs_root: "outputs/scanning_v2"
+  outputs_root: "outputs"   # lee outputs/<video_id>/scanning/
   annotations_path: "data/annotations/scanning_windows_gt.csv"
   video_ids: ["SNMOT-148"]
 
@@ -34,7 +34,7 @@ model:
   use_heuristic_pred_as_feature: false
 
 outputs:
-  root: "outputs/scanning_v2_supervised"
+  root: "outputs/scanning_training_gt"
 
 reporting:
   compare_with_heuristic: true

@@ -73,7 +73,7 @@ python scripts/scanning_v2/run_scanning_v2.py `
   --team_assignments outputs/SNMOT-148/SNMOT-148_team_assignments.json `
   --calibration  outputs/SNMOT-148/calibration_hinv.json `
   --sequence_dir data/tracking/SoccerNet/tracking/test/test/SNMOT-148 `
-  --output_dir   outputs/scanning_v2/SNMOT-148 `
+  --output_dir   outputs/SNMOT-148/scanning `
   --head-pose-backend sixdrepnet --render --build-annotation-pack
 ```
 

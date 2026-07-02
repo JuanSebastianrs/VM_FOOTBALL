@@ -5,9 +5,9 @@ eventos V2 actuales.
 
 Ejemplo:
   python scripts/scanning_v2/validate_scanning_annotations.py \
-    --video_id SNMOT-148 --outputs_dir outputs/scanning_v2/SNMOT-148 \
+    --video_id SNMOT-148 --outputs_dir outputs/SNMOT-148/scanning \
     --annotations data/annotations/scanning_windows_gt.csv \
-    --output_dir outputs/scanning_v2_supervised/SNMOT-148/reports
+    --output_dir outputs/scanning_training_gt/reports
 """
 
 from __future__ import annotations

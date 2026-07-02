@@ -57,12 +57,12 @@ definen las reglas: la señal secuencial contiene la información de scanning.
 
 ## 4. Artefactos
 
-- Modelo final: `outputs/scanning_v2_supervised_weak/models/best/`
+- Modelo final: `outputs/scanning_training/models/best/`
   (`scanning_classifier.pkl` + `model_metadata.json` con CV, gates y límites;
   re-entrenado con los 16 labeled tras la CV).
-- Comparativa: `outputs/scanning_v2_supervised_weak/models/model_zoo_report.md`.
-- Evaluación GT: `outputs/scanning_v2_supervised_weak/reports_gt/`.
-- Dataset: `outputs/scanning_v2_supervised_weak/dataset/` (115 eventos,
+- Comparativa: `outputs/scanning_training/models/model_zoo_report.md`.
+- Evaluación GT: `outputs/scanning_training/reports_gt/`.
+- Dataset: `outputs/scanning_training/dataset/` (115 eventos,
   `scanning_v2_features_v2_seq` con serie temporal para el GRU).
 - Reproducir todo: `python scripts/scanning_v2/run_supervised_weak_e2e.py
   --config configs/scanning_v2_supervised_weak.yaml --overwrite`.
