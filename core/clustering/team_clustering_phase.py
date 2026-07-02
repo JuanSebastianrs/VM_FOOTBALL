@@ -13,7 +13,7 @@ Salida:
 
 Uso:
     conda activate dl
-    python eval_team_clustering.py [--mode hsv|dbscan] [--k 2] [--conf 0.40]
+    python scripts/eval_team_clustering.py [--mode hsv|dbscan] [--k 2] [--conf 0.40]
                                    [--no-use-gk-class]
                                    [--gk-assignment-mode legacy|fused]
                                    [--cluster-referee]

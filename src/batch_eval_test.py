@@ -21,7 +21,7 @@ def dist_pt(x1, y1, x2, y2):
 def get_args():
     parser = argparse.ArgumentParser(description="Batch TacticalVision Evaluator")
     parser.add_argument("--force", action="store_true", help="Force re-processing of all phases even if JSONs exist")
-    parser.add_argument("--params_yaml", type=str, default=r"d:\sebastian\Tesis\VM_FOOTBALL\best_hmm_params.yaml", help="Path to optimized parameters YAML")
+    parser.add_argument("--params_yaml", type=str, default="configs/best_hmm_params.yaml", help="Path to optimized parameters YAML")
     return parser.parse_args()
 
 def run_batch():

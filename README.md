@@ -18,8 +18,9 @@ Toda la documentación técnica profunda ha sido unificada y actualizada en el d
 |--------|--------|----------|
 | **Detección** | ✅ Funcional (RF-DETR 3 clases entrenado) | `cloud/rfdetr_player_detection/*`, `core/detection/*` |
 | **Tracking** | ✅ Funcional | ByteTrack (Ultralytics) |
-| **Equipos + Portero** | ✅ Funcional (evaluación) | `core/clustering/team_classifier.py`, `eval_team_clustering.py` |
-| **Dorsales** | 📋 Planificado | `core/identity/` |
+| **Equipos + Portero** | ✅ Funcional (evaluación) | `core/clustering/team_classifier.py`, `scripts/eval_team_clustering.py` |
+| **Dorsales** | ✅ Funcional (v1.7) | `core/identity/`, `runs/jersey_perframe_v3_224/best.pt` |
+| **Scanning visual** | ✅ Funcional (weak supervision + zoo) | `core/scanning_v2/`, `outputs/scanning_training/models/best/` |
 
 ### RF-DETR 3 clases (completado)
 
@@ -36,7 +37,7 @@ Toda la documentación técnica profunda ha sido unificada y actualizada en el d
 ### Validación de evaluación role-aware
 
 - Clips validados con el checkpoint 3 clases: SNMOT-116, SNMOT-117 y SNMOT-143.
-- Modo por defecto para evaluación: `python eval_team_clustering.py`.
+- Modo por defecto para evaluación: `python scripts/eval_team_clustering.py`.
 - Ese default ya ejecuta el flujo role-aware fused: GK por clase, árbitros excluidos del clustering y fallback legacy disponible por flags.
 - Debug / overrides útiles: `--no-use-gk-class`, `--gk-assignment-mode legacy`, `--cluster-referee`.
 
@@ -63,9 +64,18 @@ pip install -r requirements.txt
 # 2. Configurar modelos
 # Descargue los pesos .pt en la carpeta /models/
 
-# 3. Ejecutar pipeline completo
-python src/tactical_vision_pipeline.py --sequence_dir datasets/SNMOT-197 --yolo_weights models/yolo26.pt --rtdetr_weights models/rtdetr-l.pt --sam2_weights models/sam2.1_hiera_small.pt
+# 3. Ejecutar pipeline completo (cache incremental: salta fases ya computadas)
+python src/tactical_vision_pipeline.py --sequence_dir data/tracking/SoccerNet/tracking/test/test/SNMOT-148
+
+# Varias secuencias; --render activa los videos (apagados por defecto)
+python src/tactical_vision_pipeline.py --sequences SNMOT-116 SNMOT-117 SNMOT-148 --render
 ```
+
+Los outputs quedan en `outputs/<secuencia>/` (tracking, calibración 2D,
+métricas físicas) y `outputs/<secuencia>/scanning/` (eventos de recepción,
+orientación aproximada, scanning heurístico + predicción del modelo entrenado).
+Artefactos globales de entrenamiento del clasificador de scanning:
+`outputs/scanning_training/`.
 
 ---
 
@@ -76,17 +86,17 @@ python src/tactical_vision_pipeline.py --sequence_dir datasets/SNMOT-197 --yolo_
 - `training/`: Scrips de entrenamiento y notebooks para Cloud.
 - `.agents/`: Centro de documentación técnica y contexto del proyecto.
 # 2. Ejecutar evaluación role-aware por defecto (K=2 recomendado)
-python eval_team_clustering.py --mode hsv --k 2
+python scripts/eval_team_clustering.py --mode hsv --k 2
 
 # 2.1 Ablation rápida (post-training)
-python eval_team_clustering.py --mode hsv --k 2 --gk-assignment-mode legacy
-python eval_team_clustering.py --mode hsv --k 2 --no-use-gk-class
+python scripts/eval_team_clustering.py --mode hsv --k 2 --gk-assignment-mode legacy
+python scripts/eval_team_clustering.py --mode hsv --k 2 --no-use-gk-class
 
 # 2.2 Debug de referee en clustering
-python eval_team_clustering.py --mode hsv --k 2 --cluster-referee
+python scripts/eval_team_clustering.py --mode hsv --k 2 --cluster-referee
 
 # 2.3 Cambiar el clustering por claridad visual
-python eval_team_clustering.py --mode dbscan --k 2
+python scripts/eval_team_clustering.py --mode dbscan --k 2
 
 # 2.4 Smoke test de entrenamiento RF-DETR 3 clases (Vertex AI)
 .\cloud\submit_rfdetr_job.ps1 -SmokeTest

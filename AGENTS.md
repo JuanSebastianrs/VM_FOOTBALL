@@ -20,20 +20,32 @@ A master's thesis building an end-to-end computer vision pipeline that turns sin
 | **Interactive dashboard** | **Functional** | `dashboard/index.html` |
 | SAM2 segmentation | Functional | Video rendering + masks |
 | Jersey number reading | **Functional (v1.7)** | `core/identity/`, `training/identification/`, model `runs/jersey_perframe_v3_224/best.pt` |
-| Event detection (passes, possessions) | Planned | Not yet implemented |
+| Event detection (receptions) | **Functional** | `core/events/`, `outputs/<seq>/scanning/pass_reception_events.parquet` |
+| **Visual scanning (head-turn before reception)** | **Functional (weak-supervised model)** | `core/scanning_v2/`, model `outputs/scanning_training/models/best/` |
 
 **Latest milestone completed:**
 - Phase 10/11: Analytics extraction (physical metrics, team shape, Pred vs GT comparison, HTML dashboard for `SNMOT-148`).
 
 ### 3. Pipeline phases (end-to-end)
-1. **Detection** — YOLO26 (ball) + RF-DETR (players/goalkeepers/referees).
-2. **CMC** — Frame-to-frame affine compensation from field keypoints.
-3. **Temporal tracking** — Viterbi HMM over ball detections with Dummy Node for occlusions.
-4. **Team clustering** — HSV descriptor + K-Means (k=2), with separate GK role via temporal hysteresis.
-5. **2D mapping** — PnLCalib per-frame calibration → bidirectional SO(3) Lie smoother → H_inv homography → world coords (metres).
-6. **Analytics** — Distance, speed, acceleration, sprints, team shape (centroid, width, compactness, convex hull).
-7. **GT validation** — Project GT bboxes to 2D using same calibration, compare with Hungarian matching.
-8. **Dashboard** — Self-contained HTML with Chart.js: KPIs, tables, time-series, 2D pitch viewer with frame slider.
+
+**Unified runner:** `src/tactical_vision_pipeline.py` executes all phases with
+**incremental caching** (a phase is skipped when its declared outputs already
+exist; `--force all` or `--force <phase>` recomputes). Video renders are OFF by
+default (`--render` enables mapper video, SAM2, scanning clips). Multi-sequence:
+`--sequences SNMOT-116 SNMOT-117 ...`. Phase selection: `--only` / `--skip`.
+
+1. **detect** — YOLO26 (ball) + RF-DETR (players/goalkeepers/referees).
+2. **cmc** — Frame-to-frame affine compensation from field keypoints.
+3. **track** — Viterbi HMM over ball detections with Dummy Node for occlusions.
+4. **eval** — Tracking metrics vs GT (plot).
+5. **team** — HSV descriptor + K-Means (k=2), with separate GK role via temporal hysteresis.
+6. **audit / jersey** — Optional: team-clustering audit, jersey number identification.
+7. **map2d** — PnLCalib per-frame calibration → bidirectional SO(3) Lie smoother → `tracking_2d.csv` + `calibration_hinv.json` (video only with `--render`).
+8. **analytics** — Distance, speed, acceleration, sprints, team shape.
+9. **gt2d / gt_compare** — Optional (`--with_gt`): project GT to 2D, Hungarian comparison.
+10. **scanning** — Scanning V2: reception events → head pose (approx.) → head-turn detection → `outputs/<seq>/scanning/`.
+11. **scan_pred** — Trained scanning classifier predictions → `outputs/<seq>/scanning/model_predictions.parquet`.
+12. **Dashboard** — Self-contained HTML with Chart.js (separate: `dashboard/generate_dashboard.py`).
 
 ### 4. What was recently done (critical context)
 - Added `project_point_to_world()` to mapper for metric export.
@@ -55,6 +67,15 @@ A master's thesis building an end-to-end computer vision pipeline that turns sin
 | `outputs/SNMOT-148/comparison/comparison_summary.json` | Pred vs GT aggregated metrics |
 | `outputs/SNMOT-148/comparison/matches_detailed.csv` | Every matched pair for inspection |
 | `outputs/SNMOT-148/dashboard/index.html` | Final interactive dashboard |
+| `outputs/SNMOT-148/scanning/` | Scanning V2: reception events, head pose, scanning labels, model predictions, event clips |
+| `outputs/scanning_training/` | Global scanning-classifier training artifacts (dataset/, models/, reports_gt/) |
+| `outputs/_archive/` | Superseded experiment artifacts (not used by the pipeline) |
+
+**Output layout rule:** everything that belongs to ONE sequence lives under
+`outputs/<video_id>/` (scanning included, in the `scanning/` subfolder — see
+`core/scanning_v2/paths.py`). Only global cross-sequence artifacts (model
+training) live outside. `scripts/migrate_outputs_layout.py` migrates legacy
+layouts.
 
 **Coordinate conventions:**
 - Pitch size: 105 m × 68 m.
@@ -63,6 +84,12 @@ A master's thesis building an end-to-end computer vision pipeline that turns sin
 
 ### 6. Canonical commands
 ```bash
+# 0) Unified pipeline (incremental cache; add --render for videos, --with_gt for GT compare)
+python src/tactical_vision_pipeline.py \
+    --sequence_dir data/tracking/SoccerNet/tracking/test/test/SNMOT-148
+# multi-sequence / phase selection:
+python src/tactical_vision_pipeline.py --sequences SNMOT-116 SNMOT-148 --only scanning scan_pred
+
 # 1) Project GT to 2D (needs calibration_hinv.json already present)
 python core/analytics/project_gt_to_2d.py \
     --sequence_dir data/tracking/SoccerNet/tracking/test/test/SNMOT-148 \
@@ -126,6 +153,7 @@ python dashboard/generate_dashboard.py \
 ---
 
 ## Agent changelog
+- **2026-07-02** — v1.8: Repo refactor + unified pipeline. (1) `src/tactical_vision_pipeline.py` rewritten as a phase registry with **incremental caching** (phases skip when their outputs exist; `--force`, `--only`, `--skip`), multi-sequence mode (`--sequences`), and video renders OFF by default (`--render` enables mapper/SAM2/scanning clips) — full pipeline re-run on a computed sequence resolves in <1s; batch of 49 sequences (analytics+scan_pred) in ~160s. (2) Scanning V2 integrated as pipeline phases `scanning` + `scan_pred` (new `scripts/scanning_v2/predict_scanning_for_video.py` builds features in-memory and applies the trained best model). (3) **Canonical output layout**: per-sequence scanning moved from `outputs/scanning_v2/<seq>/` to `outputs/<seq>/scanning/` (`core/scanning_v2/paths.py` central helper with legacy-read fallback; `scripts/migrate_outputs_layout.py` migrated 42 sequences); training artifacts renamed `outputs/scanning_v2_supervised_weak` → `outputs/scanning_training`. (4) Cleanup: dead root files removed (debug_plot5.py, gcp_ls*.txt, tmp_files.txt, SKILL.md, training_summary.json), `eval_*.py` → `scripts/`, `best_hmm_params.yaml` → `configs/`, `test_job.yaml` → `cloud/`, scanning v1 CLI scripts → `scripts/legacy/scanning_v1/`; `outputs/SNMOT-148` old jersey experiment artifacts → `outputs/SNMOT-148/_archive/`. All 182 tests pass.
 - **2025-05-04** — v1.0: Analytics phase (compute_metrics, project_gt_to_2d, compare_pred_gt, generate_dashboard) completed and validated on SNMOT-148. Mapper updated with `--output_csv` and `project_point_to_world()`.
 - **2026-05-12** — v1.1: Jersey identification phase scaffold implemented and debugged. Added `build_tracking_jersey_dataset.py` (extracts crops, quality scores, tracklet bags from SoccerNet Tracking), `train_jersey_digit_mil.py` (digit-compositional MIL with EfficientNet-B0), `jersey_assignment.py` (Hungarian per-team assignment with duplicate resolution), `jersey_identity_phase.py` (inference CLI), `evaluate_jersey_tracklets.py` (tracklet-level metrics), and integrated optional `--jersey_model` into `tactical_vision_pipeline.py` as Phase 10 between team clustering and 2D mapping.
 - **2026-05-12** — v1.2: Fixed critical jersey identification bugs and retrained model. Patched `tracklets.json` crop paths (removed duplicated `jersey_tracking_v1` prefix). Fixed `train_jersey_digit_mil.py` loader to raise `FileNotFoundError` instead of silently zero-filling missing crops. Fixed `jersey_assignment.py` lock logic to use Hungarian-assigned number confidence instead of global max. Fixed `jersey_identity_phase.py` zero-mass fallback to zeros instead of uniform artificial alternatives. Fixed `infer_jersey_on_dataset.py` and `evaluate_jersey_tracklets.py` to evaluate per-sequence (not across sequences) and report raw top1/top3 accuracy. Retrained EfficientNet-B0 MIL for 30 epochs: val raw top1 = 57.1%, test raw top1 = 27.3%. Added `tools/TrackEval/` to `.gitignore`.

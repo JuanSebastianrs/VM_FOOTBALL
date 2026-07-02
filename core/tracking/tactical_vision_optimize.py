@@ -9,9 +9,9 @@ Methodology:
   - Uses a corrected composite loss that does NOT penalize legitimate
     Dummy Node usage during real occlusions:
         L = (1 - F1) + CLE / 1000
-  - Exports best_hmm_params.yaml for production pipeline consumption.
+  - Exports configs/best_hmm_params.yaml for production pipeline consumption.
 
-Output:  best_hmm_params.yaml
+Output:  configs/best_hmm_params.yaml
 ──────────────────────────────────────────────────────────────────────────────
 """
 
@@ -412,7 +412,7 @@ def main():
         description="Bayesian Optimization of Viterbi HMM (Optuna)")
     parser.add_argument("--n_trials", type=int, default=300)
     parser.add_argument("--output_yaml", type=str,
-                        default=r"d:\sebastian\Tesis\VM_FOOTBALL\best_hmm_params.yaml")
+                        default="configs/best_hmm_params.yaml")
     args = parser.parse_args()
 
     _get_train_data()
