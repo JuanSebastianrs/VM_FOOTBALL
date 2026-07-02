@@ -4,4 +4,9 @@ sample_id,event_id,video_id,frame_start,frame_reception,frame_end,receiver_track
 2,SNMOT-148_rcp_0002,SNMOT-148,164,239,239,41,player,0.0,heuristic,clips/SNMOT-148_rcp_0002_video.mp4,1.0,3.0,both,high,high,annotator=claude_visual_review; reorientaciones repetidas de cabeza izq/der esperando el balon (fr 188-234)
 3,SNMOT-148_rcp_0003,SNMOT-148,294,369,369,9,player,0.0,heuristic,clips/SNMOT-148_rcp_0003_video.mp4,0.0,0.0,,medium,low,"annotator=claude_visual_review; giro de CUERPO para abrirse antes de recibir, sin head-turn claro independiente"
 4,SNMOT-148_rcp_0004,SNMOT-148,462,537,537,18,player,0.0,heuristic,clips/SNMOT-148_rcp_0004_video.mp4,0.0,0.0,,medium,low,"annotator=claude_visual_review; posibles miradas breves, sin scan sostenido claro"
-0,SNMOT-117_rcp_0000,SNMOT-117,256,331,331,45,player,0.0,heuristic,,,,,,,
+0,SNMOT-117_rcp_0000,SNMOT-117,256,331,331,45,player,0.0,heuristic,,1.0,1.0,right,high,medium,annotator=claude_visual_review; giro de cabeza claro fr271-285 (mira atras/afuera y vuelve) antes de recibir
+0,SNMOT-125_rcp_0000,SNMOT-125,1,1,1,10,player,-2.0,heuristic,,,,,low,low,"annotator=claude_visual_review; ventana de 1 frame: ilegible, sin etiqueta"
+1,SNMOT-125_rcp_0001,SNMOT-125,330,356,356,403,goalkeeper,1.0,heuristic,,0.0,0.0,,medium,medium,"annotator=claude_visual_review; portero corre mirando al frente, ventana corta, sin scan"
+2,SNMOT-125_rcp_0002,SNMOT-125,494,569,569,422,player,1.0,heuristic,,0.0,0.0,,low,low,"annotator=claude_visual_review; vista de espalda/lateral, posibles miradas breves no concluyentes"
+3,SNMOT-125_rcp_0003,SNMOT-125,605,680,680,373,player,1.0,heuristic,,1.0,2.0,both,medium,medium,"annotator=claude_visual_review; de frente, cabeza gira a ambos lados antes de recibir"
+0,SNMOT-130_rcp_0000,SNMOT-130,1,1,1,2,player,0.0,heuristic,,,,,low,low,"annotator=claude_visual_review; ventana de 1 frame: ilegible, sin etiqueta"
