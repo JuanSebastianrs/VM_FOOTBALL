@@ -350,8 +350,10 @@ def get_args():
     p.add_argument("--jersey_model", type=str, default=None)
     p.add_argument("--roster_json", type=str, default=None)
     p.add_argument("--team_mapping", type=str, default=None)
-    p.add_argument("--p1_threshold", type=float, default=0.85)
-    p.add_argument("--margin_threshold", type=float, default=0.20)
+    # validado en test split (49 seqs): geometric p1=0.80 m=0.15 -> 99 locks
+    # @ 93.9% (vs 80 @ 92.5% de arithmetic 0.75); E2E SNMOT-148: 7 locks @ 100%
+    p.add_argument("--p1_threshold", type=float, default=0.80)
+    p.add_argument("--margin_threshold", type=float, default=0.15)
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--inference_mode", type=str, default="temporal",
