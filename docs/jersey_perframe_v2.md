@@ -331,3 +331,32 @@ powershell -ExecutionPolicy Bypass -File scripts/run_train_224_chain.ps1
 4. Reconocedor de texto de escena (PARSeq) fine-tuneado como segunda opinión en
    ensamble (`docs/2404.08401v5.pdf`).
 5. Calibración de temperatura por NLL en val con re-ajuste conjunto de umbrales.
+
+## 16. v1.8 (2026-07-02): recalibración de fusión — geometric p1=0.80
+
+Auditoría disparada por la caída de locks E2E en SNMOT-148 (5 vs 10 de la
+referencia v1.7 del 12-jun, generada con código pre-commit `7803b91`).
+
+**Hallazgos** (sweep en val con caché npz + verificación en test, 792 tracklets):
+
+| config (test split) | raw top-1 | locks | lock acc | false lock |
+|---|---|---|---|---|
+| arithmetic p1=0.75 m=0.15 (prod anterior) | **39.4%** | 80 | 92.5% | 7.5% |
+| **geometric p1=0.80 m=0.15 (nueva prod)** | 36.1% | **99** | **93.9%** | 6.1% |
+| geometric p1=0.85 m=0.20 (max precisión) | 36.1% | 75 | **97.3%** | 2.7% |
+
+- El checkpoint v3_224 **reproduce exactamente** los números documentados de
+  v1.7 en el dataset (arithmetic 39.4% / 80 @ 92.5%): el modelo y la fusión
+  están intactos; la pérdida E2E venía del punto de operación, no del modelo.
+- E2E SNMOT-148 con geometric p1=0.80: **7 jugadores GT bloqueados @ 100%,
+  0 falsos** (antes 5 @ 100%).
+- **Fine-tune v4 descartado con evidencia**: warm-start 15 épocas con 29,662
+  crops legibles (tracking 224 + SoccerNet 2023) → test 35.0% / 95 @ 91.6%,
+  ligeramente peor que v3. El modelo está limitado por datos/resolución de
+  dígitos, no por entrenamiento (checkpoint en `runs/jersey_perframe_v4_224_ft`,
+  no promovido).
+- Render: jugadores sin dorsal ya NO muestran `#<track_id>` (se leía como
+  dorsal imposible >99); debug con `--show_track_ids`.
+
+Producción: `runs/jersey_perframe_v3_224/best.pt` + `--fusion_mode geometric
+--p1_threshold 0.80 --margin_threshold 0.15` (defaults del pipeline).
