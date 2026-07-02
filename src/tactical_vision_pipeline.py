@@ -284,7 +284,7 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
     phases.append(Phase(
         "final_video", "VIDEO FINAL (todos los modelos) -> outputs/final/",
         [py, mod("scripts", "compose_final_video.py"), "--video_id", seq,
-         "--outputs_root", os.path.dirname(out_dir) or "outputs"],
+         "--outputs_root", os.path.dirname(out_dir) or "outputs", "--overwrite"],
         [os.path.join(os.path.dirname(out_dir) or "outputs", "final",
                       f"{seq}_FINAL.mp4")],
         enabled=bool(args.render),
