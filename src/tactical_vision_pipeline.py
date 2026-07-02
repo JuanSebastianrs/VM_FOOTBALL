@@ -281,12 +281,15 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
         enabled=not args.no_scanning,
         skip_reason="--no_scanning"))
 
+    final_cmd = [py, mod("scripts", "compose_final_video.py"), "--video_id", seq,
+                 "--outputs_root", os.path.dirname(out_dir) or "outputs",
+                 "--overwrite", "--archive_debug"]
+    if args.tidy_outputs:
+        final_cmd.append("--tidy")
     phases.append(Phase(
-        "final_video", "VIDEO FINAL (todos los modelos) -> outputs/final/",
-        [py, mod("scripts", "compose_final_video.py"), "--video_id", seq,
-         "--outputs_root", os.path.dirname(out_dir) or "outputs", "--overwrite"],
-        [os.path.join(os.path.dirname(out_dir) or "outputs", "final",
-                      f"{seq}_FINAL.mp4")],
+        "final_video", "VIDEO FINAL (todos los modelos) en la carpeta de la secuencia",
+        final_cmd,
+        [out(f"{seq}_FINAL.mp4")],
         enabled=bool(args.render),
         skip_reason="usa --render (necesita el video del mapper)"))
 
@@ -327,6 +330,10 @@ def get_args():
                    help="genera videos (mapper, clips de scanning, SAM2). "
                         "Apagado por defecto: el pipeline de datos no lo necesita")
     p.add_argument("--no_scanning", action="store_true")
+    p.add_argument("--tidy_outputs", action="store_true",
+                   help="al final BORRA archivos de ruido de la secuencia "
+                        "(crops, mascaras, debug); quedan los mp4 importantes "
+                        "y los datos del cache")
 
     # pesos / modelos
     p.add_argument("--yolo_weights", type=str, default="models/yolo26.pt")
@@ -348,12 +355,15 @@ def get_args():
 
     # dorsales (Phase jersey) — igual que antes
     p.add_argument("--jersey_model", type=str, default=None)
-    p.add_argument("--roster_json", type=str, default=None)
+    p.add_argument("--roster_json", type=str,
+                   default="datasets/jersey_tracking_v1/rosters.json",
+                   help="dorsales validos por equipo (postproceso); si la "
+                        "secuencia no esta en el archivo, no restringe")
     p.add_argument("--team_mapping", type=str, default=None)
-    # validado en test split (49 seqs): geometric p1=0.80 m=0.15 -> 99 locks
-    # @ 93.9% (vs 80 @ 92.5% de arithmetic 0.75); E2E SNMOT-148: 7 locks @ 100%
-    p.add_argument("--p1_threshold", type=float, default=0.80)
-    p.add_argument("--margin_threshold", type=float, default=0.15)
+    # v1.9: geometric conservador + ROSTER (dorsales validos por equipo).
+    # Test 49 seqs: 226 locks @ 88.0%; E2E SNMOT-148: 12/18 GT @ 91.7%
+    p.add_argument("--p1_threshold", type=float, default=0.85)
+    p.add_argument("--margin_threshold", type=float, default=0.20)
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--inference_mode", type=str, default="temporal",

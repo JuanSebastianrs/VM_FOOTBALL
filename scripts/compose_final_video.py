@@ -1,19 +1,24 @@
 # scripts/compose_final_video.py
 """
-Compone el VIDEO FINAL de una secuencia (todos los modelos en un solo mp4) y
-lo publica en `outputs/final/<seq>_FINAL.mp4`:
+Compone el VIDEO FINAL de una secuencia (todos los modelos en un solo mp4)
+dentro de su propia carpeta: `outputs/<seq>/<seq>_FINAL.mp4`:
 
   seccion 1: <seq>_2d_map.mp4  (deteccion + tracking + equipos + dorsales
              + balon + minimapa metrico sincronizado)
   seccion 2: clips de scanning por recepcion (receptor resaltado + panel de
              orientacion), si existen.
 
-Con --archive_debug mueve los mp4 intermedios/debug de la secuencia
-(yolo_raw, team_clustering, variantes viejas) a `<seq>/_archive/` para que
-el output visible quede limpio.
+Limpieza:
+  --archive_debug  mueve mp4 intermedios/debug a `<seq>/_archive/`
+  --tidy           BORRA el ruido no re-usable por el pipeline: crops de
+                   ventanas de scanning, mascaras SAM2, carpetas de debug,
+                   annotation packs y _archive. Conserva los MP4 importantes
+                   (FINAL, 2d_map, tacticalvision_refined, event_clips) y los
+                   datos minimos que alimentan el cache incremental
+                   (JSON/CSV/parquet: detections, trajectory, teams, jersey,
+                   calibracion, metricas, scanning).
 
-  python scripts/compose_final_video.py --video_id COL-POR-2026
-  python scripts/compose_final_video.py --video_id SNMOT-148 --archive_debug
+  python scripts/compose_final_video.py --video_id COL-POR-2026 --tidy
 """
 
 from __future__ import annotations
@@ -41,19 +46,46 @@ def _run(cmd):
     subprocess.run([str(c) for c in cmd], check=True)
 
 
+# ruido re-generable que --tidy BORRA (no lo usa ninguna fase del pipeline)
+TIDY_DELETE_DIRS = [
+    "team_clustering_debug", "*_sam2_masks", "_archive",
+    "scanning/windows", "scanning/annotation_pack", "scanning/reports",
+    "jersey_crops*", "gt_metrics", "jersey_eval*",
+]
+
+
+def tidy(seq_dir: Path) -> None:
+    import glob
+    deleted = 0
+    for pat in TIDY_DELETE_DIRS:
+        for p in glob.glob(str(seq_dir / pat)):
+            pp = Path(p)
+            if pp.is_dir():
+                shutil.rmtree(pp)
+                deleted += 1
+            elif pp.is_file():
+                pp.unlink()
+                deleted += 1
+    if deleted:
+        print(f"[tidy] {deleted} carpetas/archivos de ruido borrados en {seq_dir}")
+
+
 def compose(video_id: str, outputs_root: str = "outputs", fps: int = 25,
-            overwrite: bool = False, archive_debug: bool = False) -> Path:
+            overwrite: bool = False, archive_debug: bool = False,
+            do_tidy: bool = False) -> Path:
     seq_dir = Path(outputs_root) / video_id
-    final_dir = Path(outputs_root) / "final"
-    final_dir.mkdir(parents=True, exist_ok=True)
-    out = final_dir / f"{video_id}_FINAL.mp4"
+    out = seq_dir / f"{video_id}_FINAL.mp4"
 
     main = seq_dir / f"{video_id}_2d_map.mp4"
     if not main.exists():
         raise FileNotFoundError(
             f"No existe {main}. Corre el pipeline con --render primero.")
 
-    clips_dir = resolve_scanning_dir(outputs_root, video_id) / "event_clips"
+    scan_dir = resolve_scanning_dir(outputs_root, video_id)
+    # clips con etiqueta del MODELO entrenado > clips con etiqueta heuristica
+    clips_dir = scan_dir / "event_clips_model"
+    if not clips_dir.is_dir():
+        clips_dir = scan_dir / "event_clips"
     clips = sorted(clips_dir.glob("*_video.mp4")) if clips_dir.is_dir() else []
 
     if out.exists() and not overwrite:
@@ -89,6 +121,8 @@ def compose(video_id: str, outputs_root: str = "outputs", fps: int = 25,
                 moved += 1
         if moved:
             print(f"[final] {moved} videos de debug -> {arch}")
+    if do_tidy:
+        tidy(seq_dir)
     return out
 
 
@@ -99,5 +133,7 @@ if __name__ == "__main__":
     ap.add_argument("--fps", type=int, default=25)
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--archive_debug", action="store_true")
+    ap.add_argument("--tidy", action="store_true")
     a = ap.parse_args()
-    compose(a.video_id, a.outputs_root, a.fps, a.overwrite, a.archive_debug)
+    compose(a.video_id, a.outputs_root, a.fps, a.overwrite, a.archive_debug,
+            a.tidy)

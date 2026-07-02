@@ -360,3 +360,27 @@ referencia v1.7 del 12-jun, generada con código pre-commit `7803b91`).
 
 Producción: `runs/jersey_perframe_v3_224/best.pt` + `--fusion_mode geometric
 --p1_threshold 0.80 --margin_threshold 0.15` (defaults del pipeline).
+
+## 17. v1.9 (2026-07-02): restricción por roster — precisión >85% con 2.8x cobertura
+
+Idea (usuario): los dorsales válidos de cada equipo se conocen a priori
+(post-procesado con plantillas). La máscara de roster ya existía
+(`--roster_json`, `scripts/extract_rosters.py`, 106 secuencias desde
+gameinfo.ini) pero NO estaba en el camino de producción.
+
+| config test (792 tracklets) | assigned | locks | lock acc |
+|---|---|---|---|
+| geometric p1=0.80 sin roster (v1.8) | 25.8% | 99 | 93.9% |
+| geometric p1=0.85 m=0.20 + roster (**v1.9 prod**) | **42.3%** | **226** | **88.0%** |
+| topk_geometric p1=0.75 + roster (descartada) | 41.8% | 309 | 81.9% |
+
+- E2E SNMOT-148 (GT): **12/18 jugadores bloqueados (66.7% cobertura) @ 91.7%**
+  — antes 5/18 (27.8%) @ 100%. Umbral elegido A PRIORI (el más conservador de
+  la rejilla), no optimizado sobre test.
+- `topk_geometric` (fusión de las mejores distribuciones por frame) se evaluó:
+  en val empata, en test pierde precisión → geometric se mantiene.
+- El sweep sobre train NO es utilizable para calibrar (el modelo memoriza:
+  100% en todo); solo val (pequeño) y decisiones a priori.
+- Producción: pipeline pasa `--roster_json datasets/jersey_tracking_v1/rosters.json`
+  por defecto (secuencia ausente en el archivo → sin restricción). Requiere
+  `team_mapping` (audit) para mapear cluster→lado.
