@@ -441,3 +441,17 @@ E2E SNMOT-148 v2.1: raw 66.7%, assigned 66.7%, 11 GT locks @ 90.9%. El error
 33→44 persiste (PARSeq también lo lee mal en crops pequeños). Techo actual:
 resolución de dígitos; siguiente palanca real = fuente 1080p+ o re-detector
 de dígitos con super-resolución.
+
+## 20. v5 DESCARTADO: fuga de datos detectada y verificada
+
+El split TEST de SoccerNet jersey-2023 (7,154 crops añadidos al entrenamiento
+v5) produjo test 77.0% raw / 508 locks @ 99.0% — salto sospechoso. Verificacion
+visual: **las imagenes de jersey-2023-test son los MISMOS jugadores de
+nuestras secuencias de evaluacion** (uniformes de SNMOT-148, dorsales 93/50/
+20/14 de su GT): SoccerNet construyo ese dataset desde los videos de tracking
+test. Contaminacion train→eval confirmada; v5 invalido para nuestro benchmark
+(`runs/jersey_perframe_v5_224`, no usar). El split TRAIN de jersey-2023 (en
+uso desde v1.5) proviene de otros videos — sin evidencia de fuga.
+
+v5b en curso: tracking-train + jersey-2023-TRAIN + 20k sinteticos (sin el
+split contaminado) para medir limpio el aporte de los datos sinteticos.
