@@ -192,7 +192,7 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
         jersey_cmd += ["--legibility_model", args.legibility_model,
                        "--legibility_threshold", str(args.legibility_threshold)]
     for flag in ("multi_crop", "link_fragments", "split_on_switch",
-                 "reassign_conflicts"):
+                 "reassign_conflicts", "infer_unknowns"):
         if getattr(args, flag):
             jersey_cmd.append(f"--{flag}")
     tm = args.team_mapping or (team_audit if args.run_team_audit else None)

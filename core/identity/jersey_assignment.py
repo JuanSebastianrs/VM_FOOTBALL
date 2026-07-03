@@ -304,6 +304,49 @@ def assign_jersey_numbers_simple(
     return results
 
 
+def infer_unknowns_by_elimination(resolved, tracklets, roster,
+                                  min_inferred_prob=0.30):
+    """Paso de ELIMINACION (como los sistemas profesionales): un tracklet sin
+    numero comprometido pero CON evidencia recibe el mejor numero del roster
+    que no este en uso por un companero temporalmente solapado.
+
+    Con 10 de 11 numeros identificados, el ultimo sale por descarte aunque el
+    dorsal nunca se lea bien. El estado resultante es "inferred" (se muestra
+    con '?'): nunca se confunde con un lock por lectura directa.
+    """
+    if not roster:
+        return resolved
+    lookup = {t.track_id: t for t in tracklets}
+    for tid, a in resolved.items():
+        if a.get("state") != "unknown" or a.get("predicted_number") is not None:
+            continue
+        t = lookup.get(tid)
+        if t is None or t.jersey_probs is None:
+            continue  # cero evidencia legible: no se inventa nada
+        frames = getattr(t, "frame_ids", None) or []
+        used = {other["predicted_number"] for otid, other in resolved.items()
+                if otid != tid and other.get("predicted_number") is not None
+                and frames_overlap(frames, getattr(lookup.get(otid), "frame_ids",
+                                                   None) or [])}
+        available = set(roster) - used
+        if not available:
+            continue
+        probs = apply_roster_mask(t.jersey_probs, available)
+        number, _ = select_top1(probs)
+        if number is None:
+            continue
+        total = float(sum(probs)) or 1.0
+        p_restricted = float(probs[number - 1]) / total
+        if len(available) == 1:
+            p_restricted = max(p_restricted, 0.9)   # descarte puro
+        if p_restricted < min_inferred_prob:
+            continue
+        a.update({"predicted_number": int(number), "state": "inferred",
+                  "confidence": round(p_restricted, 4),
+                  "eliminated_candidates": sorted(used)})
+    return resolved
+
+
 def assign_per_team(
     all_tracklets: List[TrackletInfo],
     team_rosters: Optional[Dict[int, set]] = None,
@@ -311,6 +354,7 @@ def assign_per_team(
     p1_threshold: float = 0.60,
     margin_threshold: float = 0.20,
     reassign_conflicts: bool = False,
+    infer_by_elimination: bool = False,
 ) -> Dict[int, Dict]:
     """
     Top-level entry point: partition tracklets by team, assign numbers per-team,
@@ -362,6 +406,11 @@ def assign_per_team(
         # Step 2: Resolve temporal duplicates
         resolved = resolve_temporal_duplicates(raw_assignments, team_tracklets,
                                                reassign_conflicts=reassign_conflicts)
+
+        # Step 3 (opcional): inferencia por eliminacion con el roster
+        if infer_by_elimination and roster:
+            resolved = infer_unknowns_by_elimination(resolved, team_tracklets,
+                                                     roster)
 
         all_assignments.update(resolved)
 

@@ -187,6 +187,9 @@ def main():
     parser.add_argument("--margin_threshold", type=float, default=0.15)
     parser.add_argument("--reassign_conflicts", action="store_true",
                         help="Conflict losers fall back to best non-conflicting alternative")
+    parser.add_argument("--parseq_cache", type=str, default=None,
+                        help="npz de build_parseq_cache.py para ensamble")
+    parser.add_argument("--parseq_weight", type=float, default=0.35)
     parser.add_argument("--sweep", action="store_true",
                         help="Grid-sweep fusion configs from the cached probs (calibration; use on val)")
     args = parser.parse_args()
@@ -219,6 +222,29 @@ def main():
         frame_probs = compute_frame_probs(model, split_records, dataset_dir, device)
         np.savez_compressed(cache_path, **frame_probs)
         print(f"Cached: {cache_path}")
+
+    # --- Optional PARSeq ensemble: p ∝ p_model^(1-w) * p_parseq^w por frame ---
+    if args.parseq_cache and Path(args.parseq_cache).exists():
+        w = float(args.parseq_weight)
+        pz = np.load(args.parseq_cache)
+        mixed = 0
+        for k in list(frame_probs.keys()):
+            if k not in pz.files:
+                continue
+            pm, pp = frame_probs[k].copy(), pz[k]
+            n = min(len(pm), len(pp))
+            if n == 0:
+                continue
+            # solo mezclar frames donde PARSeq LEYO algo (fila no-uniforme);
+            # mezclar contra uniforme solo aplana el posterior del modelo
+            read = pp[:n].max(axis=1) > (1.5 / 99.0)
+            if read.any():
+                mix = (np.power(pm[:n][read] + 1e-12, 1.0 - w)
+                       * np.power(pp[:n][read] + 1e-12, w))
+                pm[:n][read] = mix / mix.sum(axis=1, keepdims=True)
+                frame_probs[k] = pm
+                mixed += 1
+        print(f"Ensamble PARSeq (w={w}): {mixed} tracklets mezclados")
 
     # --- Optional rosters (external_roster mode; primary metric is no-roster) ---
     team_rosters_by_seq = None

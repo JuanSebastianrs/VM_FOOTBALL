@@ -621,6 +621,10 @@ def main():
     parser.add_argument("--reassign_conflicts", action="store_true",
                         help="On duplicate-number conflicts, losers fall back to their best "
                              "non-conflicting alternative (intra-frame exclusivity) instead of unknown")
+    parser.add_argument("--infer_unknowns", action="store_true",
+                        help="ELIMINACION con roster: tracklets sin lock pero con evidencia "
+                             "reciben el mejor numero del roster no usado por companeros "
+                             "solapados (estado 'inferred', se muestra con '?')")
     args = parser.parse_args()
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
@@ -749,6 +753,7 @@ def main():
         p1_threshold=args.p1_threshold,
         margin_threshold=args.margin_threshold,
         reassign_conflicts=args.reassign_conflicts,
+        infer_by_elimination=args.infer_unknowns,
     )
 
     def _convert(obj):
