@@ -52,6 +52,8 @@ def main():
     parser.add_argument("--soccernet_root", type=str, default="datasets/soccernet/jersey-2023")
     parser.add_argument("--legibility_model", type=str, default="runs/jersey_legibility_v1/best.pt")
     parser.add_argument("--output_json", type=str, required=True)
+    parser.add_argument("--split", type=str, default="train", choices=["train", "test"],
+                        help="test SOLO como datos de entrenamiento extra (renuncia a ese benchmark)")
     parser.add_argument("--frames_per_tracklet", type=int, default=32)
     parser.add_argument("--max_keep", type=int, default=16)
     parser.add_argument("--min_legibility", type=float, default=0.5)
@@ -61,16 +63,17 @@ def main():
     args = parser.parse_args()
 
     root = Path(args.soccernet_root)
-    gt_path = root / "train" / "train_gt.json"
+    sp = args.split
+    gt_path = root / sp / f"{sp}_gt.json"
     if not gt_path.exists():
-        gt_path = root / "train" / "train" / "train_gt.json"
+        gt_path = root / sp / sp / f"{sp}_gt.json"
     with open(gt_path) as f:
         gt = json.load(f)
     visible = {k: v for k, v in gt.items() if v != -1}
 
-    images_dir = root / "train" / "images"
+    images_dir = root / sp / "images"
     if not images_dir.exists():
-        images_dir = root / "train" / "train" / "images"
+        images_dir = root / sp / sp / "images"
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     model = load_legibility_model(args.legibility_model, device)
