@@ -455,3 +455,22 @@ uso desde v1.5) proviene de otros videos — sin evidencia de fuga.
 
 v5b en curso: tracking-train + jersey-2023-TRAIN + 20k sinteticos (sin el
 split contaminado) para medir limpio el aporte de los datos sinteticos.
+
+## 21. Veredicto del reentrenamiento (v4, v5, v5b): el techo es real
+
+| checkpoint (test, conf_topk p1=.90 + roster, sin PARSeq) | raw | assigned | locks | lock acc |
+|---|---|---|---|---|
+| **v3_224 (producción)** | **37.8%** | **43.9%** | 270 | **88.9%** |
+| v4 (mismos datos, +épocas) | 35.0% | — | 95* | 91.6%* |
+| v5 (+jersey-2023 TEST) | 77.0% | 77.8% | 508 | 99.0% — **FUGA, inválido** |
+| v5b (+20k sintéticos, limpio) | 35.7% | 40.9% | 253 | 87.0% |
+
+(*v4 evaluado con geometric p1=.80.)
+
+Tres reentrenamientos, un solo ganador aparente que resultó ser contaminación.
+Conclusión empírica: **con crops a esta resolución (dígitos 8-30 px) el
+checkpoint v3_224 está en el techo de los datos disponibles**; ni más épocas
+ni datos sintéticos dirigidos lo mueven. Las ganancias reales y defendibles
+vinieron del stack de inferencia (roster + confidence_topk + PARSeq:
+249 locks @ 92.8%, 3.1x v1.7). Palancas restantes: fuente 1080p+ nativa,
+super-resolución de crops, o anotación humana de más secuencias de tracking.
