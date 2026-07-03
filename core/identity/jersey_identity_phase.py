@@ -198,7 +198,38 @@ def predict_tracklets_mil(model, tracklets, sequence_dir, device, K=16, seed=42)
 # ──────────────────────────────────────────────────────────────────────
 
 @torch.no_grad()
-def predict_per_frame(model, tracklet, sequence_dir, device, legibility_model=None, legibility_threshold=0.5, multi_crop=False):
+def _parseq_read(parseq, parseq_tf, crop_rgb, device):
+    """Lee el crop con PARSeq. Devuelve (numero 1..99 | None, confianza)."""
+    from PIL import Image as _Image
+    x = parseq_tf(_Image.fromarray(crop_rgb)).unsqueeze(0).to(device)
+    logits = parseq(x)
+    labels, confs = parseq.tokenizer.decode(logits.softmax(-1))
+    digits = "".join(ch for ch in labels[0] if ch.isdigit())
+    if not digits or len(digits) > 2:
+        return None, 0.0
+    n = int(digits)
+    if not (1 <= n <= 99):
+        return None, 0.0
+    c = confs[0]
+    conf = float(c.prod().clamp(0, 1)) if hasattr(c, "prod") else float(c)
+    return n, conf
+
+
+def load_parseq(model_name, device):
+    """Carga PARSeq (torch.hub) + su transform oficial."""
+    parseq = torch.hub.load("baudm/parseq", model_name, pretrained=True,
+                            trust_repo=True).eval().to(device)
+    try:
+        from strhub.data.module import SceneTextDataModule
+        tf = SceneTextDataModule.get_transform(parseq.hparams.img_size)
+    except Exception:
+        import torchvision.transforms as T
+        tf = T.Compose([T.Resize((32, 128)), T.ToTensor(), T.Normalize(0.5, 0.5)])
+    return parseq, tf
+
+
+def predict_per_frame(model, tracklet, sequence_dir, device, legibility_model=None, legibility_threshold=0.5, multi_crop=False,
+                      parseq=None, parseq_tf=None, parseq_weight=0.25):
     """Run inference on EVERY frame of a tracklet. Returns list of frame results."""
     model.eval()
     if legibility_model is not None:
@@ -312,6 +343,18 @@ def predict_per_frame(model, tracklet, sequence_dir, device, legibility_model=No
         x = crop_tensor.unsqueeze(0).unsqueeze(0).to(device)  # (1, 1, 3, H, W)
         out_len, out_tens, out_ones = model(x)
         jersey_probs = compute_jersey_probs_from_logits(out_len, out_tens, out_ones)
+
+        # Ensamble opcional con PARSeq (segundo lector de texto de escena):
+        # solo cuando PARSeq LEE un numero valido en un crop legible.
+        if parseq is not None and selected_legibility >= 0.30:
+            num, conf = _parseq_read(parseq, parseq_tf, selected_crop, device)
+            if num is not None and conf > 0:
+                pp = np.full(99, (1.0 - conf) / 98.0)
+                pp[num - 1] = conf
+                w = parseq_weight
+                mix = (np.power(jersey_probs + 1e-12, 1.0 - w)
+                       * np.power(pp + 1e-12, w))
+                jersey_probs = mix / mix.sum()
 
         frame_results.append({
             "frame_id": int(fid),
@@ -483,7 +526,8 @@ def predict_tracklets_temporal(model, tracklets, sequence_dir, device,
                                min_legible_frames=4, min_peak_quality=0.3,
                                fusion_mode="geometric", temperature=1.0,
                                do_link_fragments=False, split_on_switch=False,
-                               min_trim_fraction=0.30):
+                               min_trim_fraction=0.30,
+                               parseq=None, parseq_tf=None, parseq_weight=0.25):
     """
     Run per-frame inference + temporal fusion for all tracklets.
 
@@ -504,6 +548,7 @@ def predict_tracklets_temporal(model, tracklets, sequence_dir, device,
             legibility_model=legibility_model,
             legibility_threshold=legibility_threshold,
             multi_crop=multi_crop,
+            parseq=parseq, parseq_tf=parseq_tf, parseq_weight=parseq_weight,
         )
         # Filter frame results by legibility score (ignore frames < threshold, but only if >= min_legible_frames remain)
         if legibility_model is not None:
@@ -621,6 +666,10 @@ def main():
     parser.add_argument("--reassign_conflicts", action="store_true",
                         help="On duplicate-number conflicts, losers fall back to their best "
                              "non-conflicting alternative (intra-frame exclusivity) instead of unknown")
+    parser.add_argument("--parseq_model", type=str, default=None,
+                        help="ensamble con PARSeq (scene-text): 'parseq' (base) "
+                             "o 'parseq_tiny'; requiere descarga torch.hub")
+    parser.add_argument("--parseq_weight", type=float, default=0.25)
     parser.add_argument("--infer_unknowns", action="store_true",
                         help="ELIMINACION con roster: tracklets sin lock pero con evidencia "
                              "reciben el mejor numero del roster no usado por companeros "
@@ -689,6 +738,10 @@ def main():
         predictions = predict_tracklets_mil(model, tracklets_data, args.sequence_dir, device, K=args.K, seed=args.seed)
     elif args.inference_mode == "temporal":
         print("Predicting with temporal fusion (all frames)...")
+        parseq = parseq_tf = None
+        if args.parseq_model:
+            print(f"Loading PARSeq ensemble reader: {args.parseq_model}")
+            parseq, parseq_tf = load_parseq(args.parseq_model, device)
         predictions = predict_tracklets_temporal(
             model, tracklets_data, args.sequence_dir, device,
             p1_threshold=args.p1_threshold,
@@ -703,6 +756,8 @@ def main():
             temperature=args.temperature,
             do_link_fragments=args.link_fragments,
             split_on_switch=args.split_on_switch,
+            parseq=parseq, parseq_tf=parseq_tf,
+            parseq_weight=args.parseq_weight,
         )
     else:  # hybrid
         print("Predicting with MIL + temporal fusion...")

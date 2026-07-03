@@ -406,3 +406,38 @@ ilegibles.
   3↔4, el modelo está *confiadamente* equivocado — más p1 que 4 locks
   correctos). No es separable por umbral; requiere datos de entrenamiento con
   más ejemplos 3x/4x o crops de mayor resolución.
+
+## 19. v2.1 (2026-07-02): ensamble PARSeq + asignación por eliminación
+
+Respuesta a "¿cómo lo hacen los sistemas profesionales / SOTA?":
+
+1. **Segundo lector de texto de escena (PARSeq)** — enfoque de Koshkina &
+   Elder 2024 (docs/2404.08401v5.pdf). `scripts/build_parseq_cache.py` +
+   ensamble por frame `p ∝ p_modelo^(1-w) · p_parseq^w`, mezclando SOLO los
+   frames donde PARSeq leyó un número válido (mezclar contra uniforme aplana
+   el posterior — medido). Peso w=0.25 elegido en val. En producción:
+   `--parseq_model parseq` en la fase (default del pipeline).
+
+   | test (792 tracklets, roster+conf_topk p1=.90) | assigned | locks | lock acc |
+   |---|---|---|---|
+   | sin PARSeq (v2.0) | 43.9% | 270 | 88.9% |
+   | + parseq_tiny w=.25 | 45.0% | 251 | 90.0% |
+   | **+ parseq base w=.25 (v2.1 prod)** | 44.8% | 249 | **92.8%** |
+
+   Lectura: misma precisión que v1.7 (92.5%) con **3.1x los dorsales
+   identificados** (249 vs 80).
+
+2. **Asignación por eliminación con roster** (`--infer_unknowns`,
+   `infer_unknowns_by_elimination` en jersey_assignment.py): tracklets con
+   evidencia pero sin lock reciben el mejor número del roster no usado por
+   compañeros temporalmente solapados (estado `inferred`). **Medido en
+   SNMOT-148 (clip 30s): 0/3 inferencias correctas** — con pocos números
+   identificados y tracking fragmentado las restricciones son débiles; los
+   profesionales aplican esto sobre PARTIDOS COMPLETOS. Por eso: queda en el
+   JSON pero NO se pinta en video y el default es OFF; recomendado solo para
+   material largo.
+
+E2E SNMOT-148 v2.1: raw 66.7%, assigned 66.7%, 11 GT locks @ 90.9%. El error
+33→44 persiste (PARSeq también lo lee mal en crops pequeños). Techo actual:
+resolución de dígitos; siguiente palanca real = fuente 1080p+ o re-detector
+de dígitos con super-resolución.

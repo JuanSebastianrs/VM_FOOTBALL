@@ -188,6 +188,9 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
                   "--temperature", str(args.temperature)]
     if args.roster_json:
         jersey_cmd += ["--roster_json", args.roster_json]
+    if args.parseq_model:
+        jersey_cmd += ["--parseq_model", args.parseq_model,
+                       "--parseq_weight", str(args.parseq_weight)]
     if args.legibility_model:
         jersey_cmd += ["--legibility_model", args.legibility_model,
                        "--legibility_threshold", str(args.legibility_threshold)]
@@ -371,6 +374,13 @@ def get_args():
     p.add_argument("--legibility_model", type=str, default=None)
     p.add_argument("--legibility_threshold", type=float, default=0.5)
     p.add_argument("--multi_crop", action="store_true")
+    p.add_argument("--parseq_model", type=str, default="parseq",
+                   help="segundo lector PARSeq en el ensamble ('' lo desactiva)")
+    p.add_argument("--parseq_weight", type=float, default=0.25)
+    p.add_argument("--infer_unknowns", action="store_true",
+                   help="eliminacion con roster para tracklets sin lock "
+                        "(recomendado solo en partido completo; en clips "
+                        "cortos las restricciones son debiles)")
     p.add_argument("--min_legible_frames", type=int, default=4)
     p.add_argument("--min_peak_quality", type=float, default=0.3)
     p.add_argument("--fusion_mode", type=str, default="confidence_topk",

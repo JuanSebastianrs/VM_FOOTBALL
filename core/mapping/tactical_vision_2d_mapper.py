@@ -725,7 +725,7 @@ def main():
         for t in jersey_data.get("tracklets", []):
             num = t.get("predicted_number")
             state = t.get("state", "unknown")
-            if num is not None and state in ("locked", "tentative", "inferred"):
+            if num is not None and state in ("locked", "tentative"):
                 jersey_map[t["track_id"]] = {"number": int(num), "state": state}
         n_locked = sum(1 for v in jersey_map.values() if v["state"] == "locked")
         print(f"  {len(jersey_map)} tracks with jersey number "
