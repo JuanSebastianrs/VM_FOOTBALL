@@ -384,3 +384,25 @@ gameinfo.ini) pero NO estaba en el camino de producción.
 - Producción: pipeline pasa `--roster_json datasets/jersey_tracking_v1/rosters.json`
   por defecto (secuencia ausente en el archivo → sin restricción). Requiere
   `team_mapping` (audit) para mapear cluster→lado.
+
+## 18. v2.0 (2026-07-02): fusión confidence_topk — los frames claros mandan
+
+Idea (usuario): "hay frames donde se ve clarísimo el número; eso nos debe
+guiar". Nueva `fusion_mode=confidence_topk` en `temporal_fusion`: fusiona solo
+la fracción de frames donde el MODELO es más confiado (max prob por frame),
+ponderados por confianza — la evidencia nítida no se diluye entre frames
+ilegibles.
+
+| test (792 tracklets) + roster | raw top-1 | assigned | locks | lock acc |
+|---|---|---|---|---|
+| geometric p1=0.85 (v1.9) | 36.1% | 42.3% | 226 | 88.0% |
+| **confidence_topk p1=0.90 m=0.30 (v2.0 prod)** | **37.8%** | **43.9%** | **270** | **88.9%** |
+| confidence_topk p1=0.95 m=0.40 (estricto) | 37.8% | 43.9% | 213 | **93.0%** |
+
+- E2E SNMOT-148 (video canónico REGENERADO): **12/18 GT bloqueados @ 91.7%**,
+  todos verificables a ojo en `SNMOT-148_FINAL.mp4` (55/4/26/10/50/... ✓).
+- El caso reportado "50→28" era del video pre-roster: **#50 ahora correcto**.
+- Único error restante: GT#33→44 con p1=0.963 (confusión sistemática de dígito
+  3↔4, el modelo está *confiadamente* equivocado — más p1 que 4 locks
+  correctos). No es separable por umbral; requiere datos de entrenamiento con
+  más ejemplos 3x/4x o crops de mayor resolución.

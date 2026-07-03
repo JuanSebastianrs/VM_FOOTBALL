@@ -337,6 +337,10 @@ def temporal_fusion(frame_results, p1_threshold=0.85, margin_threshold=0.20,
                            confident-wrong frames that dominate log-space).
       - "topk_geometric" : geometric fusion restricted to the top `topk_frac`
                            fraction of frames by weight (quality * legibility).
+      - "confidence_topk": geometric fusion restricted to the frames donde el
+                           MODELO es mas confiado (max prob por frame); los
+                           frames con numero claramente visible dominan la
+                           decision en vez de diluirse entre frames ilegibles.
     temperature: softens (>1) or sharpens (<1) per-frame distributions before
                  fusion; applied as p^(1/T) renormalized.
     """
@@ -366,7 +370,17 @@ def temporal_fusion(frame_results, p1_threshold=0.85, margin_threshold=0.20,
         weights = weights / weights_sum
 
     # Optional restriction to top-weighted frames before geometric fusion
-    if fusion_mode == "topk_geometric" and len(weights) > 2:
+    if fusion_mode == "confidence_topk":
+        conf = probs.max(axis=1)  # confianza de prediccion por frame
+        if len(conf) > 2:
+            k = max(2, int(np.ceil(topk_frac * len(conf))))
+            idx = np.argsort(conf)[::-1][:k]
+        else:
+            idx = np.arange(len(conf))
+        sub_w = weights[idx] * conf[idx]
+        sub_w = sub_w / max(sub_w.sum(), 1e-8)
+        fused_log = (sub_w[:, None] * np.log(probs[idx] + 1e-10)).sum(axis=0)
+    elif fusion_mode == "topk_geometric" and len(weights) > 2:
         k = max(2, int(np.ceil(topk_frac * len(weights))))
         top_idx = np.argsort(weights)[::-1][:k]
         sub_w = weights[top_idx]
@@ -594,7 +608,7 @@ def main():
     parser.add_argument("--min_legible_frames", type=int, default=4, help="Minimum legible frames required to filter tracklet")
     parser.add_argument("--min_peak_quality", type=float, default=0.3, help="Minimum quality score for a peak")
     parser.add_argument("--fusion_mode", type=str, default="geometric",
-                        choices=["geometric", "arithmetic", "topk_geometric"],
+                        choices=["geometric", "arithmetic", "topk_geometric", "confidence_topk"],
                         help="Temporal fusion strategy (see temporal_fusion)")
     parser.add_argument("--temperature", type=float, default=1.0,
                         help="Per-frame probability temperature before fusion")

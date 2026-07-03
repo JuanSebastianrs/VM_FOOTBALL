@@ -360,10 +360,10 @@ def get_args():
                    help="dorsales validos por equipo (postproceso); si la "
                         "secuencia no esta en el archivo, no restringe")
     p.add_argument("--team_mapping", type=str, default=None)
-    # v1.9: geometric conservador + ROSTER (dorsales validos por equipo).
-    # Test 49 seqs: 226 locks @ 88.0%; E2E SNMOT-148: 12/18 GT @ 91.7%
-    p.add_argument("--p1_threshold", type=float, default=0.85)
-    p.add_argument("--margin_threshold", type=float, default=0.20)
+    # v2.0: confidence_topk (los frames donde el numero se ve claro mandan)
+    # + ROSTER. Test 49 seqs: 270 locks @ 88.9% (p1 .95 -> 213 @ 93.0%)
+    p.add_argument("--p1_threshold", type=float, default=0.90)
+    p.add_argument("--margin_threshold", type=float, default=0.30)
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--inference_mode", type=str, default="temporal",
@@ -373,8 +373,8 @@ def get_args():
     p.add_argument("--multi_crop", action="store_true")
     p.add_argument("--min_legible_frames", type=int, default=4)
     p.add_argument("--min_peak_quality", type=float, default=0.3)
-    p.add_argument("--fusion_mode", type=str, default="geometric",
-                   choices=["geometric", "arithmetic", "topk_geometric"])
+    p.add_argument("--fusion_mode", type=str, default="confidence_topk",
+                   choices=["geometric", "arithmetic", "topk_geometric", "confidence_topk"])
     p.add_argument("--temperature", type=float, default=1.0)
     p.add_argument("--link_fragments", action="store_true")
     p.add_argument("--split_on_switch", action="store_true")

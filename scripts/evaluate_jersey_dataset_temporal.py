@@ -179,7 +179,7 @@ def main():
     parser.add_argument("--roster_json", type=str, default=None)
     # Fusion config (single-run mode)
     parser.add_argument("--fusion_mode", type=str, default="geometric",
-                        choices=["geometric", "arithmetic", "topk_geometric"])
+                        choices=["geometric", "arithmetic", "topk_geometric", "confidence_topk"])
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--legibility_threshold", type=float, default=0.70)
     parser.add_argument("--min_legible_frames", type=int, default=4)
@@ -271,7 +271,7 @@ def main():
     # --- Sweep mode (calibration) ---
     import pandas as pd
     grid = {
-        "fusion_mode": ["geometric", "arithmetic", "topk_geometric"],
+        "fusion_mode": ["geometric", "arithmetic", "topk_geometric", "confidence_topk"],
         "temperature": [1.0, 1.5, 2.0, 3.0],
         "legibility_threshold": [0.40, 0.50, 0.60, 0.70, 0.80],
         "p1_threshold": [0.60, 0.75, 0.85],
