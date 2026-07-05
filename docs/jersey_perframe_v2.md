@@ -529,3 +529,21 @@ python scripts/evaluate_jersey_e2e_multi.py --sequences SNMOT-148 \
     --fusion_mode confidence_topk --p1_threshold 0.90 --margin_threshold 0.30 \
     --parseq_model parseq --parseq_checkpoint runs/parseq_jersey_ft/best.pt
 ```
+
+## 23. Super-resolución de crops: DESCARTADA con evidencia (2026-07-05)
+
+La palanca "SR de crops" de §21 se midió y NO aporta: Real-ESRGAN x4
+(`models/RealESRGAN_x4plus.pth`, cargado vía spandrel) aplicado a los 1,624
+crops legibles de val ANTES del lector PARSeq-FT:
+
+| lectura del crop | exact-match val |
+|---|---|
+| original 224px | **41.63%** |
+| Real-ESRGAN x4 (896px) | 41.13% |
+
+(acuerdo entre ambas: 81.7%; script: `scripts/eval_sr_reader_ab.py`)
+
+Explicación: el lector reduce su entrada a 32×128 de todos modos; el SR
+GAN no recupera información real de dígitos de 8-30 px nativos, solo
+alucina textura. No se llevó a test. La palanca de resolución que queda es
+FUENTE nativa 1080p+ (más píxeles reales por dígito), no post-proceso.

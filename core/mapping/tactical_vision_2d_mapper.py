@@ -153,6 +153,14 @@ class BidirectionalLieSmoother:
     # 0.5 = equal forward/backward.  Slightly favour forward for causality.
     BIDIR_FORWARD_WEIGHT    = 0.5
 
+    # ── Gap filling ──
+    # Los huecos sin calibracion se rellenan sosteniendo/prediciendo estado,
+    # pero SOLO hasta esta longitud (frames). Huecos mas largos (p.ej. 238
+    # frames en SNMOT-148) devolvian una camara congelada/promediada que
+    # proyectaba posiciones FICTICIAS en minimapa y tracking_2d.csv durante
+    # segundos; ahora esos frames quedan sin H_inv (visible=0, honesto).
+    MAX_GAP_FILL_FRAMES     = 25   # ~1 s a 25 fps
+
     def __init__(self):
         # Raw measurements collected during Phase 1
         self._measurements = []    # list of dicts or None (per frame)
@@ -260,6 +268,24 @@ class BidirectionalLieSmoother:
                     'pos': w * f['pos'] + (1 - w) * b['pos'],
                 }
                 merged_params.append(merged)
+
+        # ── Invalidate long measurement gaps ──
+        # merged_params rellena huecos con estado sostenido; para huecos
+        # mas largos que MAX_GAP_FILL_FRAMES eso fabrica posiciones.
+        i = 0
+        while i < N:
+            if self._measurements[i] is None:
+                j = i
+                while j < N and self._measurements[j] is None:
+                    j += 1
+                if (j - i) > self.MAX_GAP_FILL_FRAMES:
+                    for k in range(i, j):
+                        merged_params[k] = None
+                    self.stats['gap_invalidated'] = (
+                        self.stats.get('gap_invalidated', 0) + (j - i))
+                i = j
+            else:
+                i += 1
 
         # Build H_inv for each frame
         self._smoothed_params = merged_params
@@ -531,6 +557,8 @@ class BidirectionalLieSmoother:
                 f"  Backward — accepted: {s.get('accepted_bwd',0)}, "
                 f"rejected: {s.get('rejected_bwd',0)}\n"
                 f"  Fallback (no calib): {s.get('fallback',0)}\n"
+                f"  Gap frames invalidated (>{self.MAX_GAP_FILL_FRAMES}f): "
+                f"{s.get('gap_invalidated',0)}\n"
                 f"  Total frames: {s.get('total_frames',0)}")
 
 
@@ -655,6 +683,10 @@ def main():
                              "(calibration_hinv.json, image -> centred pitch metres)")
     parser.add_argument("--no_video", action="store_true",
                         help="Skip video rendering (useful when only CSV is needed)")
+    parser.add_argument("--dump_raw_calib", type=str, default="",
+                        help="Optional: path to dump RAW per-frame PnLCalib "
+                             "measurements (pre-smoothing) as JSON, for offline "
+                             "analysis of smoothing variants")
     parser.add_argument("--fps", type=float, default=25.0,
                         help="Frames per second of the sequence")
     parser.add_argument("--show_track_ids", action="store_true",
@@ -791,6 +823,7 @@ def main():
     print(f"{'='*50}")
 
     frame_ids = []   # ordered list of frame_ids matching measurement indices
+    raw_calib_dump = []  # raw measurements (only filled with --dump_raw_calib)
 
     for img_path in tqdm(images, desc="Calibrating"):
         frame_id = int(os.path.splitext(os.path.basename(img_path))[0])
@@ -871,6 +904,17 @@ def main():
 
         # ── Collect into smoother ──
         smoother.collect_measurement(cam_params_dict, rep_err, source)
+        if args.dump_raw_calib:
+            raw_calib_dump.append(
+                None if cam_params_dict is None else
+                {"frame_id": int(frame_id), "rep_err": float(rep_err),
+                 "source": source, **cam_params_dict})
+
+    if args.dump_raw_calib:
+        with open(args.dump_raw_calib, "w", encoding="utf-8") as fh:
+            json.dump({"frame_ids": [int(f) for f in frame_ids],
+                       "measurements": raw_calib_dump}, fh)
+        print(f"Raw calibration dumped: {args.dump_raw_calib}")
 
     # ═══════════════════════════════════════════════════════════════
     #  BIDIRECTIONAL SMOOTHING (forward + backward + merge)

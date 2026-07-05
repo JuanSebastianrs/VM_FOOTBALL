@@ -510,3 +510,59 @@ Los factores de seguridad altos garantizan que **nunca se rechace una calibraci�
 
 > [!TIP]
 > **Para debugging futuro**: Ejecutar con `--debug` imprime cada 25 cuadros los ángulos suavizados, la fuente de calibración (voting/ground/hold), y el contador de rechazos. Si el minimap sigue inestable, el primer paso es revisar estos logs para determinar si el gate está aceptando demasiados outliers (bajar umbrales) o rechazando demasiados frames buenos (subir umbrales).
+
+---
+
+## Revisión 2026-07-05: auditoría cuantitativa del suavizado Lie ("¿empeoró?")
+
+Motivación: percepción de que el suavizado SO(3) bidireccional empeoró vs el
+EMA por ángulo anterior. Se midió con datos, sin recalibrar a ojo.
+
+**Herramientas nuevas** (reproducible):
+- `tactical_vision_2d_mapper.py --dump_raw_calib <json>`: vuelca las
+  mediciones CRUDAS de PnLCalib por frame (pre-suavizado).
+- `scripts/analyze_lie_smoothing.py`: compara variantes de suavizado sobre
+  ese dump proyectando 3 puntos fijos de imagen al plano del campo.
+  Métricas: jitter (mediana de la 2ª diferencia, m/frame²) y desviación vs
+  la trayectoria cruda sana (retardo/deriva, m).
+
+**Resultados en SNMOT-148** (750 frames; 479 con calibración, rep_err
+mediana 3.96 px; 2 mediciones crudas insanas — pan espejado ±160-180°,
+proyecciones de hasta 600 km):
+
+| variante | jitter med | jitter p95 | desv med | desv p95 |
+|---|---|---|---|---|
+| crudo (sin suavizar) | 0.568 | 15.74 | 0 | 0 |
+| EMA forward puro (≈ CameraParamsSmoother viejo) | 0.006 | 0.27 | **1.11** | **10.32** |
+| Lie forward (ESKF-Lite) | 0.019 | 0.33 | 0.77 | 8.35 |
+| **Lie bidireccional (producción)** | 0.048* | 0.48 | **0.82** | **7.77** |
+| Gauss fase-cero offline (referencia) | 0.010 | 0.76 | 0.29 | 13.54 |
+
+(*medido solo sobre frames con calibración real tras el fix de huecos.)
+
+**Veredicto: el suavizado Lie NO empeoró.** Tiene ~25 % menos retardo mediano
+y mejor p95 que el EMA viejo, con jitter igualmente controlado (12x por
+debajo del crudo); los gates rechazan correctamente los outliers espejados
+de PnLCalib. El EMA viejo era más "liso" pero arrastraba la cámara hasta
+10 m en paneos.
+
+**La causa real de la percepción**: SNMOT-148 tiene **271/750 frames (36 %)
+sin calibración** (un hueco de 238 frames ≈ 9.5 s + uno de 26). El suavizador
+rellenaba TODOS los huecos sosteniendo/promediando cámara, así que el
+minimapa dibujaba jugadores en posiciones FICTICIAS durante ~10 s y
+`tracking_2d.csv` alimentaba analytics con esas posiciones (con `gap==1`,
+sumaban distancia/velocidad fantasma).
+
+**Fix aplicado** (`BidirectionalLieSmoother.MAX_GAP_FILL_FRAMES = 25`):
+los huecos de medición > 25 frames (~1 s) quedan SIN H_inv tras el merge —
+minimapa sin puntos y sin filas fabricadas en el CSV (analytics ya exige
+`gap==1` para computar velocidad, así que el hueco suma 0 en vez de
+ficción). Huecos cortos se siguen rellenando (deseable). En SNMOT-148:
+264 frames invalidados; las métricas de suavizado sobre los frames reales
+no cambian.
+
+**Trabajo futuro** (no aplicado): la referencia offline gauss fase-cero con
+rechazo de outliers logra 3x mejor fidelidad mediana (0.29 m) — el mapper ya
+es de dos pasadas, así que un suavizador batch (spline/gauss robusto) es
+legítimo y dominaría en tramos continuos; requiere cuidar los bordes de
+hueco (sus picos p95 vienen de interpolar cerca de outliers de borde).
