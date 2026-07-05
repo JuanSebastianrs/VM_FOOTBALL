@@ -215,10 +215,26 @@ def _parseq_read(parseq, parseq_tf, crop_rgb, device):
     return n, conf
 
 
-def load_parseq(model_name, device):
-    """Carga PARSeq (torch.hub) + su transform oficial."""
+def load_parseq(model_name, device, checkpoint=None):
+    """Carga PARSeq (torch.hub) + su transform oficial.
+
+    checkpoint: ruta opcional a un .pt de finetune_parseq_jersey.py
+    (dict con 'state_dict'); se aplica sobre la arquitectura del hub.
+    """
     parseq = torch.hub.load("baudm/parseq", model_name, pretrained=True,
-                            trust_repo=True).eval().to(device)
+                            trust_repo=True)
+    if checkpoint:
+        from pathlib import Path as _Path
+        if _Path(checkpoint).exists():
+            ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
+            state = ckpt.get("state_dict", ckpt)
+            parseq.load_state_dict(state)
+            print(f"  PARSeq fine-tuned weights: {checkpoint} "
+                  f"(val {ckpt.get('val_acc', float('nan')):.3f})")
+        else:
+            print(f"  AVISO: checkpoint PARSeq no encontrado ({checkpoint}); "
+                  f"se usan los pesos genericos del hub")
+    parseq = parseq.eval().to(device)
     try:
         from strhub.data.module import SceneTextDataModule
         tf = SceneTextDataModule.get_transform(parseq.hparams.img_size)
@@ -670,6 +686,9 @@ def main():
                         help="ensamble con PARSeq (scene-text): 'parseq' (base) "
                              "o 'parseq_tiny'; requiere descarga torch.hub")
     parser.add_argument("--parseq_weight", type=float, default=0.25)
+    parser.add_argument("--parseq_checkpoint", type=str, default=None,
+                        help="pesos fine-tuneados (runs/parseq_jersey_ft/best.pt) "
+                             "a cargar sobre --parseq_model")
     parser.add_argument("--infer_unknowns", action="store_true",
                         help="ELIMINACION con roster: tracklets sin lock pero con evidencia "
                              "reciben el mejor numero del roster no usado por companeros "
@@ -741,7 +760,8 @@ def main():
         parseq = parseq_tf = None
         if args.parseq_model:
             print(f"Loading PARSeq ensemble reader: {args.parseq_model}")
-            parseq, parseq_tf = load_parseq(args.parseq_model, device)
+            parseq, parseq_tf = load_parseq(args.parseq_model, device,
+                                            checkpoint=args.parseq_checkpoint)
         predictions = predict_tracklets_temporal(
             model, tracklets_data, args.sequence_dir, device,
             p1_threshold=args.p1_threshold,

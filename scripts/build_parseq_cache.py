@@ -48,6 +48,9 @@ def main():
     ap.add_argument("--split", default="test", choices=["train", "val", "test"])
     ap.add_argument("--model", default="parseq_tiny",
                     help="parseq_tiny | parseq (base, mas preciso y lento)")
+    ap.add_argument("--checkpoint", default=None,
+                    help="pesos fine-tuneados (runs/parseq_jersey_ft/best.pt) "
+                         "a cargar sobre --model")
     ap.add_argument("--output", required=True)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--batch_size", type=int, default=64)
@@ -58,7 +61,13 @@ def main():
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     model = torch.hub.load("baudm/parseq", args.model, pretrained=True,
-                           trust_repo=True).eval().to(device)
+                           trust_repo=True)
+    if args.checkpoint:
+        ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+        model.load_state_dict(ckpt.get("state_dict", ckpt))
+        print(f"[parseq] fine-tuned weights: {args.checkpoint} "
+              f"(val {ckpt.get('val_acc', float('nan')):.3f})")
+    model = model.eval().to(device)
     img_tf = None
     try:  # transform oficial del repo de parseq
         from strhub.data.module import SceneTextDataModule

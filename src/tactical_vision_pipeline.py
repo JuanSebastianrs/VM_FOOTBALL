@@ -191,6 +191,8 @@ def build_phases(args, sequence_dir: str) -> List[Phase]:
     if args.parseq_model:
         jersey_cmd += ["--parseq_model", args.parseq_model,
                        "--parseq_weight", str(args.parseq_weight)]
+        if args.parseq_checkpoint:
+            jersey_cmd += ["--parseq_checkpoint", args.parseq_checkpoint]
     if args.legibility_model:
         jersey_cmd += ["--legibility_model", args.legibility_model,
                        "--legibility_threshold", str(args.legibility_threshold)]
@@ -377,6 +379,10 @@ def get_args():
     p.add_argument("--parseq_model", type=str, default="parseq",
                    help="segundo lector PARSeq en el ensamble ('' lo desactiva)")
     p.add_argument("--parseq_weight", type=float, default=0.25)
+    p.add_argument("--parseq_checkpoint", type=str,
+                   default="runs/parseq_jersey_ft/best.pt",
+                   help="pesos PARSeq fine-tuneados en dorsales (v2.2; si el "
+                        "archivo no existe la fase usa los pesos genericos)")
     p.add_argument("--infer_unknowns", action="store_true",
                    help="eliminacion con roster para tracklets sin lock "
                         "(recomendado solo en partido completo; en clips "

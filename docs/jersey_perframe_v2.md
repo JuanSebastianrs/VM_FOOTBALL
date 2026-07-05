@@ -474,3 +474,58 @@ ni datos sintéticos dirigidos lo mueven. Las ganancias reales y defendibles
 vinieron del stack de inferencia (roster + confidence_topk + PARSeq:
 249 locks @ 92.8%, 3.1x v1.7). Palancas restantes: fuente 1080p+ nativa,
 super-resolución de crops, o anotación humana de más secuencias de tracking.
+
+## 22. v2.2 (2026-07-05): PARSeq fine-tuneado en dorsales — PRODUCCIÓN
+
+El eslabón débil del ensamble v2.1 era el segundo lector: PARSeq genérico de
+texto de escena solo acertaba el **2.1%** (exact-match) de los crops legibles
+de val. Koshkina & Elder 2024 (la referencia que motivó el ensamble) obtienen
+sus ganancias fine-tuneando PARSeq en crops de dorsales — eso es v2.2.
+
+**Fine-tune** (`training/identification/finetune_parseq_jersey.py`):
+- PARSeq base (23.8M params, torch.hub baudm/parseq), `training_step` nativo
+  (entrenamiento por permutaciones) en un loop propio con AMP.
+- Datos LIMPIOS (29,662 crops): 19,956 del split train de
+  `jersey_tracking_v2_224` (legibilidad ≥ 0.5) + 9,706 del per-frame index de
+  SoccerNet **jersey-2023 TRAIN** (el split TEST sigue prohibido — fuga, §20).
+- 8 épocas, batch 96, lr 7e-5 warmup-cosine, augmentación moderada; selección
+  por exact-match en el split val de tracking: **2.1% → 41.6%** (best ép. 5,
+  read-rate 41%→100%). Checkpoint: `runs/parseq_jersey_ft/best.pt` (~40 min
+  en la RTX 2080).
+
+**Calibración**: sweep de `parseq_weight` en val saturado (100% lock acc en
+todo w; diferencias de 1 tracklet) → se mantiene el **w=0.25 de producción**
+(decisión a priori, sin tocar test).
+
+**Resultados test** (792 tracklets, conf_topk p1=.90 m=.30 + roster):
+
+| config | raw | assigned | locks | lock acc |
+|---|---|---|---|---|
+| v2.1 (PARSeq genérico w=.25) | 38.4% | 44.8% | 249 | 92.8% |
+| FT w=.15 (ganador val) | 45.2% | 49.5% | 293 | 95.9% |
+| **v2.2 = FT w=.25 (producción)** | **51.0%** | **54.7%** | **317** | **97.5%** |
+
+**+27% de dorsales identificados con 1/3 menos error** (317@97.5 vs 249@92.8).
+
+**E2E SNMOT-148** (`--tag v22_parseq_ft`): raw 66.7→72.2%, locks 11→13
+(cobertura 61.1→72.2%) @ 92.3%. El falso lock persistente (GT#33→44,
+dígitos ~10px) sigue: el techo de resolución no desaparece, pero se empuja.
+
+**Producción**: `--parseq_checkpoint runs/parseq_jersey_ft/best.pt` es ahora
+default del pipeline unificado (si el archivo no existe, la fase avisa y usa
+los pesos genéricos del hub). Cache builder: `build_parseq_cache.py
+--checkpoint`. E2E multi: `evaluate_jersey_e2e_multi.py --parseq_model parseq
+--parseq_checkpoint ...`.
+
+**Reproducción**:
+```
+python training/identification/finetune_parseq_jersey.py \
+    --model parseq --epochs 8 --batch_size 96 --lr 7e-5 \
+    --output_dir runs/parseq_jersey_ft
+powershell -File scripts/run_parseq_ft_eval_chain.ps1          # caches + sweep val
+powershell -File scripts/run_parseq_ft_eval_chain.ps1 -TestW 0.25
+python scripts/evaluate_jersey_e2e_multi.py --sequences SNMOT-148 \
+    --model_path runs/jersey_perframe_v3_224/best.pt --tag v22_parseq_ft \
+    --fusion_mode confidence_topk --p1_threshold 0.90 --margin_threshold 0.30 \
+    --parseq_model parseq --parseq_checkpoint runs/parseq_jersey_ft/best.pt
+```

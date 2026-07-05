@@ -65,6 +65,11 @@ def run_sequence(seq, args):
         cmd += ["--split_on_switch"]
     if args.reassign_conflicts:
         cmd += ["--reassign_conflicts"]
+    if args.parseq_model:
+        cmd += ["--parseq_model", args.parseq_model,
+                "--parseq_weight", str(args.parseq_weight)]
+        if args.parseq_checkpoint:
+            cmd += ["--parseq_checkpoint", args.parseq_checkpoint]
     print(f"\n=== {seq}: jersey identity ({args.tag}) ===")
     subprocess.run(cmd, check=True)
 
@@ -103,6 +108,11 @@ def main():
     parser.add_argument("--link_fragments", action="store_true")
     parser.add_argument("--split_on_switch", action="store_true")
     parser.add_argument("--reassign_conflicts", action="store_true")
+    parser.add_argument("--parseq_model", type=str, default=None,
+                        help="ensamble PARSeq en la fase ('parseq' | 'parseq_tiny')")
+    parser.add_argument("--parseq_weight", type=float, default=0.25)
+    parser.add_argument("--parseq_checkpoint", type=str, default=None,
+                        help="pesos PARSeq fine-tuneados (runs/parseq_jersey_ft/best.pt)")
     parser.add_argument("--no_roster", action="store_true",
                         help="Disable roster mask (raw model capability)")
     args = parser.parse_args()
