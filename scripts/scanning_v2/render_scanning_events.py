@@ -37,7 +37,31 @@ def render_from_outputs(config, video_id, out_dir, detections, trajectory,
     gs = pd.read_parquet(out / "game_state.parquet")
     viz = ScanningV2Visualizer({**config, "fps": fps})
     clips_dir = out / clips_subdir
+    # limpiar clips de corridas anteriores: eventos que ya no existen
+    # quedarian anexados al video FINAL con estilo/contenido obsoleto
+    if clips_dir.is_dir():
+        stale = list(clips_dir.glob("*_video.mp4")) + list(clips_dir.glob("*_minimap.mp4"))
+        for f in stale:
+            f.unlink()
+        if stale:
+            print(f"[render] {len(stale)} clips obsoletos borrados de {clips_dir}")
     scan_by_id = {r["event_id"]: r for r in scanning.to_dict("records")}
+
+    # dorsales identificados (fase jersey): mismos labels que el video
+    # principal — locked "10", tentative "10?"; sin dorsal no se etiqueta
+    jersey_labels = {}
+    jersey_json = out.parent / f"{video_id}_jersey_identity.json"
+    if jersey_json.exists():
+        import json
+        with open(jersey_json, "r") as fh:
+            jd = json.load(fh)
+        for t in jd.get("tracklets", []):
+            num = t.get("predicted_number")
+            state = t.get("state", "unknown")
+            if num is not None and state in ("locked", "tentative"):
+                jersey_labels[int(t["track_id"])] = (
+                    f"{int(num)}{'' if state == 'locked' else '?'}")
+        print(f"[render] dorsales para overlay: {len(jersey_labels)} tracks")
 
     # opcional: sobreescribir la etiqueta heuristica con la del MODELO entrenado
     model_by_id = {}
@@ -58,7 +82,8 @@ def render_from_outputs(config, video_id, out_dir, detections, trajectory,
         if mp is not None:
             scan_row["scan_label_pred"] = int(mp["scan_label_model"])
             scan_row["source"] = (f"model p={float(mp['scan_probability_model']):.2f}")
-        viz.render_event(seq, gs, head_pose, scan_row, ev, clips_dir)
+        viz.render_event(seq, gs, head_pose, scan_row, ev, clips_dir,
+                         jersey_labels=jersey_labels)
         n += 1
         print(f"  clip {ev['event_id']} (recv #{ev['receiver_track_id']} "
               f"{ev.get('receiver_role')}, scan={scan_row.get('scan_label_pred')}"

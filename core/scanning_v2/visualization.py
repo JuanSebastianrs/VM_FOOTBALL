@@ -28,6 +28,15 @@ from core.scanning.visualization import (
 _RECV = (40, 220, 255)
 _GREEN = (40, 255, 40)
 
+# misma paleta del video principal (tactical_vision_2d_mapper) para que los
+# clips de scanning CONVIVAN visualmente con el resto de las capas
+_TEAM_COLORS_IMG = {
+    0: (255, 100, 50),    # Team A
+    1: (50, 255, 100),    # Team B
+    -1: (180, 180, 180),  # outlier
+    -2: (0, 255, 255),    # referee
+}
+
 
 class ScanningV2Visualizer:
     def __init__(self, config: Optional[dict] = None):
@@ -104,18 +113,28 @@ class ScanningV2Visualizer:
 
     def render_event(self, seq: SequenceData, gs: pd.DataFrame, head_pose: pd.DataFrame,
                      scan_row: dict, event: dict, out_dir: Path,
-                     scale: int = 11, margin: int = 24) -> Optional[Path]:
+                     scale: int = 8, margin: int = 40,
+                     jersey_labels: Optional[dict] = None) -> Optional[Path]:
+        """
+        {eid}_video.mp4 ahora es SIDE-BY-SIDE (camara | minimapa), con TODOS
+        los jugadores dibujados (equipos + dorsales via jersey_labels) — las
+        capas del pipeline conviven con el resaltado del receptor, en lugar
+        de un frame "pelado" solo con el receptor.
+        """
         eid = event["event_id"]
         tid = int(event["receiver_track_id"])
         f_rec = int(event["frame_reception"])
         ws, we = int(scan_row["window_start"]), f_rec
         out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
+        jersey_labels = jersey_labels or {}
 
         w, h = seq.frame_size or (1920, 1080)
-        vw = cv2.VideoWriter(str(out_dir / f"{eid}_video.mp4"),
-                             cv2.VideoWriter_fourcc(*"mp4v"), seq.fps, (w, h))
         base = self._pitch._draw_pitch(scale, margin)
         mh, mw = base.shape[:2]
+        out_h = max(h, mh)
+        vw = cv2.VideoWriter(str(out_dir / f"{eid}_video.mp4"),
+                             cv2.VideoWriter_fourcc(*"mp4v"), seq.fps,
+                             (w + mw, out_h))
         mwr = cv2.VideoWriter(str(out_dir / f"{eid}_minimap.mp4"),
                               cv2.VideoWriter_fourcc(*"mp4v"), seq.fps, (mw, mh))
 
@@ -145,6 +164,11 @@ class ScanningV2Visualizer:
                     continue
                 col = _team_color(r.get("team_id")) if not r.get("is_referee") else (180, 180, 180)
                 cv2.circle(pitch, (mx, my), 5 if int(r["track_id"]) == tid else 3, col, -1)
+                jlab = jersey_labels.get(int(r["track_id"]), "")
+                if jlab:
+                    cv2.putText(pitch, jlab, (mx + 6, my + 3),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.38,
+                                (255, 255, 255), 1, cv2.LINE_AA)
 
             # --- video + minimap del receptor ---
             yaw = roll = None; conf = 0.0; hpb = "?"; tbf = None
@@ -157,6 +181,27 @@ class ScanningV2Visualizer:
                 hpb = str(row.get("head_pose_backend_used"))
                 tbf = None if pd.isna(row.get("theta_body_field")) else float(row["theta_body_field"])
 
+            # --- TODOS los jugadores en la camara (equipos + dorsales) ---
+            if img is not None:
+                for _, r in gframe.iterrows():
+                    rtid = int(r["track_id"])
+                    if rtid == tid:
+                        continue  # el receptor se dibuja resaltado abajo
+                    bx1, by1 = int(r["bbox_x1"]), int(r["bbox_y1"])
+                    bx2, by2 = int(r["bbox_x2"]), int(r["bbox_y2"])
+                    tcol = (_TEAM_COLORS_IMG[-2] if r.get("is_referee")
+                            else _TEAM_COLORS_IMG.get(
+                                int(r["team_id"]) if pd.notna(r.get("team_id"))
+                                else -1, _TEAM_COLORS_IMG[-1]))
+                    cv2.rectangle(img, (bx1, by1), (bx2, by2), tcol, 2)
+                    jlab = jersey_labels.get(rtid, "")
+                    if r.get("is_referee"):
+                        jlab = f"REF {jlab}".rstrip()
+                    if jlab:
+                        cv2.putText(img, jlab, (bx1, max(14, by1 - 5)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, tcol, 2,
+                                    cv2.LINE_AA)
+
             is_turning = (fid in turning)
             if img is not None and not recv.empty:
                 rr = recv.iloc[0]
@@ -164,7 +209,9 @@ class ScanningV2Visualizer:
                 cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
                 cv2.rectangle(img, (x1, y1), (x2, y2), _RECV, 2)
                 conf_ev = scan_row.get("event_confidence", event.get("event_confidence"))
-                lab = (f"#{tid} {rr.get('role')}/{rr.get('team_id')} "
+                jl = jersey_labels.get(tid, "")
+                lab = (f"{jl + ' ' if jl else ''}#{tid} "
+                       f"{rr.get('role')}/{rr.get('team_id')} "
                        f"src={backend} ev_c={conf_ev}")
                 lab2 = f"yaw={yaw:.0f} c={conf:.2f} hp={hpb}" if yaw is not None else f"yaw=NA hp={hpb}"
                 cv2.putText(img, lab, (x1, max(14, y1 - 24)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, _RECV, 2)
@@ -212,7 +259,14 @@ class ScanningV2Visualizer:
                     self._overlay_head_crop(img, cv2.imread(str(hc_path)))
                 cv2.putText(img, f"{eid}  frame {fid}  t-{(f_rec - fid) / seq.fps:.1f}s",
                             (10, h - 14), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-                vw.write(img)
+                # side-by-side (camara | minimapa), como el video principal
+                pt = (out_h - h) // 2
+                img_p = cv2.copyMakeBorder(img, pt, out_h - h - pt, 0, 0,
+                                           cv2.BORDER_CONSTANT, value=[0, 0, 0])
+                pt = (out_h - mh) // 2
+                pitch_p = cv2.copyMakeBorder(pitch, pt, out_h - mh - pt, 0, 0,
+                                             cv2.BORDER_CONSTANT, value=[0, 0, 0])
+                vw.write(np.hstack((img_p, pitch_p)))
             mwr.write(pitch)
         vw.release(); mwr.release()
         return out_dir / f"{eid}_video.mp4"
