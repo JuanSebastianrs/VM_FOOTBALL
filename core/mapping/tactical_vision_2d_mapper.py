@@ -563,6 +563,158 @@ class BidirectionalLieSmoother:
 
 
 # ---------------------------------------------------------------------------
+# RobustOfflineSmoother — rechazo robusto + gauss fase-cero (produccion)
+# ---------------------------------------------------------------------------
+
+class RobustOfflineSmoother(BidirectionalLieSmoother):
+    """
+    Suavizador OFFLINE robusto (auditoria 2026-07-05, informe de
+    estabilizacion del minimapa): el mapper ya es de dos pasadas, asi que
+    un suavizado batch de fase cero es legitimo y domina al EMA causal
+    en tramos continuos (SNMOT-148: desv mediana 0.25 vs 0.82 m, jitter
+    0.014 vs 0.048 m/f^2, p95 3.4 vs 7.8 m vs el Lie bidireccional).
+
+      1. Rechazo por rep_err y por proyeccion insana (puntos de imagen
+         proyectados fuera de un entorno del campo — atrapa las soluciones
+         espejadas de PnLCalib que llegan con rep_err aceptable).
+      2. Rechazo por residuo vs mediana deslizante del rotvec.
+      3. Interpolacion lineal + filtro gaussiano de FASE CERO sobre
+         rotvec / focal / principal point / posicion.
+      4. Huecos de medicion > MAX_GAP_FILL_FRAMES quedan sin H_inv
+         (misma regla heredada: no fabricar posiciones).
+
+    Reproduce `run_variant_gauss_robust` de scripts/analyze_lie_smoothing.py.
+    """
+
+    GAUSS_SIGMA      = 3.0    # frames (fase cero — sin retardo direccional)
+    MED_WIN          = 11     # ventana de la mediana deslizante
+    MED_REJECT_DEG   = 4.0    # residuo maximo vs mediana (grados)
+    SANE_HALF_X_M    = 120.0  # sanidad de proyeccion (campo 105x68 + margen)
+    SANE_HALF_Y_M    = 80.0
+
+    def __init__(self, image_size=(1920, 1080)):
+        super().__init__()
+        w, h = image_size
+        # puntos de imagen para el test de sanidad (mitad inferior ~ campo)
+        self._sane_pts = np.array([
+            [0.50 * w, 0.907 * h, 1.0],
+            [0.25 * w, 0.759 * h, 1.0],
+            [0.75 * w, 0.759 * h, 1.0],
+        ], dtype=np.float64).T
+
+    def _measurement_is_sane(self, m):
+        H = self._build_H_inv_static(m["R"], m["fx"], m["fy"],
+                                     m["cx"], m["cy"], m["pos"])
+        if H is None:
+            return False
+        w = H @ self._sane_pts
+        p = (w[:2] / w[2:3]).T
+        return bool((np.abs(p[:, 0]) <= self.SANE_HALF_X_M).all()
+                    and (np.abs(p[:, 1]) <= self.SANE_HALF_Y_M).all())
+
+    def smooth_all(self):
+        from scipy.ndimage import gaussian_filter1d, median_filter
+        ms = self._measurements
+        N = len(ms)
+        self.stats['total_frames'] = N
+
+        ok = []
+        for i, m in enumerate(ms):
+            if m is None:
+                continue
+            if m["rep_err"] > self.MAX_REPROJ_ERR_PX:
+                self.stats['rejected_reproj'] = (
+                    self.stats.get('rejected_reproj', 0) + 1)
+                continue
+            if not self._measurement_is_sane(m):
+                self.stats['rejected_insane'] = (
+                    self.stats.get('rejected_insane', 0) + 1)
+                continue
+            ok.append(i)
+
+        self._smoothed_params = [None] * N
+        self._smoothed_H_inv = [None] * N
+        if len(ok) < 5:
+            return
+
+        ref = ms[ok[0]]["R"]
+        rotvecs = np.full((N, 3), np.nan)
+        scal = np.full((N, 7), np.nan)   # fx fy cx cy pos(3)
+        for i in ok:
+            m = ms[i]
+            rotvecs[i] = (ref.inv() * m["R"]).as_rotvec()
+            scal[i] = [m["fx"], m["fy"], m["cx"], m["cy"], *m["pos"]]
+
+        # rechazo por mediana deslizante (outliers espejados/aislados)
+        rv_ok = rotvecs[ok]
+        med = np.stack([median_filter(rv_ok[:, c], size=self.MED_WIN,
+                                      mode="nearest") for c in range(3)],
+                       axis=1)
+        resid_deg = np.rad2deg(np.linalg.norm(rv_ok - med, axis=1))
+        keep = resid_deg <= self.MED_REJECT_DEG
+        self.stats['rejected_median'] = int((~keep).sum())
+        ok = [i for i, k in zip(ok, keep) if k]
+        if len(ok) < 5:
+            return
+        drop = ~np.isin(np.arange(N), ok)
+        rotvecs[drop] = np.nan
+        scal[drop] = np.nan
+        self.stats['accepted'] = len(ok)
+
+        # interpolar + gauss fase cero
+        idx = np.arange(N)
+        good = ~np.isnan(rotvecs[:, 0])
+        for arr in (rotvecs, scal):
+            for c in range(arr.shape[1]):
+                col = arr[:, c]
+                g = ~np.isnan(col)
+                arr[:, c] = np.interp(idx, idx[g], col[g])
+        rotvecs = gaussian_filter1d(rotvecs, self.GAUSS_SIGMA, axis=0,
+                                    mode="nearest")
+        scal = gaussian_filter1d(scal, self.GAUSS_SIGMA, axis=0,
+                                 mode="nearest")
+
+        params = [{
+            "R": ref * Rotation.from_rotvec(rotvecs[i]),
+            "fx": scal[i, 0], "fy": scal[i, 1],
+            "cx": scal[i, 2], "cy": scal[i, 3], "pos": scal[i, 4:7]}
+            for i in range(N)]
+
+        # huecos largos entre mediciones ACEPTADAS -> sin H_inv
+        i = 0
+        while i < N:
+            if not good[i]:
+                j = i
+                while j < N and not good[j]:
+                    j += 1
+                if (j - i) > self.MAX_GAP_FILL_FRAMES:
+                    for k in range(i, j):
+                        params[k] = None
+                    self.stats['gap_invalidated'] = (
+                        self.stats.get('gap_invalidated', 0) + (j - i))
+                i = j
+            else:
+                i += 1
+
+        self._smoothed_params = params
+        self._smoothed_H_inv = [
+            None if p is None else self._build_H_inv_static(
+                p["R"], p["fx"], p["fy"], p["cx"], p["cy"], p["pos"])
+            for p in params]
+
+    def summary(self):
+        s = self.stats
+        return (f"  Accepted: {s.get('accepted',0)} | "
+                f"rejected reproj: {s.get('rejected_reproj',0)}, "
+                f"insane: {s.get('rejected_insane',0)}, "
+                f"median: {s.get('rejected_median',0)}\n"
+                f"  Fallback (no calib): {s.get('fallback',0)}\n"
+                f"  Gap frames invalidated (>{self.MAX_GAP_FILL_FRAMES}f): "
+                f"{s.get('gap_invalidated',0)}\n"
+                f"  Total frames: {s.get('total_frames',0)}")
+
+
+# ---------------------------------------------------------------------------
 # Minimap drawing
 # ---------------------------------------------------------------------------
 
@@ -683,6 +835,11 @@ def main():
                              "(calibration_hinv.json, image -> centred pitch metres)")
     parser.add_argument("--no_video", action="store_true",
                         help="Skip video rendering (useful when only CSV is needed)")
+    parser.add_argument("--smoothing_mode", type=str, default="robust_offline",
+                        choices=["robust_offline", "lie_bidir"],
+                        help="robust_offline (default): rechazo robusto + gauss "
+                             "fase-cero batch, domina en tramos continuos; "
+                             "lie_bidir: ESKF-Lite bidireccional anterior")
     parser.add_argument("--dump_raw_calib", type=str, default="",
                         help="Optional: path to dump RAW per-frame PnLCalib "
                              "measurements (pre-smoothing) as JSON, for offline "
@@ -806,7 +963,10 @@ def main():
 
     # --- Calibration objects ---
     cam = FramebyFrameCalib(iwidth=w_ori, iheight=h_ori, denormalize=True)
-    smoother = BidirectionalLieSmoother()
+    if args.smoothing_mode == "robust_offline":
+        smoother = RobustOfflineSmoother(image_size=(w_ori, h_ori))
+    else:
+        smoother = BidirectionalLieSmoother()
 
     pnl_refine = not args.disable_pnl_refine
 
@@ -919,7 +1079,7 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     #  BIDIRECTIONAL SMOOTHING (forward + backward + merge)
     # ═══════════════════════════════════════════════════════════════
-    print(f"\nRunning bidirectional SO(3) Lie algebra smoothing...")
+    print(f"\nRunning calibration smoothing ({args.smoothing_mode})...")
     smoother.smooth_all()
 
     # ── Debug: print a sample of smoothed rotations ──

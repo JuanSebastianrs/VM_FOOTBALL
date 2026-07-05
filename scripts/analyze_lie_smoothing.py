@@ -162,6 +162,88 @@ def sane_mask(series, max_x=120.0, max_y=80.0):
     return ok & inb
 
 
+def run_variant_gauss_robust(ms, sigma=3.0, max_rep_err=20.0,
+                             med_win=11, med_reject_deg=4.0,
+                             max_gap_fill=25):
+    """
+    Candidata a produccion: gauss fase-cero con rechazo ROBUSTO.
+      1. rechazo por rep_err y por proyeccion insana
+      2. rechazo por residuo vs mediana deslizante del rotvec (outliers
+         espejados de PnLCalib con rep_err aceptable)
+      3. interpolacion solo dentro de huecos <= max_gap_fill
+      4. gauss fase-cero sobre rotvec/focal/pos
+      5. huecos largos -> None (igual que MAX_GAP_FILL_FRAMES en prod)
+    """
+    from scipy.ndimage import median_filter
+    N = len(ms)
+
+    def _sane(m):
+        H = BidirectionalLieSmoother._build_H_inv_static(
+            m["R"], m["fx"], m["fy"], m["cx"], m["cy"], m["pos"])
+        if H is None:
+            return False
+        w = H @ IMAGE_POINTS
+        p = (w[:2] / w[2:3]).T
+        return bool((np.abs(p[:, 0]) <= 120).all()
+                    and (np.abs(p[:, 1]) <= 80).all())
+
+    ok = [i for i, m in enumerate(ms)
+          if m is not None and m["rep_err"] <= max_rep_err and _sane(m)]
+    if len(ok) < 5:
+        return [None] * N
+    ref = ms[ok[0]]["R"]
+    rotvecs = np.full((N, 3), np.nan)
+    scal = np.full((N, 7), np.nan)
+    for i in ok:
+        m = ms[i]
+        rotvecs[i] = (ref.inv() * m["R"]).as_rotvec()
+        scal[i] = [m["fx"], m["fy"], m["cx"], m["cy"], *m["pos"]]
+
+    # 2. mediana deslizante sobre las mediciones aceptadas (solo indices ok)
+    rv_ok = rotvecs[ok]
+    med = np.stack([median_filter(rv_ok[:, c], size=med_win, mode="nearest")
+                    for c in range(3)], axis=1)
+    resid_deg = np.rad2deg(np.linalg.norm(rv_ok - med, axis=1))
+    keep = resid_deg <= med_reject_deg
+    ok = [i for i, k in zip(ok, keep) if k]
+    if len(ok) < 5:
+        return [None] * N
+    drop = ~np.isin(np.arange(N), ok)
+    rotvecs[drop] = np.nan
+    scal[drop] = np.nan
+
+    # 3-4. interpolar + suavizar
+    idx = np.arange(N)
+    good = ~np.isnan(rotvecs[:, 0])
+    for arr in (rotvecs, scal):
+        for c in range(arr.shape[1]):
+            col = arr[:, c]
+            g = ~np.isnan(col)
+            arr[:, c] = np.interp(idx, idx[g], col[g])
+    rotvecs = gaussian_filter1d(rotvecs, sigma, axis=0, mode="nearest")
+    scal = gaussian_filter1d(scal, sigma, axis=0, mode="nearest")
+
+    # 5. invalidar huecos largos entre mediciones ACEPTADAS (regla de prod)
+    params = [{
+        "R": ref * Rotation.from_rotvec(rotvecs[i]),
+        "fx": scal[i, 0], "fy": scal[i, 1],
+        "cx": scal[i, 2], "cy": scal[i, 3], "pos": scal[i, 4:7]}
+        for i in range(N)]
+    i = 0
+    while i < N:
+        if not good[i]:
+            j = i
+            while j < N and not good[j]:
+                j += 1
+            if (j - i) > max_gap_fill:
+                for k in range(i, j):
+                    params[k] = None
+            i = j
+        else:
+            i += 1
+    return params_to_hinv(params)
+
+
 def metrics(series, raw_series, raw_sane):
     """Jitter (mediana de |2a diferencia|) y desviacion vs crudo sano."""
     valid = sane_mask(series)
@@ -209,6 +291,8 @@ def main():
         "lie_fwd": run_variant_pass(ms, use_prediction=True),
         "lie_bidir (PROD)": run_variant_bidir(ms),
         f"gauss s={args.gauss_sigma:g} (oro)": run_variant_gauss(
+            ms, sigma=args.gauss_sigma),
+        "gauss ROBUSTO (cand)": run_variant_gauss_robust(
             ms, sigma=args.gauss_sigma),
     }
     raw_series = project_series(variants["raw"])

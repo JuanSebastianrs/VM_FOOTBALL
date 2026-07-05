@@ -566,3 +566,38 @@ rechazo de outliers logra 3x mejor fidelidad mediana (0.29 m) — el mapper ya
 es de dos pasadas, así que un suavizador batch (spline/gauss robusto) es
 legítimo y dominaría en tramos continuos; requiere cuidar los bordes de
 hueco (sus picos p95 vienen de interpolar cerca de outliers de borde).
+
+---
+
+## 2026-07-05 (b): suavizador offline robusto promovido a PRODUCCIÓN
+
+El "trabajo futuro" de la revisión anterior se implementó, validó y promovió
+el mismo día a pedido del usuario ("lo mejor para la mayoría de los casos").
+
+**`RobustOfflineSmoother`** (`--smoothing_mode robust_offline`, default del
+mapper; `lie_bidir` queda disponible como fallback):
+1. Rechazo por rep_err (>20 px) y por **proyección insana** (3 puntos de
+   imagen proyectados fuera de ±120×80 m — atrapa las soluciones espejadas
+   de PnLCalib que llegan con rep_err aceptable).
+2. Rechazo por **residuo vs mediana deslizante** del rotvec (ventana 11,
+   umbral 4°) — outliers aislados.
+3. Interpolación lineal + **filtro gaussiano de fase cero** (σ=3) sobre
+   rotvec/focal/principal point/posición. Fase cero = sin retardo
+   direccional; legítimo porque el mapper ya es de dos pasadas (offline).
+4. Huecos de medición >25 frames siguen quedando SIN H_inv.
+
+**Validación en dos secuencias** (proyección de puntos fijos, m):
+
+| | SNMOT-148 (36% sin calib) | SNMOT-116 (100% calibrada) |
+|---|---|---|
+| | jit_med / dev_med / dev_p95 | jit_med / dev_med / dev_p95 |
+| Lie bidireccional (anterior) | 0.048 / 0.821 / 7.77 | 0.054 / 0.567 / 2.62 |
+| **Robusto offline (prod)** | **0.014 / 0.251 / 3.37** | **0.016 / 0.334 / 2.37** |
+
+Domina en TODAS las métricas en ambas: ~3.3x menos jitter, ~2-3x más fiel,
+picos p95 menores. La clase reproduce bit-exacto la variante
+`gauss ROBUSTO (cand)` de `scripts/analyze_lie_smoothing.py` (verificado
+max|ΔH_inv| = 0 en ambas secuencias).
+
+Rechazos en SNMOT-148: 8 por rep_err, 1 insana, 23 por mediana (los
+espejados de los bordes de hueco); SNMOT-116: 1+1+0 (748/750 aceptadas).
