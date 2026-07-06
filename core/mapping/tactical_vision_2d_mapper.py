@@ -1163,91 +1163,97 @@ def main():
         if not args.no_video:
             pitch_frame = base_pitch.copy()
 
-        if H_inv is not None:
-            # -- Players (team-aware) --
-            frame_data = detections.get(frame_id, {"players": []})
-            for p in frame_data.get("players", []):
-                x_min = p["x_min"]
-                y_min = p["y_min"]
-                x_max = p["x_max"]
-                y_max = p["y_max"]
-                track_id = p.get("track_id", -1)
+        # -- Players (team-aware) --
+        # Las cajas/labels sobre el VIDEO no dependen de la calibracion:
+        # se dibujan SIEMPRE. Solo la proyeccion metrica (minimapa + CSV)
+        # requiere H_inv; sin ella el minimapa queda vacio con aviso.
+        frame_data = detections.get(frame_id, {"players": []})
+        for p in frame_data.get("players", []):
+            x_min = p["x_min"]
+            y_min = p["y_min"]
+            x_max = p["x_max"]
+            y_max = p["y_max"]
+            track_id = p.get("track_id", -1)
 
-                color, is_gk, is_ref = get_player_color(track_id)
+            color, is_gk, is_ref = get_player_color(track_id)
 
-                if not args.no_video:
-                    # Draw bbox on video frame with team color
-                    cv2.rectangle(frame,
-                                  (int(x_min), int(y_min)),
-                                  (int(x_max), int(y_max)),
-                                  color, 2)
+            if not args.no_video:
+                # Draw bbox on video frame with team color
+                cv2.rectangle(frame,
+                              (int(x_min), int(y_min)),
+                              (int(x_max), int(y_max)),
+                              color, 2)
 
-                    # Label on video frame (jersey number when identified)
-                    info_team = team_map.get(track_id)
-                    if info_team:
-                        label, has_jersey = get_display_label(track_id)
-                        if is_ref:
-                            label = f"REF {label}".rstrip()
-                        elif is_gk:
-                            label = f"GK {label}".rstrip()
-                        if label:
-                            font_scale = 0.55 if has_jersey else 0.4
-                            cv2.putText(frame, label,
-                                        (int(x_min), int(y_min) - 5),
-                                        cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
-                                        2 if has_jersey else 1,
-                                        cv2.LINE_AA)
-
-                # Metric projection (foot-point)
-                x_foot = (x_min + x_max) / 2.0
-                y_foot = y_max
-                x_world, y_world = project_point_to_world(x_foot, y_foot, H_inv)
-                visible = x_world is not None
-
-                if csv_writer:
-                    info_team = team_map.get(track_id, {})
-                    role_str = info_team.get("role", "unknown")
-                    team_id = info_team.get("team_id", -1)
-                    csv_writer.writerow([
-                        frame_id, round((frame_id - 1) * dt, 3),
-                        'player', track_id, team_id, role_str,
-                        round(x_world, 3) if visible else '',
-                        round(y_world, 3) if visible else '',
-                        1 if visible else 0,
-                        'detection',
-                        ''
-                    ])
-
-                if not args.no_video and visible:
-                    mx = int(x_world * scale) + margin
-                    my = int(y_world * scale) + margin
+                # Label on video frame (jersey number when identified)
+                info_team = team_map.get(track_id)
+                if info_team:
+                    label, has_jersey = get_display_label(track_id)
                     if is_ref:
-                        pts = np.array([
-                            [mx, my - 7], [mx + 5, my],
-                            [mx, my + 7], [mx - 5, my]
-                        ], dtype=np.int32)
-                        cv2.fillPoly(pitch_frame, [pts], color)
+                        label = f"REF {label}".rstrip()
                     elif is_gk:
-                        cv2.circle(pitch_frame, (mx, my), 8, color, -1)
-                        cv2.circle(pitch_frame, (mx, my), 8, (255, 255, 255), 2)
-                    else:
-                        cv2.circle(pitch_frame, (mx, my), 6, color, -1)
-                    map_label, map_has_jersey = get_display_label(track_id)
-                    if map_label:
-                        cv2.putText(pitch_frame, map_label.lstrip("#"), (mx + 8, my),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.45 if map_has_jersey else 0.4,
-                                    (255, 255, 255), 2 if map_has_jersey else 1)
+                        label = f"GK {label}".rstrip()
+                    if label:
+                        font_scale = 0.55 if has_jersey else 0.4
+                        cv2.putText(frame, label,
+                                    (int(x_min), int(y_min) - 5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, font_scale, color,
+                                    2 if has_jersey else 1,
+                                    cv2.LINE_AA)
 
-            # -- Ball (Viterbi trajectory) --
-            ball = trajectory.get(frame_id)
-            if ball is not None:
-                bx, by = ball["x"], ball["y"]
-                if not args.no_video:
-                    is_dummy = ball.get("is_dummy", False)
-                    bcolor = (0, 0, 255) if is_dummy else (0, 255, 255)
-                    cv2.circle(frame, (int(bx), int(by)), 5, bcolor, -1)
+            if H_inv is None:
+                continue
 
+            # Metric projection (foot-point)
+            x_foot = (x_min + x_max) / 2.0
+            y_foot = y_max
+            x_world, y_world = project_point_to_world(x_foot, y_foot, H_inv)
+            visible = x_world is not None
+
+            if csv_writer:
+                info_team = team_map.get(track_id, {})
+                role_str = info_team.get("role", "unknown")
+                team_id = info_team.get("team_id", -1)
+                csv_writer.writerow([
+                    frame_id, round((frame_id - 1) * dt, 3),
+                    'player', track_id, team_id, role_str,
+                    round(x_world, 3) if visible else '',
+                    round(y_world, 3) if visible else '',
+                    1 if visible else 0,
+                    'detection',
+                    ''
+                ])
+
+            if not args.no_video and visible:
+                mx = int(x_world * scale) + margin
+                my = int(y_world * scale) + margin
+                if is_ref:
+                    pts = np.array([
+                        [mx, my - 7], [mx + 5, my],
+                        [mx, my + 7], [mx - 5, my]
+                    ], dtype=np.int32)
+                    cv2.fillPoly(pitch_frame, [pts], color)
+                elif is_gk:
+                    cv2.circle(pitch_frame, (mx, my), 8, color, -1)
+                    cv2.circle(pitch_frame, (mx, my), 8, (255, 255, 255), 2)
+                else:
+                    cv2.circle(pitch_frame, (mx, my), 6, color, -1)
+                map_label, map_has_jersey = get_display_label(track_id)
+                if map_label:
+                    cv2.putText(pitch_frame, map_label.lstrip("#"), (mx + 8, my),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.45 if map_has_jersey else 0.4,
+                                (255, 255, 255), 2 if map_has_jersey else 1)
+
+        # -- Ball (Viterbi trajectory) --
+        ball = trajectory.get(frame_id)
+        if ball is not None:
+            bx, by = ball["x"], ball["y"]
+            if not args.no_video:
+                is_dummy = ball.get("is_dummy", False)
+                bcolor = (0, 0, 255) if is_dummy else (0, 255, 255)
+                cv2.circle(frame, (int(bx), int(by)), 5, bcolor, -1)
+
+            if H_inv is not None:
                 x_world, y_world = project_point_to_world(bx, by, H_inv)
                 visible = x_world is not None and not ball.get("is_dummy", False)
 
@@ -1266,6 +1272,12 @@ def main():
                     mx = int(x_world * scale) + margin
                     my = int(y_world * scale) + margin
                     cv2.circle(pitch_frame, (mx, my), 5, (0, 165, 255), -1)
+
+        if H_inv is None and not args.no_video:
+            cv2.putText(pitch_frame, "SIN CALIBRACION (plano no visible)",
+                        (margin, pitch_frame.shape[0] // 2),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2,
+                        cv2.LINE_AA)
 
         if not args.no_video:
             # ── Compose side-by-side ──
