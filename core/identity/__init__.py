@@ -3,9 +3,7 @@
 
 """
 Reconocimiento de dorsales de jugadores.
-Implementaciones: SmolVLM2 + ResNet.
+Implementación en producción: EfficientNet-B0 per-frame + PARSeq
+fine-tuneado con fusión temporal (`jersey_identity_phase.py`,
+`jersey_model.py`, `jersey_assignment.py`, `tracklet_linking.py`).
 """
-
-# TODO: Importar cuando se implemente
-# from .jersey_reader import JerseyReader
-# from .crop_generator import DorsalCropGenerator

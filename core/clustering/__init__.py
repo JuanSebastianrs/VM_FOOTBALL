@@ -3,9 +3,7 @@
 
 """
 Clasificación de jugadores por equipo usando clustering.
-Implementaciones: K-Means con HSV y SigLIP2.
+Implementación en producción: K-Means sobre descriptores HSV con
+manejo role-aware de porteros (`team_classifier.py`, orquestado por
+`team_clustering_phase.py`).
 """
-
-# TODO: Importar cuando se implemente
-# from .team_classifier import TeamClassifier
-# from .siglip_embedder import SigLIPEmbedder

@@ -1,9 +1,0 @@
-POST REPORT
-sequence=triunfazo_millos mode=hsv k=2 use_gk_class=1 gk_assignment_mode=fused
-Team A: tracks=130 hue=86.4(cyan) sat=54.0 val=174.4
-Team B: tracks=125 hue=110.5(blue) sat=126.1 val=133.5
-goalie_track=#369 assigned=Team A votesA/B=0/0/0 edge=0.00 confidence=0.032 reason=fused_class_seeded
-goalie_track=#407 assigned=? votesA/B=0/0/0 edge=0.00 confidence=0.000 reason=unknown
-goalie_track=#1051 assigned=Team A votesA/B=0/0/0 edge=0.00 confidence=0.052 reason=fused_class_seeded
-goalie_track=#1254 assigned=Team B votesA/B=0/0/0 edge=0.00 confidence=0.215 reason=fused_class_seeded
-referee_tracks=2 ids=140,898

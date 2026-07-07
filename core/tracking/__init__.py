@@ -2,10 +2,8 @@
 # Módulo de tracking y segmentación
 
 """
-Tracking multiobject y segmentación con memoria temporal.
-Implementaciones: ByteTrack + SAM2.
+Tracking multiobjeto.
+Implementación en producción: Viterbi HMM sobre detecciones de balón
+(`tactical_vision_hmm.py`), compensación de movimiento de cámara
+(`tactical_vision_cmc.py`) y evaluación vs GT (`tactical_vision_eval.py`).
 """
-
-# TODO: Importar cuando se implemente
-# from .tracker import MultiObjectTracker
-# from .segmenter import SAM2Segmenter

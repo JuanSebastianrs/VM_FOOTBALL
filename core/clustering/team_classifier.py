@@ -80,9 +80,8 @@ class TeamClassifier:
         """
         Ajustar el clasificador sobre una colección de crops representativos.
 
-        En la práctica se pasa un crop (o la media acumulada) por track_id,
-        equivalente a lo que hace el script legacy cv_model/team_clustering.py
-        con `tracks_sum[tid] / tracks_count[tid]`.
+        En la práctica se pasa un crop (o la media acumulada,
+        `tracks_sum[tid] / tracks_count[tid]`) por track_id.
 
         Args:
             crops     : Lista de crops BGR de torsos (uno por track)
