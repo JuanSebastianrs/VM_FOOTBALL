@@ -86,3 +86,7 @@ tools/TrackEval/
 .agent/
 cloud/ball_detection/results/inference_video/
 MASTER_PROMPT.md
+
+# Tesis LaTeX: repo git propio (github.com/JuanSebastianrs/tesis-tactical-vision)
+tesis/
+tesis.zip

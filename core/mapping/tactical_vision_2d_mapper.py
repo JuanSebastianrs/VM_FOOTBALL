@@ -1022,7 +1022,12 @@ def main():
         source = 'hold'
 
         # Path A: Full 3D calibration (heuristic_voting)
-        result = cam.heuristic_voting(refine_lines=pnl_refine)
+        try:
+            result = cam.heuristic_voting(refine_lines=pnl_refine)
+        except cv2.error:
+            # Degenerate keypoint geometry can crash cv2.calibrateCamera
+            # inside PnLCalib; treat the frame as uncalibrable.
+            result = None
 
         if result is not None:
             cam_params_dict = result['cam_params']
